@@ -223,6 +223,16 @@
       },
       {
         "mode": "NULLABLE",
+        "name": "non_retryable_ex_code",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "non_retryable_ex_reason",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
         "name": "retryable_ex_tracking_id",
         "type": "STRING"
       },
@@ -234,6 +244,11 @@
       {
         "mode": "NULLABLE",
         "name": "retryable_ex_msg",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "retryable_ex_code",
         "type": "STRING"
       },
       {

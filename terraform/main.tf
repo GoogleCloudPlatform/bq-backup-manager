@@ -1,16 +1,18 @@
-#   Copyright 2021 Google LLC
 #
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
+#  Copyright 2023 Google LLC
 #
-#       http://www.apache.org/licenses/LICENSE-2.0
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
 #
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 
 
@@ -47,7 +49,12 @@ provider "google-beta" {
   request_timeout = "60s"
 }
 
+data "google_project" "project" {}
+
 locals {
+
+  cloud_scheduler_sa = "service-${data.google_project.project.number}@gcp-sa-cloudscheduler.iam.gserviceaccount.com"
+
   common_labels = {
     "app" = var.application_name
     "provisioned_by" =  "terraform"
@@ -71,24 +78,28 @@ locals {
       value = module.gcs.create_gcs_flags_bucket_name
     },
     {
+      name = "GCS_BACKUP_POLICIES_BUCKET",
+      value = module.gcs.create_gcs_backup_policies_bucket_name
+    },
+    {
       name = "APPLICATION_NAME",
       value = var.application_name
     }
   ]
 
-  fallback_policy_default_level_backup_project = lookup(lookup(var.fallback_policy, "default_policy") , "backup_project")
-  fallback_policy_folder_level_backup_projects = [for k, v in lookup(var.fallback_policy, "folder_overrides"): lookup(v,"backup_project")]
-  fallback_policy_project_level_backup_projects = [for k, v in lookup(var.fallback_policy, "project_overrides"): lookup(v,"backup_project")]
-  fallback_policy_dataset_level_backup_projects = [for k, v in lookup(var.fallback_policy, "dataset_overrides"): lookup(v,"backup_project")]
-  fallback_policy_table_level_backup_projects = [for k, v in lookup(var.fallback_policy, "table_overrides"): lookup(v,"backup_project")]
-  fallback_policy_backup_projects = distinct(concat(
-    [local.fallback_policy_default_level_backup_project],
-    local.fallback_policy_folder_level_backup_projects,
-    local.fallback_policy_project_level_backup_projects,
-    local.fallback_policy_dataset_level_backup_projects,
-    local.fallback_policy_table_level_backup_projects
+  fallback_policy_default_level_backup_op_project = lookup(lookup(var.fallback_policy, "default_policy") , "backup_operation_project", null)
+  fallback_policy_folder_level_backup_op_projects = [for k, v in lookup(var.fallback_policy, "folder_overrides"): lookup(v,"backup_operation_project", null)]
+  fallback_policy_project_level_backup_op_projects = [for k, v in lookup(var.fallback_policy, "project_overrides"): lookup(v,"backup_operation_project", null)]
+  fallback_policy_dataset_level_backup_op_projects = [for k, v in lookup(var.fallback_policy, "dataset_overrides"): lookup(v,"backup_operation_project", null)]
+  fallback_policy_table_level_backup_op_projects = [for k, v in lookup(var.fallback_policy, "table_overrides"): lookup(v,"backup_operation_project", null)]
+  fallback_policy_backup_op_projects = distinct(concat(
+    [local.fallback_policy_default_level_backup_op_project],
+    local.fallback_policy_folder_level_backup_op_projects,
+    local.fallback_policy_project_level_backup_op_projects,
+    local.fallback_policy_dataset_level_backup_op_projects,
+    local.fallback_policy_table_level_backup_op_projects
   ))
-  all_backup_projects = distinct(concat(var.additional_backup_projects, local.fallback_policy_backup_projects))
+  all_backup_op_projects = [for e in distinct(concat(var.additional_backup_operation_projects, local.fallback_policy_backup_op_projects)): e if e != null]
 
 }
 
@@ -111,7 +122,6 @@ module "gcs" {
   source = "./modules/gcs"
   gcs_flags_bucket_name = "${var.project}-${var.gcs_flags_bucket_name}"
   project = var.project
-  region = var.compute_region
   # because it's used by the cloud run services
   # both dispatchers should be admins. Add the inspection-dispatcher-sa only if it's being deployed
   gcs_flags_bucket_admins = [
@@ -122,6 +132,13 @@ module "gcs" {
     "serviceAccount:${module.iam.sa_tagger_email}",
   ]
   common_labels = local.common_labels
+  gcs_backup_policies_bucket_admins = [
+    "serviceAccount:${module.iam.sa_configurator_email}",
+    "serviceAccount:${module.iam.sa_tagger_email}",
+  ]
+  gcs_backup_policies_bucket_name = "${var.project}-${var.gcs_backup_policies_bucket_name}"
+  compute_region                  = var.compute_region
+  data_region                     = var.data_region
 }
 
 module "bigquery" {
@@ -131,6 +148,7 @@ module "bigquery" {
   dataset = var.bigquery_dataset_name
   logging_sink_sa = module.cloud_logging.service_account
   common_labels = local.common_labels
+  gcs_backup_policies_bucket_name = module.gcs.create_gcs_backup_policies_bucket_name
 }
 
 module "cloud_logging" {
@@ -282,8 +300,7 @@ module "pubsub-dispatcher" {
   subscription_name = var.dispatcher_pubsub_sub
   subscription_service_account = module.iam.sa_dispatcher_tasks_email
   topic = var.dispatcher_pubsub_topic
-  topic_publishers_sa_emails = [
-    var.cloud_scheduler_account]
+  topic_publishers_sa_emails = [local.cloud_scheduler_sa]
   # use a deadline large enough to process BQ listing for large scopes
   subscription_ack_deadline_seconds = var.dispatcher_subscription_ack_deadline_seconds
   # avoid resending dispatcher messages if things went wrong and the msg was NAK (e.g. timeout expired, app error, etc)
@@ -384,12 +401,18 @@ module "data-catalog" {
 
 module "async-gcs-snapshoter" {
 
-  count = length(local.all_backup_projects)
+  count = length(local.all_backup_op_projects)
   source = "./modules/async-gcs-snapshoter"
 
   application_name  = var.application_name
-  log_project    = local.all_backup_projects[count.index]
+  log_project    = local.all_backup_op_projects[count.index]
   host_project      = var.project
   log_sink_name     = "bq_backup_manager_gcs_export_pubsub_sink"
   pubsub_topic_name = module.pubsub-tagger.topic-name
+}
+
+module "firestore" {
+  source = "./modules/firestore"
+  project = var.project
+  region = var.compute_region # store cache data next to the services
 }

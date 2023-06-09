@@ -1,17 +1,19 @@
 /*
- * Copyright 2022 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.google.cloud.pso.bq_snapshot_manager.configurator;
 
@@ -19,18 +21,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.PubSubEvent;
-import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.FallbackBackupPolicy;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.Configurator;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.ConfiguratorRequest;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.ConfiguratorResponse;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerRequest;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerResponse;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.ControllerExceptionHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
-import com.google.cloud.pso.bq_snapshot_manager.services.catalog.DataCatalogServiceImpl;
+import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyServiceGCSImpl;
+import com.google.cloud.pso.bq_snapshot_manager.services.bq.BigQueryServiceImpl;
+import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
+import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyServiceFireStoreImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubServiceImpl;
+import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScannerImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.GCSPersistentSetImpl;
 import com.google.gson.Gson;
 import org.springframework.boot.SpringApplication;
@@ -62,7 +65,8 @@ public class ConfiguratorController {
         logger = new LoggingHelper(
                 ConfiguratorController.class.getSimpleName(),
                 functionNumber,
-                environment.getProjectId()
+                environment.getProjectId(),
+                environment.getApplicationName()
         );
 
         logger.logInfoWithTracker(
@@ -87,7 +91,7 @@ public class ConfiguratorController {
     public ResponseEntity receiveMessage(@RequestBody PubSubEvent requestBody) {
 
 
-        DataCatalogServiceImpl dataCatalogService = null;
+        BackupPolicyService backupPolicyService = null;
 
         // These values will be updated based on the execution flow and logged at the end
         ResponseEntity responseEntity;
@@ -118,12 +122,14 @@ public class ConfiguratorController {
 
             logger.logInfoWithTracker(configuratorRequest.isDryRun(), trackingId, configuratorRequest.getTargetTable(), String.format("Parsed Request: %s", configuratorRequest.toString()));
 
-            dataCatalogService = new DataCatalogServiceImpl();
+            backupPolicyService = new BackupPolicyServiceGCSImpl(environment.getGcsBackupPoliciesBucket());
 
             Configurator configurator = new Configurator(
                     environment.toConfig(),
-                    dataCatalogService,
+                    new BigQueryServiceImpl(configuratorRequest.getTargetTable().getProject()),
+                    backupPolicyService,
                     new PubSubServiceImpl(),
+                    new ResourceScannerImpl(),
                     new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
                     fallbackBackupPolicy,
                     "configurator-flags",
@@ -150,8 +156,8 @@ public class ConfiguratorController {
 
         } finally {
 
-            if (dataCatalogService != null) {
-                dataCatalogService.shutdown();
+            if (backupPolicyService != null) {
+                backupPolicyService.shutdown();
             }
         }
 

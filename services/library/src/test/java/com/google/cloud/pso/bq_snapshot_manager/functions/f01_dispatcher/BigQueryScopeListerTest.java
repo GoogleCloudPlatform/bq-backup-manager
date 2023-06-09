@@ -1,18 +1,21 @@
 /*
- * Copyright 2023 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
+
 package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -25,13 +28,17 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.junit.Assert.assertEquals;
 
 
 public class BigQueryScopeListerTest {
 
     BigQueryScopeLister lister = new BigQueryScopeLister(
             new ResourceScannerTestImpl(),
-            new LoggingHelper("test", 1, "test-project"),
+            new LoggingHelper("test", 1, "test-project", "bq_backup_manager"),
             "R-testxxxxxxx"
     );
 
@@ -53,6 +60,8 @@ public class BigQueryScopeListerTest {
                 TableSpec.fromSqlString("p1.d1.t1"),
                 TableSpec.fromSqlString("p1.d1.t2"));
 
+        assertEquals(expected, actual);
+
     }
 
     @Test
@@ -64,7 +73,7 @@ public class BigQueryScopeListerTest {
                 new ArrayList<>(), // projects exclude
                 Arrays.asList("p1.d2", "p2.d2"), // datasets include - should be the only include list affecting the scope
                 new ArrayList<>(), // datasets exclude
-                Arrays.asList("p1.d1.t1", "p1.d1.t2"), // tables include - should have no effect
+                Arrays.asList(),
                 Arrays.asList("p1.d2.t1") // tables exclude
         );
 
@@ -76,6 +85,7 @@ public class BigQueryScopeListerTest {
                 TableSpec.fromSqlString("p2.d2.t2")
         );
 
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -85,9 +95,9 @@ public class BigQueryScopeListerTest {
                 new ArrayList<>(), // folders - should have no effect
                 Arrays.asList("p1", "p2"), // projects include - should be the only include list affecting the scope
                 new ArrayList<>(), // projects exclude
-                Arrays.asList("p1.d2", "p2.d2"), // datasets include - should have no effect
+                Arrays.asList(), // datasets include - should have no effect
                 Arrays.asList("p1.d1"), // datasets exclude
-                Arrays.asList("p1.d1.t1", "p1.d1.t2"), // tables include - should have no effect
+                Arrays.asList(),
                 Arrays.asList("p1.d2.t1") // tables exclude
         );
 
@@ -103,6 +113,8 @@ public class BigQueryScopeListerTest {
                 TableSpec.fromSqlString("p2.d2.t2")
         );
 
+        assertEquals(expected, actual);
+
     }
 
     @Test
@@ -110,11 +122,11 @@ public class BigQueryScopeListerTest {
 
         BigQueryScope bigQueryScope = new BigQueryScope(
                 Arrays.asList(1L, 2L), // folders - should be the only include list affecting the scope
-                Arrays.asList("p1", "p2"), // projects include - should have no effect
+                Arrays.asList(),
                 Arrays.asList("p4"), // projects exclude
-                Arrays.asList("p1.d2", "p2.d2"), // datasets include - should have no effect
+                Arrays.asList(), //
                 Arrays.asList("p1.d1"), // datasets exclude
-                Arrays.asList("p1.d1.t1", "p1.d1.t2"), // tables include - should have no effect
+                Arrays.asList(),
                 Arrays.asList("p1.d2.t1") // tables exclude
         );
 
@@ -132,5 +144,28 @@ public class BigQueryScopeListerTest {
                 TableSpec.fromSqlString("p3.d1.t1")
         );
 
+        assertEquals(expected, actual);
     }
+
+    @Test
+    public void testExcludeWithRegex() throws NonRetryableApplicationException {
+
+        BigQueryScope bigQueryScope = new BigQueryScope(
+                Arrays.asList(1L,2L), // folders - should be the only include list affecting the scope
+                Arrays.asList(), // projects include - should have no effect
+                Arrays.asList("p3", "regex:^p4$"), // projects exclude - p3 as literal and p4 as regex
+                Arrays.asList(), // datasets include - should have no effect
+                Arrays.asList("regex:.*\\.d1$", "P1.D2"), // datasets exclude: all datasets ending with d1 and p1.d2
+                Arrays.asList(), // tables include - should be the only scope
+                Arrays.asList("regex:.*\\.t2$") // regex to exclude tables ending with t2 suffix
+        );
+
+        List<TableSpec> actual = lister.listTablesInScope(bigQueryScope);
+        List<TableSpec> expected = Lists.newArrayList(
+                TableSpec.fromSqlString("p2.d2.t1"));
+
+        assertEquals(expected, actual);
+
+    }
+
 }

@@ -1,0 +1,88 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "config_source",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "backup_cron",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "backup_method",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "backup_time_travel_offset_days",
+    "type": "INT64"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "backup_storage_project",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "backup_operation_project",
+    "type": "STRING"
+  },
+
+
+
+
+
+  {
+    "mode": "NULLABLE",
+    "name": "bq_snapshot_storage_dataset",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "bq_snapshot_expiration_days",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gcs_snapshot_storage_location",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gcs_snapshot_format",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gcs_csv_delimiter",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gcs_csv_export_header",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gcs_avro_use_logical_types",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_backup_at",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_bq_snapshot_storage_uri",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_gcs_snapshot_storage_uri",
+    "type": "STRING"
+  }
+]
+

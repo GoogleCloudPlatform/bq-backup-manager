@@ -1,23 +1,25 @@
 /*
- * Copyright 2023 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
+
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
-import com.google.cloud.pso.bq_snapshot_manager.entities.Globals;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
@@ -68,7 +70,8 @@ public class GCSSnapshoter {
         logger = new LoggingHelper(
                 GCSSnapshoter.class.getSimpleName(),
                 functionNumber,
-                config.getProjectId()
+                config.getProjectId(),
+                config.getApplicationName()
         );
     }
 
@@ -145,7 +148,7 @@ public class GCSSnapshoter {
         if(!request.isDryRun()){
             // create an async bq export job
 
-            String jobId = TrackingHelper.generateBQExportJobId(request.getTrackingId());
+            String jobId = TrackingHelper.generateBQExportJobId(request.getTrackingId(), config.getApplicationName());
 
             // We create the tagging request and added it to a persistent storage
             // The Tagger service will receive notifications of export job completion via log sinks and pick up the tagger request from the persistent storage
@@ -167,7 +170,7 @@ public class GCSSnapshoter {
 
             Map<String, String> jobLabels = new HashMap<>();
             // labels has to be max 63 chars, contain only lowercase letters, numeric characters, underscores, and dashes. All characters must use UTF-8 encoding, and international characters are allowed.
-            jobLabels.put("app", Globals.APPLICATION_NAME);
+            jobLabels.put("app", config.getApplicationName());
 
             // API Call
             bqService.exportToGCS(

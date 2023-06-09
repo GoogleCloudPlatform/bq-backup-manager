@@ -1,17 +1,19 @@
 /*
- * Copyright 2022 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.google.cloud.pso.bq_snapshot_manager.helpers;
@@ -31,6 +33,9 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class Utils {
+
+    public static final Long SECONDS_IN_DAY = 86400L;
+    public static final Long MILLI_SECONDS_IN_DAY = 86400000L;
 
     public static String getOrFail(Map<String, String> map, String key) {
         String field = map.get(key);
@@ -102,7 +107,7 @@ public class Utils {
         String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, pubSubMessageId);
         if (persistentSet.contains(flagFileName)) {
             // log error and ACK and return
-            String msg = String.format("PubSub message ID '%s' has been processed before by the service. The message should be ACK to PubSub to stop retries. Please investigate further why the message was retried in the first place.",
+            String msg = String.format("PubSub message ID '%s' has been processed before by the service. This could be a PubSub duplicate message and safe to ignore or the previous messages were not ACK to PubSub to stop retries. Please investigate further if needed.",
                     pubSubMessageId
             );
             throw new NonRetryableApplicationException(msg);
@@ -136,16 +141,16 @@ public class Utils {
      */
     public static Tuple<TableSpec, Long> getTableSpecWithTimeTravel(TableSpec table, TimeTravelOffsetDays timeTravelOffsetDays, Timestamp referencePoint) {
         Long timeTravelMs;
-        Long refPointMs = referencePoint.getSeconds()*1000;
+        Long refPointMs = timestampToUnixTimeMillis(referencePoint);
 
         if (timeTravelOffsetDays.equals(TimeTravelOffsetDays.DAYS_0)) {
             // always use time travel for consistency and traceability
             timeTravelMs = refPointMs;
         }else{
-            // use a buffer (milliseconds) to count for the operation time
-            Long bufferMs = timeTravelOffsetDays.equals(TimeTravelOffsetDays.DAYS_7) ? 60000L : 0L;
+            // use a buffer (milliseconds) to count for the operation time. 1 MIN = 60000 MILLISECONDS
+            Long bufferMs = timeTravelOffsetDays.equals(TimeTravelOffsetDays.DAYS_7) ? 60 * 60000L : 0L;
             // milli seconds per day * number of days
-            Long timeTravelOffsetMs = (86400000L * Long.parseLong(timeTravelOffsetDays.getText()));
+            Long timeTravelOffsetMs = (Utils.MILLI_SECONDS_IN_DAY * Long.parseLong(timeTravelOffsetDays.getText()));
             timeTravelMs = (refPointMs - timeTravelOffsetMs) + bufferMs;
         }
 
@@ -157,10 +162,18 @@ public class Utils {
         );
     }
 
+    public static Long timestampToUnixTimeMillis(Timestamp ts){
+        return ts.toSqlTimestamp().getTime();
+    }
+
     public static String trimSlashes(String str){
         return StringUtils.removeStart(
                 StringUtils.removeEnd(str, "/"),
                 "/"
         );
+    }
+
+    public static Timestamp addSeconds(Timestamp timestamp, Long secondsDelta){
+        return Timestamp.ofTimeSecondsAndNanos(timestamp.getSeconds() + secondsDelta , timestamp.getNanos());
     }
 }

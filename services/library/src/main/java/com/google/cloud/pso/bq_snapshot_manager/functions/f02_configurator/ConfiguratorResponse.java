@@ -1,18 +1,21 @@
 /*
- * Copyright 2023 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
+
 package com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator;
 
 import com.google.cloud.Timestamp;
@@ -25,17 +28,28 @@ import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishRes
 public class ConfiguratorResponse extends TableOperationRequestResponse {
 
     private final BackupPolicy backupPolicy;
+
+    private final String backupPolicySource;
     private final Timestamp refTs;
+
+    // If the table should be backed up this run based on the backup cron only
+    private final boolean isBackupCronTime;
+
+    // If the table has enough history to go back in time via time travel to take a backup
+    private final boolean isTableCreatedBeforeTimeTravel;
     private final boolean isBackupTime;
     private final SnapshoterRequest bqSnapshoterRequest;
     private final SnapshoterRequest gcsSnapshoterRequest;
     private final PubSubPublishResults bigQueryBackupPublishingResults;
     private final PubSubPublishResults gcsBackupPublishingResults;
 
-    public ConfiguratorResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicy backupPolicy, Timestamp refTs, boolean isBackupTime, SnapshoterRequest bqSnapshoterRequest, SnapshoterRequest gcsSnapshoterRequest, PubSubPublishResults bigQueryBackupPublishingResults, PubSubPublishResults gcsBackupPublishingResults) {
+    public ConfiguratorResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicy backupPolicy, String backupPolicySource, Timestamp refTs,boolean  isBackupCronTime, boolean  isTableCreatedBeforeTimeTravel, boolean isBackupTime, SnapshoterRequest bqSnapshoterRequest, SnapshoterRequest gcsSnapshoterRequest, PubSubPublishResults bigQueryBackupPublishingResults, PubSubPublishResults gcsBackupPublishingResults) {
         super(targetTable, runId, trackingId, isDryRun);
         this.backupPolicy = backupPolicy;
+        this.backupPolicySource = backupPolicySource;
         this.refTs = refTs;
+        this.isBackupCronTime = isBackupCronTime;
+        this.isTableCreatedBeforeTimeTravel = isTableCreatedBeforeTimeTravel;
         this.isBackupTime = isBackupTime;
         this.bqSnapshoterRequest = bqSnapshoterRequest;
         this.gcsSnapshoterRequest = gcsSnapshoterRequest;
@@ -69,5 +83,17 @@ public class ConfiguratorResponse extends TableOperationRequestResponse {
 
     public PubSubPublishResults getGcsBackupPublishingResults() {
         return gcsBackupPublishingResults;
+    }
+
+    public boolean isBackupCronTime() {
+        return isBackupCronTime;
+    }
+
+    public boolean isTableCreatedBeforeTimeTravel() {
+        return isTableCreatedBeforeTimeTravel;
+    }
+
+    public SnapshoterRequest getBqSnapshoterRequest() {
+        return bqSnapshoterRequest;
     }
 }

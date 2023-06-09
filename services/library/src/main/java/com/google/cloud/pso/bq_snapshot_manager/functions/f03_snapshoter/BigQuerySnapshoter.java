@@ -1,17 +1,19 @@
 /*
- * Copyright 2022 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
@@ -19,7 +21,6 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
-import com.google.cloud.pso.bq_snapshot_manager.entities.Globals;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
@@ -64,7 +65,8 @@ public class BigQuerySnapshoter {
         logger = new LoggingHelper(
                 BigQuerySnapshoter.class.getSimpleName(),
                 functionNumber,
-                config.getProjectId()
+                config.getProjectId(),
+                config.getApplicationName()
         );
     }
 
@@ -78,7 +80,7 @@ public class BigQuerySnapshoter {
             throw new IllegalArgumentException(String.format("BigQuerySnapshotExpirationDays is missing in the BackupPolicy %s",
                     request.getBackupPolicy()));
         }
-        if (request.getBackupPolicy().getBackupProject() == null) {
+        if (request.getBackupPolicy().getBackupStorageProject() == null) {
             throw new IllegalArgumentException(String.format("BigQuerySnapshotStorageProject is missing in the BackupPolicy %s",
                     request.getBackupPolicy()));
         }
@@ -102,13 +104,6 @@ public class BigQuerySnapshoter {
         // validate required params
         validateInput(request);
 
-        // Perform the Snapshot operation using the BigQuery service
-
-        // expiry date is calculated relative to the operation time
-        Timestamp expiryTs = Timestamp.ofTimeSecondsAndNanos(
-                operationTs.getSeconds() + (request.getBackupPolicy().getBigQuerySnapshotExpirationDays().longValue() * 86400L),
-                0);
-
         // time travel is calculated relative to the operation time
         Tuple<TableSpec, Long> sourceTableWithTimeTravelTuple = Utils.getTableSpecWithTimeTravel(
                 request.getTargetTable(),
@@ -116,10 +111,15 @@ public class BigQuerySnapshoter {
                 operationTs
         );
 
+        // expiry date is calculated relative to the operation time
+        Timestamp expiryTs = Timestamp.ofTimeSecondsAndNanos(
+                operationTs.getSeconds() + (request.getBackupPolicy().getBigQuerySnapshotExpirationDays().longValue() * Utils.SECONDS_IN_DAY),
+                operationTs.getNanos());
+
         // construct the snapshot table from the request params and calculated timetravel
         TableSpec snapshotTable = getSnapshotTableSpec(
                 request.getTargetTable(),
-                request.getBackupPolicy().getBackupProject(),
+                request.getBackupPolicy().getBackupStorageProject(),
                 request.getBackupPolicy().getBigQuerySnapshotStorageDataset(),
                 request.getRunId(),
                 sourceTableWithTimeTravelTuple.y()
@@ -141,9 +141,10 @@ public class BigQuerySnapshoter {
 
 
         if(!request.isDryRun()){
-            // API Call
-            String jobId = TrackingHelper.generateBQSnapshotJobId(request.getTrackingId());
 
+            String jobId = TrackingHelper.generateBQSnapshotJobId(request.getTrackingId(), config.getApplicationName());
+
+            // API Call
             bqService.createSnapshot(
                     jobId,
                     sourceTableWithTimeTravelTuple.x(),

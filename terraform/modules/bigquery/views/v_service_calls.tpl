@@ -12,5 +12,5 @@ SUM(CASE WHEN step = 'START'  AND function_number = 4 THEN 1 ELSE 0 END) AS tagg
 SUM(CASE WHEN step = 'END' AND function_number = 4 THEN 1 ELSE 0 END) AS tagger_ends
 FROM
 `${project}.${dataset}.${logging_view_steps}`
-WHERE function_number > 1
+WHERE function_number <> 1
 GROUP BY 1,2,3

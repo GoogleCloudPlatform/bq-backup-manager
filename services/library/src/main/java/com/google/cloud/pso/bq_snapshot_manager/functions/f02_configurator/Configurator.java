@@ -1,18 +1,21 @@
 /*
- * Copyright 2023 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
+
 package com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator;
 
 import com.google.cloud.Timestamp;
@@ -26,11 +29,12 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplication
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.FallbackBackupPolicy;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
-import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
-import com.google.cloud.pso.bq_snapshot_manager.services.catalog.DataCatalogService;
+import com.google.cloud.pso.bq_snapshot_manager.services.bq.BigQueryService;
+import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishResults;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubService;
+import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScanner;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
 import org.springframework.scheduling.support.CronExpression;
 
@@ -45,23 +49,32 @@ public class Configurator {
     private final LoggingHelper logger;
     private final Integer functionNumber;
     private final ConfiguratorConfig config;
-    private final DataCatalogService dataCatalogService;
+
+    private final BigQueryService bqService;
+
+    private final BackupPolicyService backupPolicyService;
     private final PubSubService pubSubService;
+
+    private final ResourceScanner resourceScanner;
     private final PersistentSet persistentSet;
     private final FallbackBackupPolicy fallbackBackupPolicy;
     private final String persistentSetObjectPrefix;
 
 
     public Configurator(ConfiguratorConfig config,
-                        DataCatalogService dataCatalogService,
+                        BigQueryService bqService,
+                        BackupPolicyService backupPolicyService,
                         PubSubService pubSubService,
+                        ResourceScanner resourceScanner,
                         PersistentSet persistentSet,
                         FallbackBackupPolicy fallbackBackupPolicy,
                         String persistentSetObjectPrefix,
                         Integer functionNumber) {
         this.config = config;
-        this.dataCatalogService = dataCatalogService;
+        this.bqService = bqService;
+        this.backupPolicyService = backupPolicyService;
         this.pubSubService = pubSubService;
+        this.resourceScanner = resourceScanner;
         this.persistentSet = persistentSet;
         this.fallbackBackupPolicy = fallbackBackupPolicy;
         this.persistentSetObjectPrefix = persistentSetObjectPrefix;
@@ -70,7 +83,8 @@ public class Configurator {
         logger = new LoggingHelper(
                 Configurator.class.getSimpleName(),
                 functionNumber,
-                config.getProjectId()
+                config.getProjectId(),
+                config.getApplicationName()
         );
     }
 
@@ -86,22 +100,45 @@ public class Configurator {
         );
 
         // 1. Find the backup policy of this table
-        BackupPolicy backupPolicy = getBackupPolicy(request);
+        Tuple<BackupPolicy, String> backupPolicyTuple = getBackupPolicy(request);
+        BackupPolicy backupPolicy = backupPolicyTuple.x();
 
-        // 2. Determine if we should take a backup at this run given the policy CRON expression
+        // 2a. Determine if we should take a backup at this run given the policy CRON expression
         // if the table has been backed up before then check if we should backup at this run
-
-        // use the start time of this run as a reference point in time for CRON checks across all requests in this run
-        Timestamp refTs = TrackingHelper.parseRunIdAsTimestamp(request.getRunId());
-        boolean isBackupTime = isBackupTime(
-                request.isForceRun(),
+        boolean isBackupCronTime = isBackupCronTime(
                 request.getTargetTable(),
                 backupPolicy.getCron(),
-                refTs,
+                request.getRefTimestamp(),
                 backupPolicy.getConfigSource(),
                 backupPolicy.getLastBackupAt(),
                 logger,
                 request.getTrackingId()
+        );
+
+        // 2b. Check if the table has been created before the desired time travel
+        Tuple<TableSpec, Long> sourceTableWithTimeTravelTuple = Utils.getTableSpecWithTimeTravel(
+                request.getTargetTable(),
+                backupPolicy.getTimeTravelOffsetDays(),
+                request.getRefTimestamp()
+        );
+
+        // API Call
+        Long tableCreationTime = bqService.getTableCreationTime(request.getTargetTable());
+
+        // check if the table is created after the time travel timestamp
+        boolean isTableCreatedBeforeTimeTravel = tableCreationTime < sourceTableWithTimeTravelTuple.y();
+
+
+        // To take a backup, the backup cron expression must match this run and the table has to be around for
+        // enough time to apply the desired time travel. Otherwise, skip the backup this run
+        boolean isBackupTime = isBackupTime(request.isForceRun(), isBackupCronTime, isTableCreatedBeforeTimeTravel);
+
+        logger.logInfoWithTracker(
+                request.isDryRun(),
+                request.getTrackingId(),
+                request.getTargetTable(),
+                String.format("isBackupTime for this run is '%s'. Calculated based on isForceRun=%s, isBackupCronTime=%s, isTableCreatedBeforeTimeTravel=%s ",
+                        isBackupTime, request.isForceRun(), isBackupCronTime, isTableCreatedBeforeTimeTravel)
         );
 
         // 3. Prepare and send the backup request(s) if required
@@ -199,51 +236,83 @@ public class Configurator {
                 request.getTrackingId(),
                 request.isDryRun(),
                 backupPolicy,
-                refTs,
+                backupPolicyTuple.y(), // source of the backup policy
+                request.getRefTimestamp(),
+                isBackupCronTime,
+                isTableCreatedBeforeTimeTravel,
                 isBackupTime,
                 bqSnapshotRequest,
                 gcsSnapshotRequest,
                 bqSnapshotPublishResults,
                 gcsSnapshotPublishResults
-                );
+        );
     }
 
-    public BackupPolicy getBackupPolicy(ConfiguratorRequest request) throws IOException {
+    /**
+     * Retrieve the backup policy for a single table either from the table-level policy store or from fallback policies
+     * @param request
+     * @return Tuple<BackupPolicy, String> where x = the backup policy for the table and y = description of how the backup policy was found/computed (used for logging and debugging)
+     * @throws IOException
+     */
+    public Tuple<BackupPolicy, String> getBackupPolicy(ConfiguratorRequest request) throws IOException {
 
-        // Check if the table has a back policy attached to it in data catalog
-        BackupPolicy attachedBackupPolicy = dataCatalogService.getBackupPolicyTag(
-                request.getTargetTable(),
-                config.getBackupTagTemplateId()
+        // Check if the table has a back policy attached to it
+        BackupPolicy attachedBackupPolicy = backupPolicyService.getBackupPolicyForTable(
+                request.getTargetTable()
         );
 
         // if there is manually attached backup policy (e.g. by the table designer) then use it.
         if (attachedBackupPolicy != null && attachedBackupPolicy.getConfigSource().equals(BackupConfigSource.MANUAL)) {
-            return attachedBackupPolicy;
-        }else{
+
+            logger.logInfoWithTracker(request.isDryRun(),
+                    request.getTrackingId(),
+                    request.getTargetTable(),
+                    String.format("Attached backup policy found for table %s", request.getTargetTable())
+            );
+
+            return Tuple.of(attachedBackupPolicy, "Manually attached policy");
+        } else {
+
+            logger.logInfoWithTracker(request.isDryRun(),
+                    request.getTrackingId(),
+                    request.getTargetTable(),
+                    String.format("No 'config_source=MANUAL' backup policy found for table %s. Will search for a fallback policy.", request.getTargetTable())
+            );
 
             // find the most granular fallback policy table > dataset > project
-            BackupPolicy fallbackPolicy = findFallbackBackupPolicy(fallbackBackupPolicy,
-                    request.getTargetTable()).y();
+            Tuple<String, BackupPolicy> fallbackBackupPolicyTuple = findFallbackBackupPolicy(
+                    fallbackBackupPolicy,
+                    request.getTargetTable(),
+                    request.getRunId()
+            );
+            BackupPolicy fallbackPolicy = fallbackBackupPolicyTuple.y();
+
+            logger.logInfoWithTracker(request.isDryRun(),
+                    request.getTrackingId(),
+                    request.getTargetTable(),
+                    String.format("Will use a %s-level fallback policy", fallbackBackupPolicyTuple.x())
+            );
 
             // if there is a system attached policy, then only use the last_xyz fields from it and use the latest fallback policy
             // the last_backup_at needs to be checked to determine if we should take a backup in this run
             // the last_xyz_uri fields need to be propagated to the Tagger service so that they are not lost on each run
             if (attachedBackupPolicy != null && attachedBackupPolicy.getConfigSource().equals(BackupConfigSource.SYSTEM)) {
-                return BackupPolicy.BackupPolicyBuilder
+                return Tuple.of(BackupPolicy.BackupPolicyBuilder
                         .from(fallbackPolicy)
                         .setLastBackupAt(attachedBackupPolicy.getLastBackupAt())
                         .setLastGcsSnapshotStorageUri(attachedBackupPolicy.getLastGcsSnapshotStorageUri())
                         .setLastBqSnapshotStorageUri(attachedBackupPolicy.getLastBqSnapshotStorageUri())
-                        .build();
-            }else{
+                        .build(),
+                        String.format("System attached fallback policy on level '%s' with timestamps from previous run", fallbackBackupPolicyTuple.x())
+                        );
+            } else {
                 // if there is no attached policy, use fallback one
-                return fallbackPolicy;
+                return Tuple.of(fallbackPolicy, String.format("System attached fallback policy on level '%s'", fallbackBackupPolicyTuple.x()));
             }
         }
     }
 
-    public static boolean isBackupTime(
-            boolean isForceRun,
+    public static boolean isBackupCronTime(
             TableSpec targetTable,
             String cron,
             Timestamp referencePoint,
@@ -255,22 +324,20 @@ public class Configurator {
 
         boolean takeBackup;
 
-        if (isForceRun
-                || (configSource.equals(BackupConfigSource.SYSTEM)
-                && lastBackupAt == null)) {
+        if (configSource.equals(BackupConfigSource.SYSTEM)
+                && lastBackupAt == null) {
             // this means the table has not been backed up before
-            // CASE 1: It's a force run --> take backup
-            // CASE 2: It's a fallback configuration (SYSTEM) running for the first time --> take backup
+            // CASE 1: It's a fallback configuration (SYSTEM) running for the first time --> take backup
             takeBackup = true;
         } else {
 
             if (lastBackupAt == null) {
                 // this means the table has not been backed up before
-                // CASE 3: It's a MANUAL config but running for the first time
+                // CASE 2: It's a MANUAL config but running for the first time
                 takeBackup = true;
             } else {
 
-                // CASE 4: It's MANUAL OR SYSTEM config that ran before and already attached to the table
+                // CASE 3: It's MANUAL OR SYSTEM config that ran before and already attached to the table
                 // --> decide based on CRON next trigger check
 
                 Tuple<Boolean, LocalDateTime> takeBackupTuple = getCronNextTrigger(
@@ -300,6 +367,15 @@ public class Configurator {
             }
         }
         return takeBackup;
+    }
+
+    public static boolean isBackupTime(boolean isForceRun,
+                                       boolean isBackupCronTime,
+                                       boolean isTableCreatedBeforeTimeTravel) {
+        // table must have enough history to use the time travel feature.
+        // In addition to that, the run has to be a force run or the backup is due based on the backup cron
+
+        return isTableCreatedBeforeTimeTravel && (isForceRun || isBackupCronTime);
     }
 
     /**
@@ -366,9 +442,10 @@ public class Configurator {
         return Tuple.of(bqSnapshotRequest, gcsSnapshotRequest);
     }
 
-    public static Tuple<String, BackupPolicy> findFallbackBackupPolicy(FallbackBackupPolicy
-                                                                               fallbackBackupPolicy,
-                                                                       TableSpec tableSpec) {
+    public Tuple<String, BackupPolicy> findFallbackBackupPolicy(FallbackBackupPolicy fallbackBackupPolicy,
+                                                                TableSpec tableSpec,
+                                                                String runId
+    ) throws IOException {
 
         BackupPolicy tableLevel = fallbackBackupPolicy.getTableOverrides().get(tableSpec.toSqlString());
         if (tableLevel != null) {
@@ -389,9 +466,20 @@ public class Configurator {
             return Tuple.of("project", projectLevel);
         }
 
-        //TODO: check for folder level by getting the folder id of a project from the API
+        // API CALL (or cache)
+        Tuple<String, String> folderLookupTuple = resourceScanner.getParentFolderId(tableSpec.getProject(), runId);
+        if (folderLookupTuple != null) {
+
+            String folderId = folderLookupTuple.x();
+            BackupPolicy folderLevel = fallbackBackupPolicy.getFolderOverrides().get(folderId);
+
+            if (folderLevel != null) {
+                // source is folder-cache or folder-api to trace and debug cache performance
+                return Tuple.of(String.format("folder-from-%s", folderLookupTuple.y()), folderLevel);
+            }
+        }
 
         // else return the global default policy
-        return Tuple.of("global", fallbackBackupPolicy.getDefaultPolicy());
+        return Tuple.of("default", fallbackBackupPolicy.getDefaultPolicy());
     }
 }
