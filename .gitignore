@@ -148,3 +148,6 @@ fabric.properties
 
 .idea/
 .idea/*
+
+.iml
+*.iml
