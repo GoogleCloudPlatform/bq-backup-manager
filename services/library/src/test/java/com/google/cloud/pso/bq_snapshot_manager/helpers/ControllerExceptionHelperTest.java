@@ -1,17 +1,19 @@
 /*
- * Copyright 2022 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.google.cloud.pso.bq_snapshot_manager.helpers;
@@ -33,7 +35,7 @@ public class ControllerExceptionHelperTest {
 
     @Test
     public void testRetryableApiException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test");
+        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
         try {
 
@@ -64,7 +66,7 @@ public class ControllerExceptionHelperTest {
 
     @Test
     public void testNonRetryableApiException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test");
+        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test","bq_backup_manager");
 
         try {
 
@@ -95,7 +97,7 @@ public class ControllerExceptionHelperTest {
 
     @Test
     public void testRetryableIOException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test");
+        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
         try {
 
@@ -115,7 +117,7 @@ public class ControllerExceptionHelperTest {
 
     @Test
     public void testRetryableRuntimeStatusResourceExhaustedException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test");
+        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
         try {
 
@@ -135,7 +137,7 @@ public class ControllerExceptionHelperTest {
 
     @Test
     public void testRetryableResourceExhaustedException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test");
+        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
         try {
 
@@ -169,7 +171,7 @@ public class ControllerExceptionHelperTest {
 
     @Test
     public void testNestedRetryableException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test");
+        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
         try {
             Throwable cause = new java.net.SocketException ("test socket exception");
@@ -196,7 +198,7 @@ public class ControllerExceptionHelperTest {
 
     @Test
     public void testNonRetryableException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test");
+        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
         try {
 

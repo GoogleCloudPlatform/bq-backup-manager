@@ -1,22 +1,25 @@
 /*
- * Copyright 2022 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
 
 import com.google.api.services.cloudresourcemanager.v3.CloudResourceManager;
+import com.google.cloud.Timestamp;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -53,10 +56,11 @@ public class DispatcherTest {
             "testProjectId",
             "testComputeRegionId",
             "testDataRegionId",
-            "testTaggerTopic"
+            "testTaggerTopic",
+            "bq_backup_manager"
     );
 
-    String runId = "R-testxxxxxxx";
+    String runId = "1679574252412-R";
 
     @Test
     public void testDispatcher() throws IOException, NonRetryableApplicationException, InterruptedException {
@@ -85,17 +89,17 @@ public class DispatcherTest {
                 return new PubSubPublishResults(
                         Arrays.asList(
                                 new SuccessPubSubMessage(
-                                        new ConfiguratorRequest( TableSpec.fromSqlString("p1.d1.t1"), "runId", "trackingId", false, false),
+                                        new ConfiguratorRequest( TableSpec.fromSqlString("p1.d1.t1"), "runId", "trackingId", false, false, Timestamp.now()),
                                         "publishedMessageId"
                                 ),
                                 new SuccessPubSubMessage(
-                                        new ConfiguratorRequest( TableSpec.fromSqlString("p1.d1.t2"), "runId", "trackingId",false, false),
+                                        new ConfiguratorRequest( TableSpec.fromSqlString("p1.d1.t2"), "runId", "trackingId",false, false, Timestamp.now()),
                                         "publishedMessageId"
                                 )
                         ),
                         Arrays.asList(
                                 new FailedPubSubMessage(
-                                        new ConfiguratorRequest(TableSpec.fromSqlString("test.fail.msg"), "runId", "trackingId",false, false),
+                                        new ConfiguratorRequest(TableSpec.fromSqlString("test.fail.msg"), "runId", "trackingId",false, false, Timestamp.now()),
                                         new Exception("test fail message")
                                 )
                         )

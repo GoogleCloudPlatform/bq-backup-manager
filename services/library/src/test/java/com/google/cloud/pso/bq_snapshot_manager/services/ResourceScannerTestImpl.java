@@ -1,22 +1,29 @@
 /*
- * Copyright 2023 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
+
 package com.google.cloud.pso.bq_snapshot_manager.services;
 
+import com.google.api.gax.rpc.UnimplementedException;
+import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
+import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScanner;
+import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScannerImpl;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -61,6 +68,18 @@ public class ResourceScannerTestImpl implements ResourceScanner {
             case "p3.d1": return Arrays.asList("p3.d1.t1");
             case "p4.d1": return Arrays.asList("p4.d1.t1");
             default: return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public Tuple<String, String> getParentFolderId(String project, String runId) throws IOException {
+        switch(project){
+            case "p1": return Tuple.of("500", "stub");
+            case "p2": return Tuple.of("600", "stub");
+            case "p3":
+            case "p4":
+                return Tuple.of("700", "stub");
+            default: return null;
         }
     }
 }

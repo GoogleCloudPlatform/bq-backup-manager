@@ -1,17 +1,19 @@
 /*
- * Copyright 2022 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger;
@@ -20,26 +22,38 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplication
 import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.GCSSnapshoter;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
-import com.google.cloud.pso.bq_snapshot_manager.services.catalog.DataCatalogService;
+import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
+
+import java.io.IOException;
 
 public class Tagger {
 
     private final LoggingHelper logger;
 
     private final TaggerConfig config;
-    private final DataCatalogService dataCatalogService;
+    private final BackupPolicyService backupPolicyService;
     private final PersistentSet persistentSet;
     private final String persistentSetObjectPrefix;
 
-    public Tagger(LoggingHelper logger, TaggerConfig config, DataCatalogService dataCatalogService, PersistentSet persistentSet, String persistentSetObjectPrefix) {
-        this.logger = logger;
+    private final Integer functionNumber;
+
+    public Tagger(TaggerConfig config, BackupPolicyService backupPolicyService, PersistentSet persistentSet, String persistentSetObjectPrefix, Integer functionNumber) {
         this.config = config;
-        this.dataCatalogService = dataCatalogService;
+        this.backupPolicyService = backupPolicyService;
         this.persistentSet = persistentSet;
         this.persistentSetObjectPrefix = persistentSetObjectPrefix;
+        this.functionNumber = functionNumber;
+
+        logger = new LoggingHelper(
+                Tagger.class.getSimpleName(),
+                functionNumber,
+                config.getProjectId(),
+                config.getApplicationName()
+        );
     }
 
     /**
@@ -52,7 +66,7 @@ public class Tagger {
     public TaggerResponse execute(
             TaggerRequest request,
             String pubSubMessageId
-    ) throws NonRetryableApplicationException, RetryableApplicationException {
+    ) throws NonRetryableApplicationException, RetryableApplicationException, IOException {
 
         // run common service start logging and checks
         Utils.runServiceStartRoutines(
@@ -99,10 +113,9 @@ public class Tagger {
             if(!request.isDryRun()){
                 // update the tag
                 // API Calls
-                dataCatalogService.createOrUpdateBackupPolicyTag(
+                backupPolicyService.createOrUpdateBackupPolicyForTable(
                         request.getTargetTable(),
-                        upDatedBackupPolicy,
-                        config.getTagTemplateId()
+                        upDatedBackupPolicy
                 );
             }
 

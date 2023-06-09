@@ -1,18 +1,21 @@
 /*
- * Copyright 2023 Google LLC
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2023 Google LLC
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
+
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
 import com.google.cloud.Timestamp;
@@ -20,6 +23,7 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplication
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerRequest;
+import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.cloud.pso.bq_snapshot_manager.services.PersistentMapTestImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.PersistentSetTestImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.PubSubServiceTestImpl;
@@ -56,7 +60,7 @@ public class GCSSnapshoterTest {
     public void testExecute() throws NonRetryableApplicationException, IOException, InterruptedException {
 
         GCSSnapshoter gcsSnapshoter = new GCSSnapshoter(
-                new SnapshoterConfig("host-project", "data-region"),
+                new SnapshoterConfig("host-project", "data-region", "bq_backup_manager"),
                 new BigQueryService() {
                     @Override
                     public void createSnapshot(String jobId, TableSpec sourceTable, TableSpec destinationId, Timestamp snapshotExpirationTs, String trackingId) throws InterruptedException {
@@ -64,6 +68,11 @@ public class GCSSnapshoterTest {
 
                     @Override
                     public void exportToGCS(String jobId, TableSpec sourceTable, String gcsDestinationUri, GCSSnapshotFormat exportFormat, @Nullable String csvFieldDelimiter, @Nullable Boolean csvPrintHeader, @Nullable Boolean useAvroLogicalTypes, String trackingId, Map<String, String> jobLabels) throws InterruptedException {
+                    }
+
+                    @Override
+                    public Long getTableCreationTime(TableSpec table) {
+                        return null;
                     }
                 },
                 new PubSubServiceTestImpl(),
@@ -79,6 +88,7 @@ public class GCSSnapshoterTest {
                 TimeTravelOffsetDays.DAYS_3,
                 BackupConfigSource.SYSTEM,
                 "project")
+                .setBackupOperationProject("project")
                 .setGcsSnapshotStorageLocation("gs://backups")
                 .setGcsExportFormat(GCSSnapshotFormat.AVRO_SNAPPY)
                 .setGcsUseAvroLogicalTypes(true)
@@ -86,7 +96,7 @@ public class GCSSnapshoterTest {
 
         TableSpec sourceTable = TableSpec.fromSqlString("project.dataset.table");
         Timestamp operationTime = Timestamp.ofTimeSecondsAndNanos(1667478075L, 0);
-        Long timeTravelMilis = (operationTime.getSeconds() - (3* 86400))*1000;
+        Long timeTravelMilis = (Utils.timestampToUnixTimeMillis(operationTime) - (3* 86400000));
         TableSpec expectedSourceTable = TableSpec.fromSqlString("project.dataset.table@"+timeTravelMilis);
 
         GCSSnapshoterResponse actualResponse = gcsSnapshoter.execute(
@@ -101,20 +111,7 @@ public class GCSSnapshoterTest {
                 "pubsub-message-id");
 
 
-        TaggerRequest expectedTaggerRequest = new TaggerRequest(
-                sourceTable,
-                "runId",
-                "trackingId",
-                false,
-                backupPolicy,
-                BackupMethod.GCS_SNAPSHOT,
-                null,
-                String.format("gs://backups/project/dataset/table/trackingId/%s/AVRO_SNAPPY/*", timeTravelMilis),
-                operationTime
-        );
-
         assertEquals(expectedSourceTable, actualResponse.getComputedSourceTable());
         assertEquals(operationTime, actualResponse.getOperationTs());
-
     }
 }
