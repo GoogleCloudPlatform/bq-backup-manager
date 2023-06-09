@@ -145,3 +145,6 @@ fabric.properties
 .class
 
 */target/*
+
+.idea
+.idea/*
