@@ -96,7 +96,7 @@ public class Configurator {
                 request,
                 persistentSet,
                 persistentSetObjectPrefix,
-                pubSubMessageId
+                request.getTrackingId()
         );
 
         // 1. Find the backup policy of this table
@@ -227,7 +227,7 @@ public class Configurator {
                 request,
                 persistentSet,
                 persistentSetObjectPrefix,
-                pubSubMessageId
+                request.getTrackingId()
         );
 
         return new ConfiguratorResponse(

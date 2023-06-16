@@ -30,7 +30,7 @@
     <groupId>com.google.cloud.pso</groupId>
     <artifactId>bq-snapshot-manager-lib</artifactId>
     <version>1.0.0</version>
-    <name>bq-snapshot-manager-tagger-lib</name>
+    <name>bq-snapshot-manager-lib</name>
 
     <properties>
         <java.version>11</java.version>

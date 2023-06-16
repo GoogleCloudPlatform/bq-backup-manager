@@ -73,23 +73,10 @@ public class Tagger {
                 logger,
                 request,
                 persistentSet,
-                persistentSetObjectPrefix,
-                pubSubMessageId
+                // This service might be called twice in case of the "Both" backup method. We need to differentiate the key
+                String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
+                request.getTrackingId()
         );
-
-        // We want to process exactly one tagging request per table at a time to avoid race condition on creating/updating tags with the "Both" backup method
-        String trackerFlagFileName = String.format("%s/%s", persistentSetObjectPrefix, request.getTrackingId());
-        if (persistentSet.contains(trackerFlagFileName)) {
-            // log error and ACK and return
-            String msg = String.format("Tracking ID '%s' for table '%s' is already being processed by the service at the moment. Please retry later.",
-                    request.getTrackingId(),
-                    request.getTargetTable().toSqlString()
-            );
-            throw new RetryableApplicationException(msg);
-        }else{
-            // add the lock if it doesn't exist
-            persistentSet.add(trackerFlagFileName);
-        }
 
         try{
 
@@ -124,8 +111,9 @@ public class Tagger {
                     logger,
                     request,
                     persistentSet,
-                    persistentSetObjectPrefix,
-                    pubSubMessageId
+                    // This service might be called twice in case of the "Both" backup method. We need to differentiate the key
+                    String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
+                    request.getTrackingId()
             );
 
             return new TaggerResponse(
@@ -140,7 +128,7 @@ public class Tagger {
         }finally {
 
             // always remove the tracker lock to allow other calls on the same table in the same run, either retried ones or for another backup method
-            persistentSet.remove(trackerFlagFileName);
+//            persistentSet.remove(trackerFlagFileName);
         }
     }
 }

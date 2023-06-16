@@ -100,7 +100,7 @@ public class GCSSnapshoter {
                 request,
                 persistentSet,
                 persistentSetObjectPrefix,
-                pubSubMessageId
+                request.getTrackingId()
         );
 
 
@@ -202,7 +202,7 @@ public class GCSSnapshoter {
                 request,
                 persistentSet,
                 persistentSetObjectPrefix,
-                pubSubMessageId
+                request.getTrackingId()
         );
 
         return new GCSSnapshoterResponse(

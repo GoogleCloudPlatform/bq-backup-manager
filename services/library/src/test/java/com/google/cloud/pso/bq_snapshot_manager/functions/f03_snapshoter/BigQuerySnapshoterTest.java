@@ -21,6 +21,7 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
+import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerRequest;
@@ -56,7 +57,7 @@ public class BigQuerySnapshoterTest {
     }
 
     @Test
-    public void testExecute() throws NonRetryableApplicationException, IOException, InterruptedException {
+    public void testExecute() throws NonRetryableApplicationException, IOException, InterruptedException, RetryableApplicationException {
 
         BigQuerySnapshoter snapshoter = new BigQuerySnapshoter(
                 new SnapshoterConfig("host-project", "data-region", "bq_backup_manager"),

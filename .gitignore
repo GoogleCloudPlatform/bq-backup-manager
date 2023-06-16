@@ -151,3 +151,9 @@ fabric.properties
 
 .iml
 *.iml
+
+.classpath
+.project
+.settings/
+target/
+*/target/**
