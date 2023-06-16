@@ -26,6 +26,15 @@ WITH counts AS (
   GROUP BY 1
 )
 
+, tables_not_due_for_backup AS (
+  SELECT
+  run_id,
+  COUNT(1) tables_not_due_for_backup
+  FROM `${project}.${dataset}.${v_audit_log_by_table}`
+  WHERE NOT is_backup_time
+  GROUP BY 1
+)
+
 SELECT
 c.run_id,
 c.timestamp AS run_id_timestamp,
@@ -40,7 +49,8 @@ STRUCT(
 STRUCT(
   c.success_count,
   c.failed_count,
-  b.backed_up_tables_count
+  b.backed_up_tables_count,
+  nb.tables_not_due_for_backup
 ) AS details,
 STRUCT(
   (c.success_count + c.failed_count) - c.dispatched_table_requests AS complete_vs_incomplete_variance
@@ -52,4 +62,6 @@ LEFT JOIN backed_up_tables b
 ON b.run_id = d.run_id
 LEFT JOIN dispatcher_errors de
 ON c.run_id = de.run_id
+LEFT JOIN tables_not_due_for_backup nb
+ON c.run_id = nb.run_id
 ORDER BY run_id DESC

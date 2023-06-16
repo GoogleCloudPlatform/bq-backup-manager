@@ -172,6 +172,7 @@ resource "google_bigquery_table" "view_run_summary_counts" {
       v_run_duration = google_bigquery_table.view_run_duration.table_id
       v_backed_up_tables = google_bigquery_table.view_backed_up_tables.table_id
       v_errors_non_retryable_dispatcher = google_bigquery_table.view_errors_dispatcher.table_id
+      v_audit_log_by_table = google_bigquery_table.view_audit_log_by_table.table_id
     }
     )
   }
