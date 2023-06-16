@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.google.cloud.pso.bq_snapshot_manager.entities.BackupMethodTest
--------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.google.cloud.pso.bq_snapshot_manager.entities.BackupMethodTest
