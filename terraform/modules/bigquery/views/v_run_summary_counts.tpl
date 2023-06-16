@@ -5,8 +5,16 @@ WITH counts AS (
   COUNT(DISTINCT tracking_id) AS dispatched_table_requests,
   SUM(CASE WHEN status = 'Success' THEN 1 ELSE 0 END) AS success_count,
   SUM(CASE WHEN status = 'Failed' THEN 1 ELSE 0 END) AS failed_count,
-  FROM ${project}.${dataset}.${v_run_summary}
+  FROM `${project}.${dataset}.${v_run_summary}`
   GROUP BY 1,2
+)
+
+, dispatcher_errors AS (
+  SELECT
+    run_id,
+    COUNT(1) dispatcher_errors
+  FROM `${project}.${dataset}.${v_errors_non_retryable_dispatcher}`
+  GROUP BY 1
 )
 
 , backed_up_tables AS (
@@ -21,6 +29,7 @@ WITH counts AS (
 SELECT
 c.run_id,
 c.timestamp AS run_id_timestamp,
+de.dispatcher_errors,
 c.dispatched_table_requests,
 d.run_duration_mins,
 STRUCT(
@@ -41,4 +50,6 @@ LEFT JOIN `${project}.${dataset}.${v_run_duration}` d
 ON c.run_id = d.run_id
 LEFT JOIN backed_up_tables b
 ON b.run_id = d.run_id
+LEFT JOIN dispatcher_errors de
+ON c.run_id = de.run_id
 ORDER BY run_id DESC
