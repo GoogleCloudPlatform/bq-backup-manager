@@ -1,1 +1,1 @@
-{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-dispatcher-service","imageId":"sha256:f6e05fefb60287b44b3661846d6e81636c90d615c30b96e73b1a54ac38ae46f7","imageDigest":"sha256:3218fe49766dd798fe072a3ff43c5f1fa80492a2b6cd662bda1b012b868db8a8","tags":["latest"]}
+{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-dispatcher-service","imageId":"sha256:2ce362fc2479e87344e9a67343a974793219d9fc1b80c0cdcc964d2d677dd859","imageDigest":"sha256:b623d38356e8847dd422c872d700631fb14c0073c0dac370a9511b2d098769e5","tags":["latest"]}

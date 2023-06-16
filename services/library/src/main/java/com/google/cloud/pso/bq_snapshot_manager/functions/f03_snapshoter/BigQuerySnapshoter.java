@@ -22,6 +22,7 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
+import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerRequest;
@@ -90,7 +91,7 @@ public class BigQuerySnapshoter {
         }
     }
 
-    public BigQuerySnapshoterResponse execute(SnapshoterRequest request, Timestamp operationTs, String pubSubMessageId) throws IOException, NonRetryableApplicationException, InterruptedException {
+    public BigQuerySnapshoterResponse execute(SnapshoterRequest request, Timestamp operationTs, String pubSubMessageId) throws IOException, NonRetryableApplicationException, InterruptedException, RetryableApplicationException {
 
         // run common service start logging and checks
         Utils.runServiceStartRoutines(

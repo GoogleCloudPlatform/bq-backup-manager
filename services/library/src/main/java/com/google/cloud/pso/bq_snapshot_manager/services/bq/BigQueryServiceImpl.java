@@ -22,6 +22,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.bigquery.*;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
+import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.GCSSnapshotFormat;
 
@@ -42,7 +43,7 @@ public class BigQueryServiceImpl implements BigQueryService {
     }
 
 
-    public void createSnapshot(String jobId, TableSpec sourceTable, TableSpec destinationTable, Timestamp snapshotExpirationTs, String trackingId) throws InterruptedException {
+    public void createSnapshot(String jobId, TableSpec sourceTable, TableSpec destinationTable, Timestamp snapshotExpirationTs, String trackingId) throws InterruptedException, RetryableApplicationException, NonRetryableApplicationException {
         CopyJobConfiguration copyJobConfiguration = CopyJobConfiguration
                 .newBuilder(destinationTable.toTableId(), sourceTable.toTableId())
                 .setWriteDisposition(JobInfo.WriteDisposition.WRITE_EMPTY)
@@ -60,7 +61,35 @@ public class BigQueryServiceImpl implements BigQueryService {
 
         // if job finished with errors
         if (job.getStatus().getError() != null) {
-            throw new RuntimeException(job.getStatus().getError().toString());
+            if(job.getStatus().getError().getMessage().toLowerCase().contains("caused by a transient issue")){
+                // In some cases snapshot jobs faces the below error. In such case we should retry it.
+                // IMPROVE: detect the error based on a code or reason and not the error message
+                /*
+                An internal error occurred and the request could not be completed.
+                This is usually caused by a transient issue.
+                Retrying the job with back-off as described in the BigQuery SLA should solve the
+                problem: https://cloud.google.com/bigquery/sla. If the error continues to occur
+                please contact support at https://cloud.google.com/support.
+                 */
+
+                String msg = String.format(
+                        "BigQuery Snapshot job %s for table %s failed due to a transient error. Msg: %s. Reason: %s",
+                        jobId,
+                        sourceTable.toSqlString(),
+                        job.getStatus().getError().getMessage(),
+                        job.getStatus().getError().getReason()
+                        );
+                throw new RetryableApplicationException(msg);
+            }else{
+                String msg = String.format(
+                        "BigQuery Snapshot job %s for table %s failed. Msg: %s. Reason: %s",
+                        jobId,
+                        sourceTable.toSqlString(),
+                        job.getStatus().getError().getMessage(),
+                        job.getStatus().getError().getReason()
+                );
+                throw new NonRetryableApplicationException(msg);
+            }
         }
     }
 
