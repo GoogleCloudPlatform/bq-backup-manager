@@ -29,7 +29,7 @@ WITH counts AS (
 , tables_not_due_for_backup AS (
   SELECT
   run_id,
-  COUNT(1) tables_not_due_for_backup
+  COUNT(DISTINCT tracking_id) tables_not_due_for_backup
   FROM `${project}.${dataset}.${v_audit_log_by_table}`
   WHERE NOT is_backup_time
   GROUP BY 1
