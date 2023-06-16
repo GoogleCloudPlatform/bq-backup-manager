@@ -72,7 +72,8 @@ public class TrackingHelper {
     }
 
     public static String generateBQExportJobId(String trackingId, String applicationName){
-        return String.format("%s_%s_%s",trackingId, "export", applicationName, trackingId);
+
+        return String.format("%s_%s_%s_%s",trackingId, "export", generateUUIDWithUnderscores(), applicationName);
     }
 
     public static String parseTrackingIdFromBQExportJobId(String bqExportJobId){
@@ -80,7 +81,15 @@ public class TrackingHelper {
     }
 
     public static String generateBQSnapshotJobId(String trackingId, String applicationName){
-        return String.format("%s_%s_%s",trackingId, "snapshot", applicationName, trackingId);
+        return String.format("%s_%s_%s_%s",trackingId, "snapshot", generateUUIDWithUnderscores(), applicationName);
+    }
+
+    public static String generateUUID(){
+        return UUID. randomUUID().toString();
+    }
+
+    public static String generateUUIDWithUnderscores(){
+        return generateUUID().replace("-","_");
     }
 
 }

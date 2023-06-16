@@ -1,1 +1,1 @@
-{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-snapshoter-bq-service","imageId":"sha256:6ab5747b4fa38f70ba9cdf6ab1d4f043457dc737913d9e78d7234f38ee102b63","imageDigest":"sha256:293438db37e57f08b78933d25b787bc96863f5910fd0ca6c17f296927289046b","tags":["latest"]}
+{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-snapshoter-bq-service","imageId":"sha256:65bbb327987a48bc6e28098ece2c6e936d4c37d502bc9169ac6b0a1e76a6e90e","imageDigest":"sha256:1342fe95bf5e3336aeffc1f509526ecdccc5a29228d230f8137829000051b577","tags":["latest"]}

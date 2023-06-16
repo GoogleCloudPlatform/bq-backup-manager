@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequestTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.02 s - in com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequestTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s - in com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequestTest

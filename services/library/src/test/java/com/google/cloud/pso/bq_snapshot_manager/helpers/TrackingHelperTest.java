@@ -45,4 +45,9 @@ public class TrackingHelperTest {
         assertEquals(trackingId, parsedTrackingId);
 
     }
+
+    @Test
+    public void generateUUID(){
+        assertEquals(-1, TrackingHelper.generateUUIDWithUnderscores().indexOf("-"));
+    }
 }

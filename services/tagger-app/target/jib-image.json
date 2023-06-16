@@ -1,1 +1,1 @@
-{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-tagger-service","imageId":"sha256:7747222e1bb7382cbdbf3889ea6537baf675a49ece8c3f742acffe836ce6c56c","imageDigest":"sha256:27fd114400dfe6c2b7d3b70ff367f03bf10a63b9fb8ef88fd25c2d69ff4bec64","tags":["latest"]}
+{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-tagger-service","imageId":"sha256:a7f5a0b04643e9a5b044883bc5cbced6c06524a7507d290c44eb7ab3a8626fc3","imageDigest":"sha256:0a73f2ab7afe2d116d2678a07a603c0f3f148b8716500c54b9b7cefc7c6fc1e0","tags":["latest"]}

@@ -1,1 +1,1 @@
-{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-snapshoter-gcs-service","imageId":"sha256:e246fb77fe57cfd9e0c4e539de9cc5599317df08925d8cb6f17e354856cc0046","imageDigest":"sha256:ceb88a887e9aa8480b9f7be38d442f8010504a37741e2467e43af748dbe12afc","tags":["latest"]}
+{"image":"europe-west3-docker.pkg.dev/bqsm-deployment-1/docker-repo/bqsm-snapshoter-gcs-service","imageId":"sha256:9fb180c0edf2b3e2e45bfc3e741120fd2c4791489bd7148b5f52fdd36bc84167","imageDigest":"sha256:ebe6115ffa996264d1a6b07c1066507a6522de73328dfab965c71b20c337e94b","tags":["latest"]}
