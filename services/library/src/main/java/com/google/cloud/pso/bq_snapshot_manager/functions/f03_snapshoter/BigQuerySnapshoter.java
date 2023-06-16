@@ -98,7 +98,7 @@ public class BigQuerySnapshoter {
                 request,
                 persistentSet,
                 persistentSetObjectPrefix,
-                pubSubMessageId
+                request.getTrackingId()
         );
 
         // validate required params
@@ -200,7 +200,7 @@ public class BigQuerySnapshoter {
                 request,
                 persistentSet,
                 persistentSetObjectPrefix,
-                pubSubMessageId
+                request.getTrackingId()
         );
 
         return new BigQuerySnapshoterResponse(

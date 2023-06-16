@@ -92,7 +92,7 @@ public class Utils {
                                                TableOperationRequestResponse request,
                                                PersistentSet persistentSet,
                                                String persistentSetObjectPrefix,
-                                               String pubSubMessageId
+                                               String trackingId
     ) throws NonRetryableApplicationException {
         logger.logFunctionStart(request.getTrackingId(), request.getTargetTable());
         logger.logInfoWithTracker(request.getTrackingId(),
@@ -100,15 +100,15 @@ public class Utils {
                 String.format("Request : %s", request.toString()));
 
         /**
-         *  Check if we already processed this pubSubMessageId before to avoid submitting API requests
-         *  in case we have unexpected errors with PubSub re-sending the message. This is an extra measure to avoid unnecessary cost.
+         *  Check if we already processed this table before by this service to avoid submitting extra API requests
+         *  in case we have duplicate PubSub messages. This is an extra measure to avoid unnecessary cost.
          *  We do that by keeping simple flag files in GCS with the pubSubMessageId as file name.
          */
-        String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, pubSubMessageId);
+        String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, trackingId);
         if (persistentSet.contains(flagFileName)) {
             // log error and ACK and return
-            String msg = String.format("PubSub message ID '%s' has been processed before by the service. This could be a PubSub duplicate message and safe to ignore or the previous messages were not ACK to PubSub to stop retries. Please investigate further if needed.",
-                    pubSubMessageId
+            String msg = String.format("tracking_id '%s' has been processed before by the service. This could be a PubSub duplicate message and safe to ignore or the previous messages were not ACK to PubSub to stop retries. Please investigate further if needed.",
+                    trackingId
             );
             throw new NonRetryableApplicationException(msg);
         }
@@ -118,14 +118,14 @@ public class Utils {
                                              TableOperationRequestResponse request,
                                              PersistentSet persistentSet,
                                              String persistentSetObjectPrefix,
-                                             String pubSubMessageId) {
+                                             String trackingId) {
         // Add a flag key marking that we already completed this request and no additional runs
         // are required in case PubSub is in a loop of retrying due to ACK timeout while the service has already processed the request
         // This is an extra measure to avoid unnecessary cost due to config issues.
-        String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, pubSubMessageId);
+        String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, trackingId);
         logger.logInfoWithTracker(request.getTrackingId(),
                 request.getTargetTable(),
-                String.format("Persisting processing key for PubSub message ID %s", pubSubMessageId));
+                String.format("Persisting processing key for tracking_id %s", trackingId));
         persistentSet.add(flagFileName);
 
         logger.logFunctionEnd(request.getTrackingId(), request.getTargetTable());
