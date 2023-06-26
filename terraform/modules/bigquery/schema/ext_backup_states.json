@@ -1,0 +1,17 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "last_backup_at",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_bq_snapshot_storage_uri",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_gcs_snapshot_storage_uri",
+    "type": "STRING"
+  }
+]

@@ -21,13 +21,13 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator;
 import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestResponse;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequest;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishResults;
 
 public class ConfiguratorResponse extends TableOperationRequestResponse {
 
-    private final BackupPolicy backupPolicy;
+    private final BackupPolicyAndState backupPolicy;
 
     private final String backupPolicySource;
     private final Timestamp refTs;
@@ -43,7 +43,7 @@ public class ConfiguratorResponse extends TableOperationRequestResponse {
     private final PubSubPublishResults bigQueryBackupPublishingResults;
     private final PubSubPublishResults gcsBackupPublishingResults;
 
-    public ConfiguratorResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicy backupPolicy, String backupPolicySource, Timestamp refTs,boolean  isBackupCronTime, boolean  isTableCreatedBeforeTimeTravel, boolean isBackupTime, SnapshoterRequest bqSnapshoterRequest, SnapshoterRequest gcsSnapshoterRequest, PubSubPublishResults bigQueryBackupPublishingResults, PubSubPublishResults gcsBackupPublishingResults) {
+    public ConfiguratorResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicyAndState backupPolicy, String backupPolicySource, Timestamp refTs, boolean  isBackupCronTime, boolean  isTableCreatedBeforeTimeTravel, boolean isBackupTime, SnapshoterRequest bqSnapshoterRequest, SnapshoterRequest gcsSnapshoterRequest, PubSubPublishResults bigQueryBackupPublishingResults, PubSubPublishResults gcsBackupPublishingResults) {
         super(targetTable, runId, trackingId, isDryRun);
         this.backupPolicy = backupPolicy;
         this.backupPolicySource = backupPolicySource;
@@ -57,7 +57,7 @@ public class ConfiguratorResponse extends TableOperationRequestResponse {
         this.gcsBackupPublishingResults = gcsBackupPublishingResults;
     }
 
-    public BackupPolicy getBackupPolicy() {
+    public BackupPolicyAndState getBackupPolicy() {
         return backupPolicy;
     }
 
@@ -95,5 +95,9 @@ public class ConfiguratorResponse extends TableOperationRequestResponse {
 
     public SnapshoterRequest getBqSnapshoterRequest() {
         return bqSnapshoterRequest;
+    }
+
+    public String getBackupPolicySource() {
+        return backupPolicySource;
     }
 }

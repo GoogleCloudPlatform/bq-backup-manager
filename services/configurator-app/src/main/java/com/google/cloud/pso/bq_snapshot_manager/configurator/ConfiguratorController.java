@@ -31,7 +31,6 @@ import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyServiceGCSImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.bq.BigQueryServiceImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
-import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyServiceFireStoreImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubServiceImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScannerImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.GCSPersistentSetImpl;

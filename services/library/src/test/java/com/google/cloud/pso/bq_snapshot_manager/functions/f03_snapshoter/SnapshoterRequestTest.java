@@ -20,10 +20,7 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupConfigSource;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.TimeTravelOffsetDays;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -44,9 +41,6 @@ public class SnapshoterRequestTest {
                 .setBigQuerySnapshotExpirationDays(0.0)
                 .setBigQuerySnapshotStorageDataset("test-dataset")
                 .setGcsSnapshotStorageLocation("test-bucket")
-                .setLastBackupAt(Timestamp.MAX_VALUE)
-                .setLastBqSnapshotStorageUri("last bq uri")
-                .setLastGcsSnapshotStorageUri("last gcs uri")
                 .build();
 
         SnapshoterRequest request = new SnapshoterRequest(
@@ -54,7 +48,10 @@ public class SnapshoterRequestTest {
                 "run-id",
                 "tracking-id",
                 false,
-                policy
+                new BackupPolicyAndState(
+                        policy,
+                        new BackupState(Timestamp.MAX_VALUE, "last bq uri", null)
+                )
         );
 
         assertEquals("operation-project", request.computeBackupOperationProject());
@@ -72,9 +69,6 @@ public class SnapshoterRequestTest {
                 .setBigQuerySnapshotExpirationDays(0.0)
                 .setBigQuerySnapshotStorageDataset("test-dataset")
                 .setGcsSnapshotStorageLocation("test-bucket")
-                .setLastBackupAt(Timestamp.MAX_VALUE)
-                .setLastBqSnapshotStorageUri("last bq uri")
-                .setLastGcsSnapshotStorageUri("last gcs uri")
                 .build();
 
         SnapshoterRequest request = new SnapshoterRequest(
@@ -82,7 +76,10 @@ public class SnapshoterRequestTest {
                 "run-id",
                 "tracking-id",
                 false,
-                policy
+                new BackupPolicyAndState(
+                        policy,
+                        new BackupState(Timestamp.MAX_VALUE, "last bq uri", null)
+                )
         );
 
         assertEquals("source_project", request.computeBackupOperationProject());

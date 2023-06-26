@@ -311,14 +311,35 @@ resource "google_bigquery_table" "external_gcs_backup_policies" {
     source_format = "NEWLINE_DELIMITED_JSON"
     hive_partitioning_options {
       mode = "CUSTOM" # Custom means you must encode the partition key schema within the source_uri_prefix
-      source_uri_prefix = "gs://${var.gcs_backup_policies_bucket_name}/{project:STRING}/{dataset:STRING}/{table:STRING}"
+      source_uri_prefix = "gs://${var.gcs_backup_policies_bucket_name}/policy/{project:STRING}/{dataset:STRING}/{table:STRING}"
 
     }
     source_uris = [
-      "gs://${var.gcs_backup_policies_bucket_name}/*.json",
+      "gs://${var.gcs_backup_policies_bucket_name}/policy/*.json",
     ]
     autodetect = false # Let BigQuery try to autodetect the schema and format of the table.
     schema = file("modules/bigquery/schema/ext_backup_policies.json")
+  }
+
+  deletion_protection = false
+}
+
+resource "google_bigquery_table" "external_gcs_backup_states" {
+  dataset_id = google_bigquery_dataset.results_dataset.dataset_id
+  table_id   = "ext_backup_states"
+
+  external_data_configuration {
+    source_format = "NEWLINE_DELIMITED_JSON"
+    hive_partitioning_options {
+      mode = "CUSTOM" # Custom means you must encode the partition key schema within the source_uri_prefix
+      source_uri_prefix = "gs://${var.gcs_backup_policies_bucket_name}/state/{project:STRING}/{dataset:STRING}/{table:STRING}"
+
+    }
+    source_uris = [
+      "gs://${var.gcs_backup_policies_bucket_name}/state/*.json",
+    ]
+    autodetect = false # Let BigQuery try to autodetect the schema and format of the table.
+    schema = file("modules/bigquery/schema/ext_backup_states.json")
   }
 
   deletion_protection = false

@@ -77,18 +77,18 @@ public class GCSSnapshoter {
 
     public static void validateRequest(SnapshoterRequest request){
         // validate required params
-        if (! (request.getBackupPolicy().getMethod().equals(BackupMethod.GCS_SNAPSHOT) ||
-                request.getBackupPolicy().getMethod().equals(BackupMethod.BOTH))) {
+        if (! (request.getBackupPolicyAndState().getMethod().equals(BackupMethod.GCS_SNAPSHOT) ||
+                request.getBackupPolicyAndState().getMethod().equals(BackupMethod.BOTH))) {
             throw new IllegalArgumentException(String.format("BackupMethod must be GCS_SNAPSHOT or BOTH. Received %s",
-                    request.getBackupPolicy().getMethod()));
+                    request.getBackupPolicyAndState().getMethod()));
         }
-        if (request.getBackupPolicy().getGcsExportFormat() == null) {
+        if (request.getBackupPolicyAndState().getGcsExportFormat() == null) {
             throw new IllegalArgumentException(String.format("GCSExportFormat is missing in the BackupPolicy %s",
-                    request.getBackupPolicy()));
+                    request.getBackupPolicyAndState()));
         }
-        if (request.getBackupPolicy().getGcsSnapshotStorageLocation() == null) {
+        if (request.getBackupPolicyAndState().getGcsSnapshotStorageLocation() == null) {
             throw new IllegalArgumentException(String.format("GcsSnapshotStorageLocation is missing in the BackupPolicy %s",
-                    request.getBackupPolicy()));
+                    request.getBackupPolicyAndState()));
         }
     }
 
@@ -112,7 +112,7 @@ public class GCSSnapshoter {
         // time travel is calculated relative to the operation time
         Tuple<TableSpec, Long> sourceTableWithTimeTravelTuple = Utils.getTableSpecWithTimeTravel(
                 request.getTargetTable(),
-                request.getBackupPolicy().getTimeTravelOffsetDays(),
+                request.getBackupPolicyAndState().getTimeTravelOffsetDays(),
                 operationTs
         );
 
@@ -123,11 +123,11 @@ public class GCSSnapshoter {
                 request.getTargetTable().getTable(),
                 request.getTrackingId(),
                 sourceTableWithTimeTravelTuple.y(), // include the time travel millisecond for transparency
-                request.getBackupPolicy().getGcsExportFormat()
+                request.getBackupPolicyAndState().getGcsExportFormat()
                 );
 
         String gcsDestinationUri = prepareGcsUriForMultiFileExport(
-                request.getBackupPolicy().getGcsSnapshotStorageLocation(),
+                request.getBackupPolicyAndState().getGcsSnapshotStorageLocation(),
                 backupFolder
                 );
 
@@ -141,7 +141,7 @@ public class GCSSnapshoter {
                         request.getTargetTable().toSqlString(),
                         gcsDestinationUri,
                         timeTravelTs,
-                        request.getBackupPolicy().getTimeTravelOffsetDays().getText()
+                        request.getBackupPolicyAndState().getTimeTravelOffsetDays().getText()
                 )
         );
 
@@ -158,7 +158,7 @@ public class GCSSnapshoter {
                     request.getRunId(),
                     request.getTrackingId(),
                     request.isDryRun(),
-                    request.getBackupPolicy(),
+                    request.getBackupPolicyAndState(),
                     BackupMethod.GCS_SNAPSHOT,
                     null,
                     gcsDestinationUri,
@@ -177,10 +177,10 @@ public class GCSSnapshoter {
                     jobId,
                     sourceTableWithTimeTravelTuple.x(),
                     gcsDestinationUri,
-                    request.getBackupPolicy().getGcsExportFormat(),
-                    request.getBackupPolicy().getGcsCsvDelimiter(),
-                    request.getBackupPolicy().getGcsCsvExportHeader(),
-                    request.getBackupPolicy().getGcsUseAvroLogicalTypes(),
+                    request.getBackupPolicyAndState().getGcsExportFormat(),
+                    request.getBackupPolicyAndState().getGcsCsvDelimiter(),
+                    request.getBackupPolicyAndState().getGcsCsvExportHeader(),
+                    request.getBackupPolicyAndState().getGcsUseAvroLogicalTypes(),
                     request.getTrackingId(),
                     jobLabels
             );

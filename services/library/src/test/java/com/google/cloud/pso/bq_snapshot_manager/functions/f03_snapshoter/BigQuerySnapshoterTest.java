@@ -19,13 +19,11 @@
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
 import com.google.cloud.Timestamp;
-import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerRequest;
-import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.cloud.pso.bq_snapshot_manager.services.PersistentSetTestImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.PubSubServiceTestImpl;
@@ -104,7 +102,7 @@ public class BigQuerySnapshoterTest {
                         "runId",
                         "trackingId",
                         false,
-                        backupPolicy
+                        new BackupPolicyAndState(backupPolicy, null)
                 ),
                 operationTime,
                 "pubsub-message-id");
@@ -115,7 +113,7 @@ public class BigQuerySnapshoterTest {
                 "runId",
                 "trackingId",
                 false,
-                backupPolicy,
+                new BackupPolicyAndState(backupPolicy, null),
                 BackupMethod.BIGQUERY_SNAPSHOT,
                 expectedSnapshotTable,
                 null,

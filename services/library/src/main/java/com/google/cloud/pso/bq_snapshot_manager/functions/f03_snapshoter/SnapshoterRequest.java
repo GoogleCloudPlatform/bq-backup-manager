@@ -18,29 +18,28 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
-import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestResponse;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
 import com.google.common.base.Objects;
 
 public class SnapshoterRequest extends TableOperationRequestResponse {
 
-    private final BackupPolicy backupPolicy;
+    private final BackupPolicyAndState backupPolicyAndState;
 
-    public SnapshoterRequest(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicy backupPolicy) {
+    public SnapshoterRequest(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicyAndState backupPolicyAndState) {
         super(targetTable, runId, trackingId, isDryRun);
-        this.backupPolicy = backupPolicy;
+        this.backupPolicyAndState = backupPolicyAndState;
     }
 
-    public BackupPolicy getBackupPolicy() {
-        return backupPolicy;
+    public BackupPolicyAndState getBackupPolicyAndState() {
+        return backupPolicyAndState;
     }
 
     @Override
     public String toString() {
         return "SnapshoterRequest{" +
-                "backupPolicy=" + backupPolicy +
+                "backupPolicy=" + backupPolicyAndState +
                 "} " + super.toString();
     }
 
@@ -50,19 +49,19 @@ public class SnapshoterRequest extends TableOperationRequestResponse {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         SnapshoterRequest that = (SnapshoterRequest) o;
-        return Objects.equal(backupPolicy, that.backupPolicy);
+        return Objects.equal(backupPolicyAndState, that.backupPolicyAndState);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), backupPolicy);
+        return Objects.hashCode(super.hashCode(), backupPolicyAndState);
     }
 
     public String computeBackupOperationProject(){
         // if the backup policy specifies a project to run the backup operations on, use it. Otherwise,
         // use the source table project
-        return this.backupPolicy.getBackupOperationProject() != null?
-                this.backupPolicy.getBackupOperationProject():
+        return this.backupPolicyAndState.getBackupOperationProject() != null?
+                this.backupPolicyAndState.getBackupOperationProject():
                 this.getTargetTable().getProject();
     }
 }

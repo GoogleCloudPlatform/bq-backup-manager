@@ -22,20 +22,16 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.cloud.pso.bq_snapshot_manager.services.PersistentMapTestImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.PersistentSetTestImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.PubSubServiceTestImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.bq.BigQueryService;
-import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishResults;
-import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.SuccessPubSubMessage;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -105,7 +101,7 @@ public class GCSSnapshoterTest {
                         "runId",
                         "trackingId",
                         false,
-                        backupPolicy
+                        new BackupPolicyAndState(backupPolicy, null)
                 ),
                 operationTime,
                 "pubsub-message-id");

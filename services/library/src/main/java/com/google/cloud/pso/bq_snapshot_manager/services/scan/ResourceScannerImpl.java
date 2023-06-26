@@ -32,11 +32,9 @@ import com.google.cloud.bigquery.TableDefinition;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -46,13 +44,7 @@ import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
-import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyFields;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.Configurator;
-import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
-import jdk.jshell.execution.Util;
 
 public class ResourceScannerImpl implements ResourceScanner {
 

@@ -22,11 +22,8 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupConfigSource;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.FallbackBackupPolicy;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
@@ -100,8 +97,8 @@ public class Configurator {
         );
 
         // 1. Find the backup policy of this table
-        Tuple<BackupPolicy, String> backupPolicyTuple = getBackupPolicy(request);
-        BackupPolicy backupPolicy = backupPolicyTuple.x();
+        Tuple<BackupPolicyAndState, String> backupPolicyTuple = getBackupPolicyAndState(request);
+        BackupPolicyAndState backupPolicy = backupPolicyTuple.x();
 
         // 2a. Determine if we should take a backup at this run given the policy CRON expression
         // if the table has been backed up before then check if we should backup at this run
@@ -249,20 +246,20 @@ public class Configurator {
     }
 
     /**
-     * Retrieve the backup policy for a single table either from the table-level policy store or from fallback policies
+     * Retrieve the backup policy and state for a single table either from the table-level policy store or from fallback policies
      * @param request
      * @return Tuple<BackupPolicy, String> where x = the backup policy for the table and y = description of how the backup policy was found/computed (used for logging and debugging)
      * @throws IOException
      */
-    public Tuple<BackupPolicy, String> getBackupPolicy(ConfiguratorRequest request) throws IOException {
+    public Tuple<BackupPolicyAndState, String> getBackupPolicyAndState(ConfiguratorRequest request) throws IOException {
 
         // Check if the table has a back policy attached to it
-        BackupPolicy attachedBackupPolicy = backupPolicyService.getBackupPolicyForTable(
+        BackupPolicyAndState attachedBackupPolicyAndState = backupPolicyService.getBackupPolicyAndStateForTable(
                 request.getTargetTable()
         );
 
         // if there is manually attached backup policy (e.g. by the table designer) then use it.
-        if (attachedBackupPolicy != null && attachedBackupPolicy.getConfigSource().equals(BackupConfigSource.MANUAL)) {
+        if (attachedBackupPolicyAndState != null && attachedBackupPolicyAndState.getConfigSource().equals(BackupConfigSource.MANUAL)) {
 
             logger.logInfoWithTracker(request.isDryRun(),
                     request.getTrackingId(),
@@ -270,7 +267,11 @@ public class Configurator {
                     String.format("Attached backup policy found for table %s", request.getTargetTable())
             );
 
-            return Tuple.of(attachedBackupPolicy, "Manually attached policy");
+            return Tuple.of(attachedBackupPolicyAndState,
+                    attachedBackupPolicyAndState.getState() != null?
+                            "Manually attached policy with backup state from previous runs":
+                            "Manually attached policy without backup state from previous runs"
+                    );
         } else {
 
             logger.logInfoWithTracker(request.isDryRun(),
@@ -285,6 +286,7 @@ public class Configurator {
                     request.getTargetTable(),
                     request.getRunId()
             );
+
             BackupPolicy fallbackPolicy = fallbackBackupPolicyTuple.y();
 
             logger.logInfoWithTracker(request.isDryRun(),
@@ -296,18 +298,27 @@ public class Configurator {
             // if there is a system attached policy, then only use the last_xyz fields from it and use the latest fallback policy
             // the last_backup_at needs to be checked to determine if we should take a backup in this run
             // the last_xyz_uri fields need to be propagated to the Tagger service so that they are not lost on each run
-            if (attachedBackupPolicy != null && attachedBackupPolicy.getConfigSource().equals(BackupConfigSource.SYSTEM)) {
-                return Tuple.of(BackupPolicy.BackupPolicyBuilder
-                        .from(fallbackPolicy)
-                        .setLastBackupAt(attachedBackupPolicy.getLastBackupAt())
-                        .setLastGcsSnapshotStorageUri(attachedBackupPolicy.getLastGcsSnapshotStorageUri())
-                        .setLastBqSnapshotStorageUri(attachedBackupPolicy.getLastBqSnapshotStorageUri())
-                        .build(),
-                        String.format("System attached fallback policy on level '%s' with timestamps from previous run", fallbackBackupPolicyTuple.x())
-                        );
+            if (attachedBackupPolicyAndState != null && attachedBackupPolicyAndState.getConfigSource().equals(BackupConfigSource.SYSTEM)) {
+                return Tuple.of(
+                        new BackupPolicyAndState(
+                                fallbackPolicy,
+                                new BackupState(attachedBackupPolicyAndState.getLastBackupAt(),
+                                        attachedBackupPolicyAndState.getLastBqSnapshotStorageUri(),
+                                        attachedBackupPolicyAndState.getLastGcsSnapshotStorageUri())
+                        ),
+                        String.format(
+                                "System attached fallback policy on level '%s' with backup state from previous runs",
+                                fallbackBackupPolicyTuple.x())
+                );
             } else {
                 // if there is no attached policy, use fallback one
-                return Tuple.of(fallbackPolicy, String.format("System attached fallback policy on level '%s'", fallbackBackupPolicyTuple.x()));
+                return Tuple.of(
+                        new BackupPolicyAndState(
+                                fallbackPolicy,
+                                null),
+                        String.format(
+                                "System attached fallback policy on level '%s' without backup state from previous runs",
+                                fallbackBackupPolicyTuple.x()));
             }
         }
     }
@@ -414,7 +425,7 @@ public class Configurator {
         );
     }
 
-    public Tuple<SnapshoterRequest, SnapshoterRequest> prepareSnapshotRequests(BackupPolicy backupPolicy, ConfiguratorRequest request) {
+    public Tuple<SnapshoterRequest, SnapshoterRequest> prepareSnapshotRequests(BackupPolicyAndState backupPolicy, ConfiguratorRequest request) {
 
         SnapshoterRequest bqSnapshotRequest = null;
         SnapshoterRequest gcsSnapshotRequest = null;
@@ -443,8 +454,8 @@ public class Configurator {
     }
 
     public Tuple<String, BackupPolicy> findFallbackBackupPolicy(FallbackBackupPolicy fallbackBackupPolicy,
-                                                                TableSpec tableSpec,
-                                                                String runId
+                                                                        TableSpec tableSpec,
+                                                                        String runId
     ) throws IOException {
 
         BackupPolicy tableLevel = fallbackBackupPolicy.getTableOverrides().get(tableSpec.toSqlString());

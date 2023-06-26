@@ -66,7 +66,6 @@ public class ConfiguratorTest {
             .setBigQuerySnapshotStorageDataset("dataset")
             .setGcsSnapshotStorageLocation("gs://bla")
             .setGcsExportFormat(GCSSnapshotFormat.AVRO)
-            .setLastBackupAt(Timestamp.MIN_VALUE)
             .build();
 
     FallbackBackupPolicy fallbackBackupPolicy = new FallbackBackupPolicy(
@@ -120,13 +119,13 @@ public class ConfiguratorTest {
                 new BackupPolicyService() {
 
                     @Override
-                    public void createOrUpdateBackupPolicyForTable(TableSpec tableSpec, BackupPolicy backupPolicy) {
+                    public void createOrUpdateBackupPolicyAndStateForTable(TableSpec tableSpec, BackupPolicyAndState backupPolicy) {
 
                     }
 
                     @Override
-                    public @Nullable BackupPolicy getBackupPolicyForTable(TableSpec tableSpec) throws IOException, IllegalArgumentException {
-                        return testPolicy;
+                    public @Nullable BackupPolicyAndState getBackupPolicyAndStateForTable(TableSpec tableSpec) throws IOException, IllegalArgumentException {
+                        return new BackupPolicyAndState(testPolicy, null);
                     }
 
                     @Override
@@ -308,7 +307,7 @@ public class ConfiguratorTest {
             TableSpec targetTable,
             String runId,
             String trackingId,
-            BackupPolicy testBackupPolicy,
+            BackupPolicyAndState backupPolicyAndState,
             Timestamp refTS,
             Timestamp tableCreationTS
     ) throws NonRetryableApplicationException, InterruptedException, IOException {
@@ -342,13 +341,13 @@ public class ConfiguratorTest {
                 new BackupPolicyService() {
 
                     @Override
-                    public void createOrUpdateBackupPolicyForTable(TableSpec tableSpec, BackupPolicy backupPolicy) {
+                    public void createOrUpdateBackupPolicyAndStateForTable(TableSpec tableSpec, BackupPolicyAndState backupPolicy) {
 
                     }
 
                     @Override
-                    public @Nullable BackupPolicy getBackupPolicyForTable(TableSpec tableSpec) throws IOException, IllegalArgumentException {
-                        return testBackupPolicy;
+                    public @Nullable BackupPolicyAndState getBackupPolicyAndStateForTable(TableSpec tableSpec) throws IOException, IllegalArgumentException {
+                        return backupPolicyAndState;
                     }
 
                     @Override
@@ -390,7 +389,6 @@ public class ConfiguratorTest {
                 .setBigQuerySnapshotStorageDataset("snapshotDataset")
                 .setGcsSnapshotStorageLocation("gs://bla/")
                 .setGcsExportFormat(GCSSnapshotFormat.AVRO)
-                .setLastBackupAt(Timestamp.MIN_VALUE)
                 .build();
 
         TableSpec targetTable = TableSpec.fromSqlString("testProject.testDataset.testTable");
@@ -399,7 +397,7 @@ public class ConfiguratorTest {
                 targetTable,
                 "1665734583289-T",
                 "1665734583289-T-xyz",
-                backupPolicy,
+                new BackupPolicyAndState(backupPolicy, null),
                 Timestamp.now(),
                 Timestamp.MIN_VALUE
         );
@@ -425,7 +423,7 @@ public class ConfiguratorTest {
                 "1665734583289-T",
                 "1665734583289-T-xyz",
                 false,
-                backupPolicy
+                new BackupPolicyAndState(backupPolicy, null)
         );
 
         assertEquals(expectedSnapshoterRequest, actualSnapshoterRequest);
@@ -451,7 +449,7 @@ public class ConfiguratorTest {
                 targetTable,
                 "1665734583289-T",
                 "1665734583289-T-xyz",
-                backupPolicy,
+                new BackupPolicyAndState(backupPolicy, null),
                 Timestamp.now(),
                 Timestamp.MIN_VALUE
         );
@@ -476,7 +474,7 @@ public class ConfiguratorTest {
                 "1665734583289-T",
                 "1665734583289-T-xyz",
                 false,
-                backupPolicy
+                new BackupPolicyAndState(backupPolicy, null)
         );
 
         assertEquals(expectedGCSSnapshoterRequest, actualGCSSnapshoterRequest);
@@ -504,7 +502,7 @@ public class ConfiguratorTest {
                 targetTable,
                 "1665734583289-T",
                 "1665734583289-T-xyz",
-                backupPolicy,
+                new BackupPolicyAndState(backupPolicy, null),
                 Timestamp.now(),
                 Timestamp.MIN_VALUE);
 
@@ -524,7 +522,7 @@ public class ConfiguratorTest {
                 "1665734583289-T",
                 "1665734583289-T-xyz",
                 false,
-                backupPolicy
+                new BackupPolicyAndState(backupPolicy, null)
         );
 
         assertEquals(expectedGCSSnapshoterRequest, actualGCSSnapshoterRequest);
@@ -541,7 +539,7 @@ public class ConfiguratorTest {
                 "1665734583289-T",
                 "1665734583289-T-xyz",
                 false,
-                backupPolicy
+                new BackupPolicyAndState(backupPolicy, null)
         );
 
         assertEquals(expectedSnapshoterRequest, actualSnapshoterRequest);
@@ -560,7 +558,6 @@ public class ConfiguratorTest {
                 .setBackupOperationProject("snapshotProject")
                 .setBigQuerySnapshotExpirationDays(15.0)
                 .setBigQuerySnapshotStorageDataset("snapshotDataset")
-                .setLastBackupAt(Timestamp.MIN_VALUE)
                 .build();
 
         TableSpec targetTable = TableSpec.fromSqlString("testProject.testDataset.testTable");
@@ -569,7 +566,8 @@ public class ConfiguratorTest {
                 targetTable,
                 "1665734583289-T",
                 "1665734583289-T-xyz",
-                backupPolicy,
+                new BackupPolicyAndState(backupPolicy,
+                        new BackupState(Timestamp.MIN_VALUE, "bq_snapshot", null) ),
                 Timestamp.now(),
                 Timestamp.MIN_VALUE
         );
@@ -595,7 +593,11 @@ public class ConfiguratorTest {
                 "1665734583289-T",
                 "1665734583289-T-xyz",
                 false,
-                testPolicy // forming the fallback policy
+                // This is a System policy with an existing state. Configurator should use the latest fallback policy\
+                // and the state from the previous run
+                new BackupPolicyAndState(
+                        fallbackBackupPolicy.getDefaultPolicy(),
+                        new BackupState(Timestamp.MIN_VALUE, "bq_snapshot", null) ) // forming the fallback policy
         );
 
         assertEquals(expectedSnapshoterRequest, actualSnapshoterRequest);
@@ -614,7 +616,6 @@ public class ConfiguratorTest {
                 .setBigQuerySnapshotStorageDataset("snapshotDataset")
                 .setGcsSnapshotStorageLocation("gs://bla/")
                 .setGcsExportFormat(GCSSnapshotFormat.AVRO)
-                .setLastBackupAt(Timestamp.MIN_VALUE)
                 .build();
 
         TableSpec targetTable = TableSpec.fromSqlString("testProject.testDataset.testTable");
@@ -627,7 +628,9 @@ public class ConfiguratorTest {
                 targetTable,
                 "1665734583289-T",
                 "1665734583289-T-xyz",
-                backupPolicy,
+                new BackupPolicyAndState(
+                        backupPolicy,
+                        new BackupState(Timestamp.MIN_VALUE, "bq_storage", null)),
                 refPoint,
                 tableCreationTs
         );

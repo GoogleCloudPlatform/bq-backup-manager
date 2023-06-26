@@ -18,7 +18,6 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
-import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import org.junit.Test;
 
@@ -156,7 +155,7 @@ public class BackupPolicyTest {
                 BackupConfigSource.MANUAL,
                 "storage-project"
                 )
-                .setBackupOperationProject("operation_project")
+                .setBackupOperationProject("operation-project")
                 .setBigQuerySnapshotExpirationDays(0.0)
                 .setBigQuerySnapshotStorageDataset("test-dataset")
                 .build();
@@ -166,41 +165,6 @@ public class BackupPolicyTest {
         assertEquals(expected, actual);
     }
 
-    @Test
-    public void testFromMapFromDCTagManualSubsequent() throws IOException, IllegalArgumentException {
-
-        // data catalog manual assigned tag
-        // NOT first run (last_xys fields are set)
-
-        Map<String, String> tagMap = new HashMap<>();
-
-        tagMap.put("backup_cron", "test-cron");
-        tagMap.put("backup_method", "BigQuery Snapshot");
-        tagMap.put("config_source", "Manual");
-        tagMap.put("backup_time_travel_offset_days", "0");
-        tagMap.put("backup_storage_project", "storage-project");
-        tagMap.put("backup_operation_project", "operation-project");
-        tagMap.put("bq_snapshot_storage_dataset", "test-dataset");
-        tagMap.put("bq_snapshot_expiration_days", "0.0");
-        tagMap.put("last_backup_at", Timestamp.MAX_VALUE.toString());
-        tagMap.put("last_bq_snapshot_storage_uri", "last bq uri");
-
-        BackupPolicy expected = new BackupPolicy.BackupPolicyBuilder("test-cron",
-                BackupMethod.BIGQUERY_SNAPSHOT,
-                TimeTravelOffsetDays.DAYS_0,
-                BackupConfigSource.MANUAL,
-                "storage-project")
-                .setBackupOperationProject("operation_project")
-                .setBigQuerySnapshotExpirationDays(0.0)
-                .setBigQuerySnapshotStorageDataset("test-dataset")
-                .setLastBqSnapshotStorageUri("last bq uri")
-                .setLastBackupAt(Timestamp.MAX_VALUE)
-                .build();
-
-        BackupPolicy actual = BackupPolicy.fromMap(tagMap);
-
-        assertEquals(expected, actual);
-    }
 
     @Test
     public void testFromMapFromFallbackTagInitial() throws IOException, IllegalArgumentException {
@@ -223,7 +187,7 @@ public class BackupPolicyTest {
                 TimeTravelOffsetDays.DAYS_0,
                 BackupConfigSource.SYSTEM,
                 "storage-project")
-                .setBackupOperationProject("operation_project")
+                .setBackupOperationProject("operation-project")
                 .setBigQuerySnapshotExpirationDays(0.0)
                 .setBigQuerySnapshotStorageDataset("test-dataset")
                 .build();
@@ -232,43 +196,6 @@ public class BackupPolicyTest {
 
         assertEquals(expected, actual);
     }
-
-    @Test
-    public void testFromMapFromFallbackTagManualSubsequent() throws IOException, IllegalArgumentException {
-
-        // system assigned tags. no config_source field
-        // NOT first run (last_xys fields are set)
-
-        Map<String, String> tagMap = new HashMap<>();
-
-        tagMap.put("backup_cron", "test-cron");
-        tagMap.put("backup_method", "BigQuery Snapshot");
-        tagMap.put("backup_time_travel_offset_days", "0");
-        tagMap.put("backup_storage_project", "storage-project");
-        tagMap.put("backup_operation_project", "operation-project");
-        tagMap.put("bq_snapshot_storage_dataset", "test-dataset");
-        tagMap.put("bq_snapshot_expiration_days", "0.0");
-        tagMap.put("last_backup_at", Timestamp.MAX_VALUE.toString());
-        tagMap.put("last_bq_snapshot_storage_uri", "last bq uri");
-
-        BackupPolicy expected = new BackupPolicy.BackupPolicyBuilder("test-cron",
-                BackupMethod.BIGQUERY_SNAPSHOT,
-                TimeTravelOffsetDays.DAYS_0,
-                BackupConfigSource.SYSTEM,
-                "storage-project")
-                .setBackupOperationProject("operation_project")
-                .setBigQuerySnapshotExpirationDays(0.0)
-                .setBigQuerySnapshotStorageDataset("test-dataset")
-                .setLastBackupAt(Timestamp.MAX_VALUE)
-                .setLastBqSnapshotStorageUri("last bq uri")
-                .build();
-
-        BackupPolicy actual = BackupPolicy.fromMap(tagMap);
-
-        assertEquals(expected, actual);
-    }
-
-
 
     @Test(expected = IllegalArgumentException.class)
     public void testFromMapFromFallbackFalse_exception()  {
@@ -296,9 +223,6 @@ public class BackupPolicyTest {
                 .setBigQuerySnapshotExpirationDays(0.0)
                 .setBigQuerySnapshotStorageDataset("test-dataset")
                 .setGcsSnapshotStorageLocation("test-bucket")
-                .setLastBackupAt(Timestamp.MAX_VALUE)
-                .setLastBqSnapshotStorageUri("last bq uri")
-                .setLastGcsSnapshotStorageUri("last gcs uri")
                 .build();
 
         BackupPolicy actual = BackupPolicy.fromMap(tagMap);

@@ -19,7 +19,6 @@
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import org.junit.Test;
 

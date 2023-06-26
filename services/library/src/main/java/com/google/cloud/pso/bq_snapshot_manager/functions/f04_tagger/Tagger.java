@@ -21,8 +21,8 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.GCSSnapshoter;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupState;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
@@ -39,14 +39,12 @@ public class Tagger {
     private final PersistentSet persistentSet;
     private final String persistentSetObjectPrefix;
 
-    private final Integer functionNumber;
 
     public Tagger(TaggerConfig config, BackupPolicyService backupPolicyService, PersistentSet persistentSet, String persistentSetObjectPrefix, Integer functionNumber) {
         this.config = config;
         this.backupPolicyService = backupPolicyService;
         this.persistentSet = persistentSet;
         this.persistentSetObjectPrefix = persistentSetObjectPrefix;
-        this.functionNumber = functionNumber;
 
         logger = new LoggingHelper(
                 Tagger.class.getSimpleName(),
@@ -78,31 +76,26 @@ public class Tagger {
                 request.getTrackingId()
         );
 
-        try{
 
-            // prepare the backup policy tag
-            BackupPolicy originalBackupPolicy = request.getBackupPolicy();
-            BackupPolicy.BackupPolicyBuilder updatedPolicyBuilder = BackupPolicy.BackupPolicyBuilder.from(originalBackupPolicy);
+            BackupState updatedState = new BackupState(
+                    request.getLastBackUpAt(),
+                    request.getAppliedBackupMethod().equals(BackupMethod.BIGQUERY_SNAPSHOT)?
+                            request.getBigQuerySnapshotTableSpec().toResourceUrl(): null,
+                    request.getAppliedBackupMethod().equals(BackupMethod.GCS_SNAPSHOT)?
+                            request.getGcsSnapshotUri(): null
+            );
 
-            // set the last_xyz fields
-            updatedPolicyBuilder.setLastBackupAt(request.getLastBackUpAt());
-
-            if(request.getAppliedBackupMethod().equals(BackupMethod.BIGQUERY_SNAPSHOT)){
-                updatedPolicyBuilder.setLastBqSnapshotStorageUri(request.getBigQuerySnapshotTableSpec().toResourceUrl());
-            }
-
-            if(request.getAppliedBackupMethod().equals(BackupMethod.GCS_SNAPSHOT)){
-                updatedPolicyBuilder.setLastGcsSnapshotStorageUri(request.getGcsSnapshotUri());
-            }
-
-            BackupPolicy upDatedBackupPolicy = updatedPolicyBuilder.build();
+            BackupPolicyAndState updatedPolicyAndState =  new BackupPolicyAndState(
+                    request.getBackupPolicyAndState().getPolicy(),
+                    updatedState
+            );
 
             if(!request.isDryRun()){
                 // update the tag
                 // API Calls
-                backupPolicyService.createOrUpdateBackupPolicyForTable(
+                backupPolicyService.createOrUpdateBackupPolicyAndStateForTable(
                         request.getTargetTable(),
-                        upDatedBackupPolicy
+                        updatedPolicyAndState
                 );
             }
 
@@ -121,14 +114,9 @@ public class Tagger {
                     request.getRunId(),
                     request.getTrackingId(),
                     request.isDryRun(),
-                    upDatedBackupPolicy,
-                    originalBackupPolicy
+                    request.getBackupPolicyAndState(),
+                    updatedPolicyAndState
             );
 
-        }finally {
-
-            // always remove the tracker lock to allow other calls on the same table in the same run, either retried ones or for another backup method
-//            persistentSet.remove(trackerFlagFileName);
-        }
     }
 }

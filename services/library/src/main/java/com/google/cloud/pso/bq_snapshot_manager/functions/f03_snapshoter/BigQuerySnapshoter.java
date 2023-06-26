@@ -72,22 +72,22 @@ public class BigQuerySnapshoter {
     }
 
     public static void validateInput(SnapshoterRequest request){
-        if (! (request.getBackupPolicy().getMethod().equals(BackupMethod.BIGQUERY_SNAPSHOT) ||
-                request.getBackupPolicy().getMethod().equals(BackupMethod.BOTH))) {
+        if (! (request.getBackupPolicyAndState().getMethod().equals(BackupMethod.BIGQUERY_SNAPSHOT) ||
+                request.getBackupPolicyAndState().getMethod().equals(BackupMethod.BOTH))) {
             throw new IllegalArgumentException(String.format("BackupMethod must be BIGQUERY_SNAPSHOT or BOTH. Received %s",
-                    request.getBackupPolicy().getMethod()));
+                    request.getBackupPolicyAndState().getMethod()));
         }
-        if (request.getBackupPolicy().getBigQuerySnapshotExpirationDays() == null) {
+        if (request.getBackupPolicyAndState().getBigQuerySnapshotExpirationDays() == null) {
             throw new IllegalArgumentException(String.format("BigQuerySnapshotExpirationDays is missing in the BackupPolicy %s",
-                    request.getBackupPolicy()));
+                    request.getBackupPolicyAndState()));
         }
-        if (request.getBackupPolicy().getBackupStorageProject() == null) {
+        if (request.getBackupPolicyAndState().getBackupStorageProject() == null) {
             throw new IllegalArgumentException(String.format("BigQuerySnapshotStorageProject is missing in the BackupPolicy %s",
-                    request.getBackupPolicy()));
+                    request.getBackupPolicyAndState()));
         }
-        if (request.getBackupPolicy().getBigQuerySnapshotStorageDataset() == null) {
+        if (request.getBackupPolicyAndState().getBigQuerySnapshotStorageDataset() == null) {
             throw new IllegalArgumentException(String.format("BigQuerySnapshotStorageDataset is missing in the BackupPolicy %s",
-                    request.getBackupPolicy()));
+                    request.getBackupPolicyAndState()));
         }
     }
 
@@ -108,20 +108,20 @@ public class BigQuerySnapshoter {
         // time travel is calculated relative to the operation time
         Tuple<TableSpec, Long> sourceTableWithTimeTravelTuple = Utils.getTableSpecWithTimeTravel(
                 request.getTargetTable(),
-                request.getBackupPolicy().getTimeTravelOffsetDays(),
+                request.getBackupPolicyAndState().getTimeTravelOffsetDays(),
                 operationTs
         );
 
         // expiry date is calculated relative to the operation time
         Timestamp expiryTs = Timestamp.ofTimeSecondsAndNanos(
-                operationTs.getSeconds() + (request.getBackupPolicy().getBigQuerySnapshotExpirationDays().longValue() * Utils.SECONDS_IN_DAY),
+                operationTs.getSeconds() + (request.getBackupPolicyAndState().getBigQuerySnapshotExpirationDays().longValue() * Utils.SECONDS_IN_DAY),
                 operationTs.getNanos());
 
         // construct the snapshot table from the request params and calculated timetravel
         TableSpec snapshotTable = getSnapshotTableSpec(
                 request.getTargetTable(),
-                request.getBackupPolicy().getBackupStorageProject(),
-                request.getBackupPolicy().getBigQuerySnapshotStorageDataset(),
+                request.getBackupPolicyAndState().getBackupStorageProject(),
+                request.getBackupPolicyAndState().getBigQuerySnapshotStorageDataset(),
                 request.getRunId(),
                 sourceTableWithTimeTravelTuple.y()
         );
@@ -135,7 +135,7 @@ public class BigQuerySnapshoter {
                         request.getTargetTable().toSqlString(),
                         snapshotTable.toSqlString(),
                         timeTravelTs.toString(),
-                        request.getBackupPolicy().getTimeTravelOffsetDays().getText(),
+                        request.getBackupPolicyAndState().getTimeTravelOffsetDays().getText(),
                         expiryTs.toString()
                 )
         );
@@ -171,7 +171,7 @@ public class BigQuerySnapshoter {
                 request.getRunId(),
                 request.getTrackingId(),
                 request.isDryRun(),
-                request.getBackupPolicy(),
+                request.getBackupPolicyAndState(),
                 BackupMethod.BIGQUERY_SNAPSHOT,
                 snapshotTable,
                 null,

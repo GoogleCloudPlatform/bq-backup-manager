@@ -600,7 +600,7 @@ export BACKUP_POLICY="{
 # File name MUST BE backup_policy.json
 echo $BACKUP_POLICY >> backup_policy.json
 
-gsutil cp backup_policy.json gs://${POLICIES_BUCKET}/project=${TABLE_PROJECT}/dataset=${TABLE_DATASET}/table=${TABLE}/backup_policy.json
+gsutil cp backup_policy.json gs://${POLICIES_BUCKET}/policy/project=${TABLE_PROJECT}/dataset=${TABLE_DATASET}/table=${TABLE}/backup_policy.json
 ```
 
 ### Triggering backup operations

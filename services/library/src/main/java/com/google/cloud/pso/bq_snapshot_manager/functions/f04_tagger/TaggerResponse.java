@@ -20,29 +20,25 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger;
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestResponse;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicy;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupState;
 
 import java.util.Objects;
 
 public class TaggerResponse extends TableOperationRequestResponse {
 
-    private final BackupPolicy updatedBackupPolicy;
-    private final BackupPolicy originalBackupPolicy;
+    private final BackupPolicyAndState originalPolicyAndState;
+    private final BackupPolicyAndState updatedPolicyAndState;
 
-    public TaggerResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicy updatedBackupPolicy) {
+    public TaggerResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun,
+                          BackupPolicyAndState  originalPolicyAndState, BackupPolicyAndState  updatedPolicyAndState) {
         super(targetTable, runId, trackingId, isDryRun);
-        this.updatedBackupPolicy = updatedBackupPolicy;
-        this.originalBackupPolicy = null;
+        this.originalPolicyAndState = originalPolicyAndState;
+        this.updatedPolicyAndState = updatedPolicyAndState;
     }
 
-    public TaggerResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicy updatedBackupPolicy, BackupPolicy originalBackupPolicy) {
-        super(targetTable, runId, trackingId, isDryRun);
-        this.updatedBackupPolicy = updatedBackupPolicy;
-        this.originalBackupPolicy = originalBackupPolicy;
-    }
-
-    public BackupPolicy getUpdatedBackupPolicy() {
-        return updatedBackupPolicy;
+    public BackupPolicyAndState getOriginalPolicyAndState() {
+        return originalPolicyAndState;
     }
 
     @Override
@@ -51,19 +47,19 @@ public class TaggerResponse extends TableOperationRequestResponse {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         TaggerResponse that = (TaggerResponse) o;
-        return updatedBackupPolicy.equals(that.updatedBackupPolicy);
+        return originalPolicyAndState.equals(that.originalPolicyAndState);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), updatedBackupPolicy);
+        return Objects.hash(super.hashCode(), originalPolicyAndState);
     }
 
     @Override
     public String toString() {
         return "TaggerResponse{" +
-                "originalBackupPolicy=" + updatedBackupPolicy + ","+
-                "updatedBackupPolicy=" + updatedBackupPolicy +
+                "originalBackupPolicyAndState=" + originalPolicyAndState + ","+
+                "updatedBackupPolicyAndState=" + updatedPolicyAndState +
                 "} " + super.toString();
     }
 }

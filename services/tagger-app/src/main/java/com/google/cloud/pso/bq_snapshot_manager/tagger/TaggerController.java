@@ -27,7 +27,6 @@ import com.google.cloud.pso.bq_snapshot_manager.helpers.ControllerExceptionHelpe
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
-import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyServiceFireStoreImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyServiceGCSImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.map.GcsPersistentMapImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.map.PersistentMap;
