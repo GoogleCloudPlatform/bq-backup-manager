@@ -372,6 +372,94 @@ variable "additional_backup_operation_projects" {
   description = "Projects were backup operations will run but not defined in the fallback policy (e.g. in Tag policies). Used to deploy required resources on these projects."
 }
 
+#########################################################################################################
+#   Networking & VPC SC Variables
+#########################################################################################################
+
+variable "vpc_network_name" {
+  type = string
+  default = "bq-backup-manager-vpc"
+  description = "VPC Network name"
+}
+
+variable "vpc_network_description" {
+  type = string
+  default = "VPC Network for BigQuery Backup Manager"
+  description = "VPC network description"
+}
+
+variable "vpc_network_routing_mode" {
+  type = string
+  default = "REGIONAL"
+  description = "VPC network routing mode"
+}
+
+variable "subnet_name" {
+  type = string
+  default = "bq-backup-manager-subnet"
+  description = "Subnet name"
+}
+
+variable "subnet_description" {
+  type = string
+  default = "Subnet for BigQuery Backup Manager"
+  description = "Subnet description"
+}
+
+variable "subnet_range" {
+  type = string
+  default = "10.0.0.0/28"
+  description = "Subnet range"
+}
+
+variable "firewall_rule_egress_deny_all_name" {
+  type = string
+  default = "backup-manager-egress-deny-all"
+  description = "Firewall rule name for denying all egress"
+}
+
+variable "firewall_rule_egress_deny_all_description" {
+  type = string
+  default = "Deny all egress traffic"
+  description = "Firewall rule description for denying all egress"
+}
+
+variable "firewall_rule_egress_allow_restricted_name" {
+  type = string
+  default = "backup-manager-egress-allow-restricted"
+  description = "Firewall rule name for allowing restricted APIs access"
+}
+
+variable "firewall_rule_egress_allow_restricted_description" {
+  type = string
+  default = "Allow egress traffic only from restricted apis"
+  description = "Firewall rule description for allowing restricted APIs access"
+}
+
+variable "dns_googleapis_name" {
+  type = string
+  default = "backup-manager-googleapis-dns"
+  description = "Cloud DNS name for googleapis"
+}
+
+variable "dns_cloudrun_name" {
+  type = string
+  default = "backup-manager-cloud-run-dns"
+  description = "Cloud DNS name for Cloud Run"
+}
+
+variable "serverless_vpc_connector_name" {
+  type = string
+  default = "backup-manager-svpc-conn"
+  description = "Serverless VPC connector name"
+}
+
+variable "serverless_vpc_connector_machine_type" {
+  type = string
+  default = "e2-micro"
+  description = "Serverless VPC connector machine type"
+}
+
 
 
 
