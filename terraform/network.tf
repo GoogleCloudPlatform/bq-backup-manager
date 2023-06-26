@@ -58,6 +58,8 @@ module "googleapis_private_dns" {
   project_id                         = var.project
   name                               = var.dns_googleapis_name
   domain                             = "googleapis.com."
+
+  # For privately visible zones, the set of Virtual Private Cloud resources that the zone is visible from.
   private_visibility_config_networks = [module.vpc.network_self_link]
 
   recordsets = [
