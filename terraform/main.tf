@@ -176,7 +176,7 @@ module "cloud-run-dispatcher" {
   max_containers = 1
   # We need more than 1 CPU to help accelerate processing of large BigQuery Scan scope
   max_cpu = 2
-  # Use the common variables in addition to specific variables for this service
+  # Use the common variables.tf in addition to specific variables.tf for this service
   environment_variables = concat(local.common_cloud_run_variables, [
     {
       name = "OUTPUT_TOPIC",
@@ -185,6 +185,7 @@ module "cloud-run-dispatcher" {
   ]
   )
   common_labels = local.common_labels
+  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-configurator" {
@@ -198,7 +199,7 @@ module "cloud-run-configurator" {
   timeout_seconds = var.configurator_service_timeout_seconds
   max_cpu = 2
 
-  # Use the common variables in addition to specific variables for this service
+  # Use the common variables.tf in addition to specific variables.tf for this service
   environment_variables = concat(local.common_cloud_run_variables, [
     {
       name = "SNAPSHOTER_BQ_OUTPUT_TOPIC",
@@ -220,6 +221,7 @@ module "cloud-run-configurator" {
   )
 
   common_labels = local.common_labels
+  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-snapshoter-bq" {
@@ -233,7 +235,7 @@ module "cloud-run-snapshoter-bq" {
   timeout_seconds = var.snapshoter_bq_service_timeout_seconds
   max_cpu = 2
 
-  # Use the common variables in addition to specific variables for this service
+  # Use the common variables.tf in addition to specific variables.tf for this service
   environment_variables = concat(local.common_cloud_run_variables, [
     {
       name = "OUTPUT_TOPIC",
@@ -243,6 +245,7 @@ module "cloud-run-snapshoter-bq" {
   )
 
   common_labels = local.common_labels
+  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-snapshoter-gcs" {
@@ -256,7 +259,7 @@ module "cloud-run-snapshoter-gcs" {
   timeout_seconds = var.snapshoter_gcs_service_timeout_seconds
   max_cpu = 2
 
-  # Use the common variables in addition to specific variables for this service
+  # Use the common variables.tf in addition to specific variables.tf for this service
   environment_variables = concat(local.common_cloud_run_variables, [
     {
       name = "OUTPUT_TOPIC",
@@ -266,6 +269,7 @@ module "cloud-run-snapshoter-gcs" {
   )
 
   common_labels = local.common_labels
+  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-tagger" {
@@ -278,7 +282,7 @@ module "cloud-run-tagger" {
   invoker_service_account_email = module.iam.sa_tagger_tasks_email
   timeout_seconds = var.tagger_service_timeout_seconds
 
-  # Use the common variables in addition to specific variables for this service
+  # Use the common variables.tf in addition to specific variables.tf for this service
   environment_variables = concat(local.common_cloud_run_variables, [
     {
       name = "TAG_TEMPLATE_ID",
@@ -288,6 +292,7 @@ module "cloud-run-tagger" {
   )
 
   common_labels = local.common_labels
+  vpc_access_connector = module.vpc_connector.id
 }
 
 

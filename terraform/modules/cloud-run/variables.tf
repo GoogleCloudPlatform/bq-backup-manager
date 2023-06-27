@@ -51,3 +51,7 @@ variable "timeout_seconds" {type = number}
 variable "common_labels" {
   type = map(string)
 }
+
+variable "vpc_access_connector" {
+  type = string
+}

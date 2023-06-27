@@ -51,3 +51,9 @@ gcloud services enable serviceusage.googleapis.com
 
 echo "enabling appengine .."
 gcloud services enable appengine.googleapis.com
+
+echo "enabling vpcaccess .."
+gcloud services enable vpcaccess.googleapis.com
+
+echo "enabling dns .."
+gcloud services enable dns.googleapis.com
