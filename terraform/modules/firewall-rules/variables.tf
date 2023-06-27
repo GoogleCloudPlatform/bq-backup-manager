@@ -52,12 +52,6 @@ variable "priority" {
   default     = null
 }
 
-variable "disabled" {
-  description = "Denotes whether the firewall rule is disabled, i.e not applied to the network it is associated with."
-  type        = bool
-  default     = false
-}
-
 variable "ranges" {
   description = "If ranges are specified, the firewall will apply only to traffic that has source IP address in these ranges."
   type        = list(string)

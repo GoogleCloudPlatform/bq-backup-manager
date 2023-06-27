@@ -442,11 +442,11 @@ variable "dns_googleapis_name" {
   description = "Cloud DNS name for googleapis"
 }
 
-variable "dns_cloudrun_name" {
-  type = string
-  default = "backup-manager-cloud-run-dns"
-  description = "Cloud DNS name for Cloud Run"
-}
+#variable "dns_cloudrun_name" {
+#  type = string
+#  default = "backup-manager-cloud-run-dns"
+#  description = "Cloud DNS name for Cloud Run"
+#}
 
 variable "serverless_vpc_connector_name" {
   type = string

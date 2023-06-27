@@ -33,4 +33,5 @@ resource "google_vpc_access_connector" "connector" {
   min_instances  = var.min_instances
   max_instances  = var.max_instances
   max_throughput = var.max_throughput
+  min_throughput = var.min_throughput
 }
