@@ -259,7 +259,7 @@ Create a new .tfvars file and override the variables in the below sections. You 
 tfavrs files as a base [example-variables](terraform/example-variables.text).
 
 ```shell
-export VARS=my-variables.tf.tfvars
+export VARS=my-variables.tfvars
 ```
 
 ##### Configure Project Variables
