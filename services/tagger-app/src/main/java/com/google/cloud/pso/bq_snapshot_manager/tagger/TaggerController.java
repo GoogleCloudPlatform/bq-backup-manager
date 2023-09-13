@@ -21,8 +21,8 @@ import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.PubSubEvent;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.Tagger;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerResponse;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerRequest;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerResponse;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.ControllerExceptionHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
@@ -47,211 +47,249 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TaggerController {
 
-    private final LoggingHelper logger;
-    private static final Integer functionNumber = 4;
-    private Gson gson;
-    Environment environment;
+  private final LoggingHelper logger;
+  private static final Integer functionNumber = 4;
+  private Gson gson;
+  Environment environment;
 
-    public TaggerController() {
+  public TaggerController() {
 
-        gson = new Gson();
-        environment = new Environment();
-        logger = new LoggingHelper(
-                TaggerController.class.getSimpleName(),
-                functionNumber,
-                environment.getProjectId(),
-                environment.getApplicationName()
-        );
-    }
+    gson = new Gson();
+    environment = new Environment();
+    logger =
+        new LoggingHelper(
+            TaggerController.class.getSimpleName(),
+            functionNumber,
+            environment.getProjectId(),
+            environment.getApplicationName());
+  }
 
-    @RequestMapping(value = "/", method = RequestMethod.POST)
-    public ResponseEntity receiveMessage(@RequestBody PubSubEvent requestBody) {
+  @RequestMapping(value = "/", method = RequestMethod.POST)
+  public ResponseEntity receiveMessage(@RequestBody PubSubEvent requestBody) {
 
-        String trackingId = TrackingHelper.MIN_RUN_ID;
-        BackupPolicyService backupPolicyService = null;
+    String trackingId = TrackingHelper.MIN_RUN_ID;
+    BackupPolicyService backupPolicyService = null;
 
-        // These values will be updated based on the execution flow and logged at the end
-        ResponseEntity responseEntity;
-        TaggerRequest taggerRequest = null;
-        TaggerResponse taggerResponse = null;
-        boolean isSuccess;
-        Exception error = null;
-        boolean isRetryableError= false;
+    // These values will be updated based on the execution flow and logged at the end
+    ResponseEntity responseEntity;
+    TaggerRequest taggerRequest = null;
+    TaggerResponse taggerResponse = null;
+    boolean isSuccess;
+    Exception error = null;
+    boolean isRetryableError = false;
 
-        try {
+    try {
 
-            if (requestBody == null || requestBody.getMessage() == null) {
-                String msg = "Bad Request: invalid message format";
-                logger.logSevereWithTracker(trackingId, null, msg);
-                throw new NonRetryableApplicationException("Request body or message is Null.");
-            }
+      if (requestBody == null || requestBody.getMessage() == null) {
+        String msg = "Bad Request: invalid message format";
+        logger.logSevereWithTracker(trackingId, null, msg);
+        throw new NonRetryableApplicationException("Request body or message is Null.");
+      }
 
-            String requestJsonString = requestBody.getMessage().dataToUtf8String();
+      String requestJsonString = requestBody.getMessage().dataToUtf8String();
 
-            logger.logInfoWithTracker(trackingId, null, String.format("Received payload: %s", requestJsonString));
+      logger.logInfoWithTracker(
+          trackingId, null, String.format("Received payload: %s", requestJsonString));
 
-            // The received pubsub message could have been sent by two different sources
-            // 1. BigQuery Snapshoter: as a TaggerRequest JSON payload
-            // 2. From a log sink listening for BQ export job completion events. These jobs are originally submitted by the GCS Snapshoter
+      // The received pubsub message could have been sent by two different sources
+      // 1. BigQuery Snapshoter: as a TaggerRequest JSON payload
+      // 2. From a log sink listening for BQ export job completion events. These jobs are originally
+      // submitted by the GCS Snapshoter
 
-            boolean isGCSExportJobMessage = isGCSExportJobMessage(requestJsonString);
-            if(isGCSExportJobMessage){
-                // parse the pubsub request as a BQ Export job completion notification
+      boolean isGCSExportJobMessage = isGCSExportJobMessage(requestJsonString);
+      if (isGCSExportJobMessage) {
+        // parse the pubsub request as a BQ Export job completion notification
 
-                String jobId = getGcsExportJobId(requestJsonString);
-                String jobProjectId = getGcsExportJobProjectId(requestJsonString);
-                trackingId = TrackingHelper.parseTrackingIdFromBQExportJobId(jobId);
-                boolean isSuccessfulJob = isSuccessfulJob(requestJsonString);
-                String jobError = getGcsExportJobError(requestJsonString);
+        String jobId = getGcsExportJobId(requestJsonString);
+        String jobProjectId = getGcsExportJobProjectId(requestJsonString);
+        trackingId = TrackingHelper.parseTrackingIdFromBQExportJobId(jobId);
+        boolean isSuccessfulJob = isSuccessfulJob(requestJsonString);
+        String jobError = getGcsExportJobError(requestJsonString);
 
-                PersistentMap persistentMap = new GcsPersistentMapImpl(environment.getGcsFlagsBucket());
-                String taggerRequestFile = String.format("%s/%s", "snapshoter-gcs-tagger-requests", jobId);
-                String taggerRequestJson = persistentMap.get(taggerRequestFile);
-                taggerRequest = gson.fromJson(taggerRequestJson, TaggerRequest.class);
+        PersistentMap persistentMap = new GcsPersistentMapImpl(environment.getGcsFlagsBucket());
+        String taggerRequestFile = String.format("%s/%s", "snapshoter-gcs-tagger-requests", jobId);
+        String taggerRequestJson = persistentMap.get(taggerRequestFile);
+        taggerRequest = gson.fromJson(taggerRequestJson, TaggerRequest.class);
 
-                // After parsing the taggerRequest for tracking, throw a non retryable exception if the backup job failed
-                if (!isSuccessfulJob){
-                    String msg = String.format("GCS export job '%s' on project '%s' has failed with error `%s`. Please check the BigQuery logs in the backup project where the job ran.",
-                            jobId,
-                            jobProjectId,
-                            jobError
-                    );
-                    throw new NonRetryableApplicationException(msg);
-                }
-
-            }else{
-                // parse the pubsub request as a taggerRequest (from BQ Snapshoter)
-                taggerRequest = gson.fromJson(requestJsonString, TaggerRequest.class);
-            }
-
-            trackingId = taggerRequest.getTrackingId();
-
-            logger.logInfoWithTracker(taggerRequest.isDryRun(), trackingId, taggerRequest.getTargetTable(), String.format("Parsed Request: %s", taggerRequest.toString()));
-
-            backupPolicyService = new BackupPolicyServiceGCSImpl(environment.getGcsBackupPoliciesBucket());
-            Tagger tagger = new Tagger(
-                    environment.toConfig(),
-                    backupPolicyService,
-                    new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
-                    "tagger-flags",
-                    functionNumber
-            );
-
-            taggerResponse = tagger.execute(
-                    taggerRequest,
-                    requestBody.getMessage().getMessageId()
-            );
-
-            responseEntity = new ResponseEntity("Process completed successfully.", HttpStatus.OK);
-            isSuccess = true;
-        } catch (Exception e) {
-
-            Tuple<ResponseEntity, Boolean> handlingResults  = ControllerExceptionHelper.handleException(e,
-                    logger,
-                    trackingId,
-                    taggerRequest == null? null: taggerRequest.getTargetTable()
-                    );
-            isSuccess = false;
-            responseEntity = handlingResults.x();
-            isRetryableError = handlingResults.y();
-            error = e;
-
-        }finally {
-            if(backupPolicyService != null){
-                backupPolicyService.shutdown();
-            }
+        // After parsing the taggerRequest for tracking, throw a non retryable exception if the
+        // backup job failed
+        if (!isSuccessfulJob) {
+          String msg =
+              String.format(
+                  "GCS export job '%s' on project '%s' has failed with error `%s`. Please check the BigQuery logs in the backup project where the job ran.",
+                  jobId, jobProjectId, jobError);
+          throw new NonRetryableApplicationException(msg);
         }
 
-        logger.logUnified(
-                taggerRequest == null? null: taggerRequest.isDryRun(),
-                functionNumber.toString(),
-                taggerRequest == null? null: taggerRequest.getRunId(),
-                taggerRequest == null? null: taggerRequest.getTrackingId(),
-                taggerRequest == null? null : taggerRequest.getTargetTable(),
-                taggerRequest,
-                taggerResponse,
-                isSuccess,
-                error,
-                isRetryableError
-        );
+      } else {
+        // parse the pubsub request as a taggerRequest (from BQ Snapshoter)
+        taggerRequest = gson.fromJson(requestJsonString, TaggerRequest.class);
+      }
 
-        return responseEntity;
+      trackingId = taggerRequest.getTrackingId();
+
+      logger.logInfoWithTracker(
+          taggerRequest.isDryRun(),
+          trackingId,
+          taggerRequest.getTargetTable(),
+          String.format("Parsed Request: %s", taggerRequest.toString()));
+
+      backupPolicyService =
+          new BackupPolicyServiceGCSImpl(environment.getGcsBackupPoliciesBucket());
+      Tagger tagger =
+          new Tagger(
+              environment.toConfig(),
+              backupPolicyService,
+              new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
+              "tagger-flags",
+              functionNumber);
+
+      taggerResponse = tagger.execute(taggerRequest, requestBody.getMessage().getMessageId());
+
+      responseEntity = new ResponseEntity("Process completed successfully.", HttpStatus.OK);
+      isSuccess = true;
+    } catch (Exception e) {
+
+      Tuple<ResponseEntity, Boolean> handlingResults =
+          ControllerExceptionHelper.handleException(
+              e, logger, trackingId, taggerRequest == null ? null : taggerRequest.getTargetTable());
+      isSuccess = false;
+      responseEntity = handlingResults.x();
+      isRetryableError = handlingResults.y();
+      error = e;
+
+    } finally {
+      if (backupPolicyService != null) {
+        backupPolicyService.shutdown();
+      }
     }
 
-    public boolean isGCSExportJobMessage(String jsonStr){
-        try{
-            getGcsExportJobId(jsonStr);
-            return true;
-        }catch (Exception ex){
-            return false;
-        }
+    logger.logUnified(
+        taggerRequest == null ? null : taggerRequest.isDryRun(),
+        functionNumber.toString(),
+        taggerRequest == null ? null : taggerRequest.getRunId(),
+        taggerRequest == null ? null : taggerRequest.getTrackingId(),
+        taggerRequest == null ? null : taggerRequest.getTargetTable(),
+        taggerRequest,
+        taggerResponse,
+        isSuccess,
+        error,
+        isRetryableError);
+
+    return responseEntity;
+  }
+
+  public boolean isGCSExportJobMessage(String jsonStr) {
+    try {
+      getGcsExportJobId(jsonStr);
+      return true;
+    } catch (Exception ex) {
+      return false;
     }
+  }
 
-    public static String getGcsExportJobError(String jsonStr){
+  public static String getGcsExportJobError(String jsonStr) {
 
-        JsonObject errorObject =  JsonParser.parseString(jsonStr)
-                .getAsJsonObject().get("protoPayload")
-                .getAsJsonObject().get("serviceData")
-                .getAsJsonObject().get("jobCompletedEvent")
-                .getAsJsonObject().get("job")
-                .getAsJsonObject().get("jobStatus")
-                .getAsJsonObject().get("error").getAsJsonObject();
+    JsonObject errorObject =
+        JsonParser.parseString(jsonStr)
+            .getAsJsonObject()
+            .get("protoPayload")
+            .getAsJsonObject()
+            .get("serviceData")
+            .getAsJsonObject()
+            .get("jobCompletedEvent")
+            .getAsJsonObject()
+            .get("job")
+            .getAsJsonObject()
+            .get("jobStatus")
+            .getAsJsonObject()
+            .get("error")
+            .getAsJsonObject();
 
-        if(errorObject.has("message")){
-            return errorObject.get("message").getAsString();
-        }else{
-            return "";
-        }
+    if (errorObject.has("message")) {
+      return errorObject.get("message").getAsString();
+    } else {
+      return "";
     }
+  }
 
-    public static boolean isSuccessfulJob(String jsonStr){
+  public static boolean isSuccessfulJob(String jsonStr) {
 
-        // if job has error message then it's not successful
-        return !JsonParser.parseString(jsonStr)
-                .getAsJsonObject().get("protoPayload")
-                .getAsJsonObject().get("serviceData")
-                .getAsJsonObject().get("jobCompletedEvent")
-                .getAsJsonObject().get("job")
-                .getAsJsonObject().get("jobStatus")
-                .getAsJsonObject().get("error")
-                .getAsJsonObject().has("message");
-    }
+    // if job has error message then it's not successful
+    return !JsonParser.parseString(jsonStr)
+        .getAsJsonObject()
+        .get("protoPayload")
+        .getAsJsonObject()
+        .get("serviceData")
+        .getAsJsonObject()
+        .get("jobCompletedEvent")
+        .getAsJsonObject()
+        .get("job")
+        .getAsJsonObject()
+        .get("jobStatus")
+        .getAsJsonObject()
+        .get("error")
+        .getAsJsonObject()
+        .has("message");
+  }
 
-    public static String getGcsExportJobId(String jsonStr){
+  public static String getGcsExportJobId(String jsonStr) {
 
-        return JsonParser.parseString(jsonStr)
-                .getAsJsonObject().get("protoPayload")
-                .getAsJsonObject().get("serviceData")
-                .getAsJsonObject().get("jobCompletedEvent")
-                .getAsJsonObject().get("job")
-                .getAsJsonObject().get("jobName")
-                .getAsJsonObject().get("jobId").getAsString();
-    }
+    return JsonParser.parseString(jsonStr)
+        .getAsJsonObject()
+        .get("protoPayload")
+        .getAsJsonObject()
+        .get("serviceData")
+        .getAsJsonObject()
+        .get("jobCompletedEvent")
+        .getAsJsonObject()
+        .get("job")
+        .getAsJsonObject()
+        .get("jobName")
+        .getAsJsonObject()
+        .get("jobId")
+        .getAsString();
+  }
 
-    public static String getGcsExportJobProjectId(String jsonStr){
+  public static String getGcsExportJobProjectId(String jsonStr) {
 
-        return JsonParser.parseString(jsonStr)
-                .getAsJsonObject().get("protoPayload")
-                .getAsJsonObject().get("serviceData")
-                .getAsJsonObject().get("jobCompletedEvent")
-                .getAsJsonObject().get("job")
-                .getAsJsonObject().get("jobName")
-                .getAsJsonObject().get("projectId").getAsString();
-    }
+    return JsonParser.parseString(jsonStr)
+        .getAsJsonObject()
+        .get("protoPayload")
+        .getAsJsonObject()
+        .get("serviceData")
+        .getAsJsonObject()
+        .get("jobCompletedEvent")
+        .getAsJsonObject()
+        .get("job")
+        .getAsJsonObject()
+        .get("jobName")
+        .getAsJsonObject()
+        .get("projectId")
+        .getAsString();
+  }
 
-    public static String getGcsExportJobLabel(String jsonStr, String label){
+  public static String getGcsExportJobLabel(String jsonStr, String label) {
 
-        return JsonParser.parseString(jsonStr)
-                .getAsJsonObject().get("protoPayload")
-                .getAsJsonObject().get("serviceData")
-                .getAsJsonObject().get("jobCompletedEvent")
-                .getAsJsonObject().get("job")
-                .getAsJsonObject().get("jobConfiguration")
-                .getAsJsonObject().get("labels").getAsJsonObject()
-                .get(label).getAsString();
-    }
+    return JsonParser.parseString(jsonStr)
+        .getAsJsonObject()
+        .get("protoPayload")
+        .getAsJsonObject()
+        .get("serviceData")
+        .getAsJsonObject()
+        .get("jobCompletedEvent")
+        .getAsJsonObject()
+        .get("job")
+        .getAsJsonObject()
+        .get("jobConfiguration")
+        .getAsJsonObject()
+        .get("labels")
+        .getAsJsonObject()
+        .get(label)
+        .getAsString();
+  }
 
-    public static void main(String[] args) {
-        SpringApplication.run(TaggerController.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(TaggerController.class, args);
+  }
 }

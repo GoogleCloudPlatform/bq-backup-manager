@@ -22,35 +22,39 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 
 public class FailedPubSubMessage {
 
-    private JsonMessage msg;
-    private String exceptionMessage;
-    private String exceptionClass;
+  private JsonMessage msg;
+  private String exceptionMessage;
+  private String exceptionClass;
 
+  public FailedPubSubMessage(JsonMessage msg, Exception exception) {
+    this.msg = msg;
+    this.exceptionClass = exception != null ? exception.getClass().getName() : null;
+    this.exceptionMessage = exception != null ? exception.getMessage() : null;
+  }
 
-    public FailedPubSubMessage(JsonMessage msg, Exception exception) {
-        this.msg = msg;
-        this.exceptionClass = exception != null? exception.getClass().getName(): null;
-        this.exceptionMessage = exception != null? exception.getMessage(): null;
-    }
+  public JsonMessage getMsg() {
+    return msg;
+  }
 
-    public JsonMessage getMsg() {
-        return msg;
-    }
+  public String getExceptionClass() {
+    return exceptionClass;
+  }
 
-    public String getExceptionClass() {
-        return exceptionClass;
-    }
+  public String getExceptionMessage() {
+    return exceptionMessage;
+  }
 
-    public String getExceptionMessage() {
-        return exceptionMessage;
-    }
-
-    @Override
-    public String toString() {
-        return "FailedPubSubMessage{" +
-                "msg=" + msg +
-                ", exceptionMessage='" + exceptionMessage + '\'' +
-                ", exceptionClass='" + exceptionClass + '\'' +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "FailedPubSubMessage{"
+        + "msg="
+        + msg
+        + ", exceptionMessage='"
+        + exceptionMessage
+        + '\''
+        + ", exceptionClass='"
+        + exceptionClass
+        + '\''
+        + '}';
+  }
 }

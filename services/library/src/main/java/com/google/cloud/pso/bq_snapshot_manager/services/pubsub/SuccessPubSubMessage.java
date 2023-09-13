@@ -22,27 +22,31 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 
 public class SuccessPubSubMessage {
 
-    private JsonMessage msg;
-    private String msgId;
+  private JsonMessage msg;
+  private String msgId;
 
-    public SuccessPubSubMessage(JsonMessage msg, String msgId) {
-        this.msg = msg;
-        this.msgId = msgId;
-    }
+  public SuccessPubSubMessage(JsonMessage msg, String msgId) {
+    this.msg = msg;
+    this.msgId = msgId;
+  }
 
-    public JsonMessage getMsg() {
-        return msg;
-    }
+  public JsonMessage getMsg() {
+    return msg;
+  }
 
-    public String getMsgId() {
-        return msgId;
-    }
+  public String getMsgId() {
+    return msgId;
+  }
 
-    @Override
-    public String toString() {
-        return "PubSubSuccessMessage{" +
-                "msg='" + msg.toJsonString() + '\'' +
-                ", msgId='" + msgId + '\'' +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "PubSubSuccessMessage{"
+        + "msg='"
+        + msg.toJsonString()
+        + '\''
+        + ", msgId='"
+        + msgId
+        + '\''
+        + '}';
+  }
 }

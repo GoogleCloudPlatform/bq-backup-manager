@@ -18,70 +18,70 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.*;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
 public class SnapshoterRequestTest {
 
-    @Test
-    public void testComputeBackupOperationProject1() {
+  @Test
+  public void testComputeBackupOperationProject1() {
 
-        // test with backupOperationProject set
+    // test with backupOperationProject set
 
-        BackupPolicy policy = new BackupPolicy.BackupPolicyBuilder("test-cron",
+    BackupPolicy policy =
+        new BackupPolicy.BackupPolicyBuilder(
+                "test-cron",
                 BackupMethod.BIGQUERY_SNAPSHOT,
                 TimeTravelOffsetDays.DAYS_0,
                 BackupConfigSource.SYSTEM,
                 "storage-project")
-                .setBackupOperationProject("operation-project")
-                .setBigQuerySnapshotExpirationDays(0.0)
-                .setBigQuerySnapshotStorageDataset("test-dataset")
-                .setGcsSnapshotStorageLocation("test-bucket")
-                .build();
+            .setBackupOperationProject("operation-project")
+            .setBigQuerySnapshotExpirationDays(0.0)
+            .setBigQuerySnapshotStorageDataset("test-dataset")
+            .setGcsSnapshotStorageLocation("test-bucket")
+            .build();
 
-        SnapshoterRequest request = new SnapshoterRequest(
-                TableSpec.fromSqlString("source_project.dataset.table"),
-                "run-id",
-                "tracking-id",
-                false,
-                new BackupPolicyAndState(
-                        policy,
-                        new BackupState(Timestamp.MAX_VALUE, "last bq uri", null)
-                )
-        );
+    SnapshoterRequest request =
+        new SnapshoterRequest(
+            TableSpec.fromSqlString("source_project.dataset.table"),
+            "run-id",
+            "tracking-id",
+            false,
+            new BackupPolicyAndState(
+                policy, new BackupState(Timestamp.MAX_VALUE, "last bq uri", null)));
 
-        assertEquals("operation-project", request.computeBackupOperationProject());
-    }
+    assertEquals("operation-project", request.computeBackupOperationProject());
+  }
 
-    public void testComputeBackupOperationProject2() {
+  public void testComputeBackupOperationProject2() {
 
-        // test with backupOperationProject missing
+    // test with backupOperationProject missing
 
-        BackupPolicy policy = new BackupPolicy.BackupPolicyBuilder("test-cron",
+    BackupPolicy policy =
+        new BackupPolicy.BackupPolicyBuilder(
+                "test-cron",
                 BackupMethod.BIGQUERY_SNAPSHOT,
                 TimeTravelOffsetDays.DAYS_0,
                 BackupConfigSource.SYSTEM,
                 "storage-project")
-                .setBigQuerySnapshotExpirationDays(0.0)
-                .setBigQuerySnapshotStorageDataset("test-dataset")
-                .setGcsSnapshotStorageLocation("test-bucket")
-                .build();
+            .setBigQuerySnapshotExpirationDays(0.0)
+            .setBigQuerySnapshotStorageDataset("test-dataset")
+            .setGcsSnapshotStorageLocation("test-bucket")
+            .build();
 
-        SnapshoterRequest request = new SnapshoterRequest(
-                TableSpec.fromSqlString("source_project.dataset.table"),
-                "run-id",
-                "tracking-id",
-                false,
-                new BackupPolicyAndState(
-                        policy,
-                        new BackupState(Timestamp.MAX_VALUE, "last bq uri", null)
-                )
-        );
+    SnapshoterRequest request =
+        new SnapshoterRequest(
+            TableSpec.fromSqlString("source_project.dataset.table"),
+            "run-id",
+            "tracking-id",
+            false,
+            new BackupPolicyAndState(
+                policy, new BackupState(Timestamp.MAX_VALUE, "last bq uri", null)));
 
-        assertEquals("source_project", request.computeBackupOperationProject());
-    }
+    assertEquals("source_project", request.computeBackupOperationProject());
+  }
 }

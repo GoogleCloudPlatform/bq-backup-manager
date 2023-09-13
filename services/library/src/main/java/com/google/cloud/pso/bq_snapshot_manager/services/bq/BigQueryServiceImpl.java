@@ -25,123 +25,127 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplication
 import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.GCSSnapshotFormat;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public class BigQueryServiceImpl implements BigQueryService {
 
-    private BigQuery bigQuery;
+  private BigQuery bigQuery;
 
-    public BigQueryServiceImpl(String projectId) throws IOException {
-        bigQuery = BigQueryOptions
-                .newBuilder()
-                .setProjectId(projectId)
-                .build()
-                .getService();
+  public BigQueryServiceImpl(String projectId) throws IOException {
+    bigQuery = BigQueryOptions.newBuilder().setProjectId(projectId).build().getService();
+  }
+
+  public void createSnapshot(
+      String jobId,
+      TableSpec sourceTable,
+      TableSpec destinationTable,
+      Timestamp snapshotExpirationTs,
+      String trackingId)
+      throws InterruptedException, RetryableApplicationException, NonRetryableApplicationException {
+    CopyJobConfiguration copyJobConfiguration =
+        CopyJobConfiguration.newBuilder(destinationTable.toTableId(), sourceTable.toTableId())
+            .setWriteDisposition(JobInfo.WriteDisposition.WRITE_EMPTY)
+            .setOperationType("SNAPSHOT")
+            .setDestinationExpirationTime(snapshotExpirationTs.toString())
+            .build();
+
+    Job job =
+        bigQuery.create(JobInfo.newBuilder(copyJobConfiguration).setJobId(JobId.of(jobId)).build());
+
+    // wait for the job to complete
+    job = job.waitFor();
+
+    // if job finished with errors
+    if (job.getStatus().getError() != null) {
+      if (job.getStatus()
+          .getError()
+          .getMessage()
+          .toLowerCase()
+          .contains("caused by a transient issue")) {
+        // In some cases snapshot jobs faces the below error. In such case we should retry it.
+        // IMPROVE: detect the error based on a code or reason and not the error message
+        /*
+        An internal error occurred and the request could not be completed.
+        This is usually caused by a transient issue.
+        Retrying the job with back-off as described in the BigQuery SLA should solve the
+        problem: https://cloud.google.com/bigquery/sla. If the error continues to occur
+        please contact support at https://cloud.google.com/support.
+         */
+
+        String msg =
+            String.format(
+                "BigQuery Snapshot job %s for table %s failed due to a transient error. Msg: %s. Reason: %s",
+                jobId,
+                sourceTable.toSqlString(),
+                job.getStatus().getError().getMessage(),
+                job.getStatus().getError().getReason());
+        throw new RetryableApplicationException(msg);
+      } else {
+        String msg =
+            String.format(
+                "BigQuery Snapshot job %s for table %s failed. Msg: %s. Reason: %s",
+                jobId,
+                sourceTable.toSqlString(),
+                job.getStatus().getError().getMessage(),
+                job.getStatus().getError().getReason());
+        throw new NonRetryableApplicationException(msg);
+      }
+    }
+  }
+
+  public void exportToGCS(
+      String jobId,
+      TableSpec sourceTable,
+      String gcsDestinationUri,
+      GCSSnapshotFormat exportFormat,
+      @Nullable String csvFieldDelimiter,
+      @Nullable Boolean csvPrintHeader,
+      @Nullable Boolean useAvroLogicalTypes,
+      String trackingId,
+      Map<String, String> jobLabels)
+      throws InterruptedException {
+
+    Tuple<String, String> formatAndCompression =
+        GCSSnapshotFormat.getFormatAndCompression(exportFormat);
+
+    ExtractJobConfiguration.Builder extractConfigurationBuilder =
+        ExtractJobConfiguration.newBuilder(sourceTable.toTableId(), gcsDestinationUri)
+            .setLabels(jobLabels)
+            .setFormat(formatAndCompression.x());
+
+    // check if compression is required
+    if (formatAndCompression.y() != null) {
+      extractConfigurationBuilder.setCompression(formatAndCompression.y());
     }
 
-
-    public void createSnapshot(String jobId, TableSpec sourceTable, TableSpec destinationTable, Timestamp snapshotExpirationTs, String trackingId) throws InterruptedException, RetryableApplicationException, NonRetryableApplicationException {
-        CopyJobConfiguration copyJobConfiguration = CopyJobConfiguration
-                .newBuilder(destinationTable.toTableId(), sourceTable.toTableId())
-                .setWriteDisposition(JobInfo.WriteDisposition.WRITE_EMPTY)
-                .setOperationType("SNAPSHOT")
-                .setDestinationExpirationTime(snapshotExpirationTs.toString())
-                .build();
-
-        Job job = bigQuery.create(JobInfo
-                .newBuilder(copyJobConfiguration)
-                .setJobId(JobId.of(jobId))
-                .build());
-
-        // wait for the job to complete
-        job = job.waitFor();
-
-        // if job finished with errors
-        if (job.getStatus().getError() != null) {
-            if(job.getStatus().getError().getMessage().toLowerCase().contains("caused by a transient issue")){
-                // In some cases snapshot jobs faces the below error. In such case we should retry it.
-                // IMPROVE: detect the error based on a code or reason and not the error message
-                /*
-                An internal error occurred and the request could not be completed.
-                This is usually caused by a transient issue.
-                Retrying the job with back-off as described in the BigQuery SLA should solve the
-                problem: https://cloud.google.com/bigquery/sla. If the error continues to occur
-                please contact support at https://cloud.google.com/support.
-                 */
-
-                String msg = String.format(
-                        "BigQuery Snapshot job %s for table %s failed due to a transient error. Msg: %s. Reason: %s",
-                        jobId,
-                        sourceTable.toSqlString(),
-                        job.getStatus().getError().getMessage(),
-                        job.getStatus().getError().getReason()
-                        );
-                throw new RetryableApplicationException(msg);
-            }else{
-                String msg = String.format(
-                        "BigQuery Snapshot job %s for table %s failed. Msg: %s. Reason: %s",
-                        jobId,
-                        sourceTable.toSqlString(),
-                        job.getStatus().getError().getMessage(),
-                        job.getStatus().getError().getReason()
-                );
-                throw new NonRetryableApplicationException(msg);
-            }
-        }
+    // set optional fields
+    if (csvFieldDelimiter != null) {
+      extractConfigurationBuilder.setFieldDelimiter(csvFieldDelimiter);
+    }
+    if (csvPrintHeader != null) {
+      extractConfigurationBuilder.setPrintHeader(csvPrintHeader);
+    }
+    if (useAvroLogicalTypes != null) {
+      extractConfigurationBuilder.setUseAvroLogicalTypes(useAvroLogicalTypes);
     }
 
-    public void exportToGCS(
-            String jobId,
-            TableSpec sourceTable,
-            String gcsDestinationUri,
-            GCSSnapshotFormat exportFormat,
-            @Nullable String csvFieldDelimiter,
-            @Nullable Boolean csvPrintHeader,
-            @Nullable Boolean useAvroLogicalTypes,
-            String trackingId,
-            Map<String, String> jobLabels
-    ) throws InterruptedException {
+    // async call to create an export job
+    bigQuery.create(
+        JobInfo.newBuilder(extractConfigurationBuilder.build()).setJobId(JobId.of(jobId)).build());
+  }
 
-        Tuple<String, String> formatAndCompression = GCSSnapshotFormat.getFormatAndCompression(exportFormat);
-
-        ExtractJobConfiguration.Builder extractConfigurationBuilder = ExtractJobConfiguration
-                .newBuilder(sourceTable.toTableId(), gcsDestinationUri)
-                .setLabels(jobLabels)
-                .setFormat(formatAndCompression.x());
-
-        // check if compression is required
-        if (formatAndCompression.y() != null) {
-            extractConfigurationBuilder.setCompression(formatAndCompression.y());
-        }
-
-        // set optional fields
-        if (csvFieldDelimiter != null) {
-            extractConfigurationBuilder.setFieldDelimiter(csvFieldDelimiter);
-        }
-        if (csvPrintHeader != null) {
-            extractConfigurationBuilder.setPrintHeader(csvPrintHeader);
-        }
-        if (useAvroLogicalTypes != null) {
-            extractConfigurationBuilder.setUseAvroLogicalTypes(useAvroLogicalTypes);
-        }
-
-        // async call to create an export job
-        bigQuery.create(JobInfo
-                .newBuilder(extractConfigurationBuilder.build())
-                .setJobId(JobId.of(jobId))
-                .build());
+  @Override
+  public Long getTableCreationTime(TableSpec tableSpec) throws NonRetryableApplicationException {
+    Table table = bigQuery.getTable(tableSpec.toTableId());
+    if (table != null) {
+      return table.getCreationTime();
+    } else {
+      throw new NonRetryableApplicationException(
+          String.format(
+              "Requested table %s is not found. The table might have been deleted.",
+              tableSpec.toSqlString()));
     }
-
-    @Override
-    public Long getTableCreationTime(TableSpec tableSpec) throws NonRetryableApplicationException {
-        Table table = bigQuery.getTable(tableSpec.toTableId());
-        if(table != null){
-            return table.getCreationTime();
-        }else{
-            throw new NonRetryableApplicationException(String.format("Requested table %s is not found. The table might have been deleted.", tableSpec.toSqlString()));
-        }
-    }
+  }
 }

@@ -25,5 +25,7 @@ import java.util.List;
 
 public interface PubSubService {
 
-    PubSubPublishResults publishTableOperationRequests(String projectId, String topicId, List<JsonMessage> messages) throws IOException, InterruptedException;
+  PubSubPublishResults publishTableOperationRequests(
+      String projectId, String topicId, List<JsonMessage> messages)
+      throws IOException, InterruptedException;
 }

@@ -27,13 +27,12 @@ import java.io.IOException;
 
 public interface BackupPolicyService {
 
-    void createOrUpdateBackupPolicyAndStateForTable(TableSpec tableSpec,
-                                                    BackupPolicyAndState backupPolicyAndState)
-            throws IOException;
+  void createOrUpdateBackupPolicyAndStateForTable(
+      TableSpec tableSpec, BackupPolicyAndState backupPolicyAndState) throws IOException;
 
-    @Nullable
-    BackupPolicyAndState getBackupPolicyAndStateForTable(TableSpec tableSpec)
-            throws IOException, IllegalArgumentException;
+  @Nullable
+  BackupPolicyAndState getBackupPolicyAndStateForTable(TableSpec tableSpec)
+      throws IOException, IllegalArgumentException;
 
-     void shutdown();
+  void shutdown();
 }
