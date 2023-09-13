@@ -27,77 +27,91 @@ import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishRes
 
 public class ConfiguratorResponse extends TableOperationRequestResponse {
 
-    private final BackupPolicyAndState backupPolicy;
+  private final BackupPolicyAndState backupPolicy;
 
-    private final String backupPolicySource;
-    private final Timestamp refTs;
+  private final String backupPolicySource;
+  private final Timestamp refTs;
 
-    // If the table should be backed up this run based on the backup cron only
-    private final boolean isBackupCronTime;
+  // If the table should be backed up this run based on the backup cron only
+  private final boolean isBackupCronTime;
 
-    // If the table has enough history to go back in time via time travel to take a backup
-    private final boolean isTableCreatedBeforeTimeTravel;
-    private final boolean isBackupTime;
-    private final SnapshoterRequest bqSnapshoterRequest;
-    private final SnapshoterRequest gcsSnapshoterRequest;
-    private final PubSubPublishResults bigQueryBackupPublishingResults;
-    private final PubSubPublishResults gcsBackupPublishingResults;
+  // If the table has enough history to go back in time via time travel to take a backup
+  private final boolean isTableCreatedBeforeTimeTravel;
+  private final boolean isBackupTime;
+  private final SnapshoterRequest bqSnapshoterRequest;
+  private final SnapshoterRequest gcsSnapshoterRequest;
+  private final PubSubPublishResults bigQueryBackupPublishingResults;
+  private final PubSubPublishResults gcsBackupPublishingResults;
 
-    public ConfiguratorResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicyAndState backupPolicy, String backupPolicySource, Timestamp refTs, boolean  isBackupCronTime, boolean  isTableCreatedBeforeTimeTravel, boolean isBackupTime, SnapshoterRequest bqSnapshoterRequest, SnapshoterRequest gcsSnapshoterRequest, PubSubPublishResults bigQueryBackupPublishingResults, PubSubPublishResults gcsBackupPublishingResults) {
-        super(targetTable, runId, trackingId, isDryRun);
-        this.backupPolicy = backupPolicy;
-        this.backupPolicySource = backupPolicySource;
-        this.refTs = refTs;
-        this.isBackupCronTime = isBackupCronTime;
-        this.isTableCreatedBeforeTimeTravel = isTableCreatedBeforeTimeTravel;
-        this.isBackupTime = isBackupTime;
-        this.bqSnapshoterRequest = bqSnapshoterRequest;
-        this.gcsSnapshoterRequest = gcsSnapshoterRequest;
-        this.bigQueryBackupPublishingResults = bigQueryBackupPublishingResults;
-        this.gcsBackupPublishingResults = gcsBackupPublishingResults;
-    }
+  public ConfiguratorResponse(
+      TableSpec targetTable,
+      String runId,
+      String trackingId,
+      boolean isDryRun,
+      BackupPolicyAndState backupPolicy,
+      String backupPolicySource,
+      Timestamp refTs,
+      boolean isBackupCronTime,
+      boolean isTableCreatedBeforeTimeTravel,
+      boolean isBackupTime,
+      SnapshoterRequest bqSnapshoterRequest,
+      SnapshoterRequest gcsSnapshoterRequest,
+      PubSubPublishResults bigQueryBackupPublishingResults,
+      PubSubPublishResults gcsBackupPublishingResults) {
+    super(targetTable, runId, trackingId, isDryRun);
+    this.backupPolicy = backupPolicy;
+    this.backupPolicySource = backupPolicySource;
+    this.refTs = refTs;
+    this.isBackupCronTime = isBackupCronTime;
+    this.isTableCreatedBeforeTimeTravel = isTableCreatedBeforeTimeTravel;
+    this.isBackupTime = isBackupTime;
+    this.bqSnapshoterRequest = bqSnapshoterRequest;
+    this.gcsSnapshoterRequest = gcsSnapshoterRequest;
+    this.bigQueryBackupPublishingResults = bigQueryBackupPublishingResults;
+    this.gcsBackupPublishingResults = gcsBackupPublishingResults;
+  }
 
-    public BackupPolicyAndState getBackupPolicy() {
-        return backupPolicy;
-    }
+  public BackupPolicyAndState getBackupPolicy() {
+    return backupPolicy;
+  }
 
-    public Timestamp getRefTs() {
-        return refTs;
-    }
+  public Timestamp getRefTs() {
+    return refTs;
+  }
 
-    public boolean isBackupTime() {
-        return isBackupTime;
-    }
+  public boolean isBackupTime() {
+    return isBackupTime;
+  }
 
-    public SnapshoterRequest getBigQuerySnapshoterRequest() {
-        return bqSnapshoterRequest;
-    }
+  public SnapshoterRequest getBigQuerySnapshoterRequest() {
+    return bqSnapshoterRequest;
+  }
 
-    public SnapshoterRequest getGcsSnapshoterRequest() {
-        return gcsSnapshoterRequest;
-    }
+  public SnapshoterRequest getGcsSnapshoterRequest() {
+    return gcsSnapshoterRequest;
+  }
 
-    public PubSubPublishResults getBigQueryBackupPublishingResults() {
-        return bigQueryBackupPublishingResults;
-    }
+  public PubSubPublishResults getBigQueryBackupPublishingResults() {
+    return bigQueryBackupPublishingResults;
+  }
 
-    public PubSubPublishResults getGcsBackupPublishingResults() {
-        return gcsBackupPublishingResults;
-    }
+  public PubSubPublishResults getGcsBackupPublishingResults() {
+    return gcsBackupPublishingResults;
+  }
 
-    public boolean isBackupCronTime() {
-        return isBackupCronTime;
-    }
+  public boolean isBackupCronTime() {
+    return isBackupCronTime;
+  }
 
-    public boolean isTableCreatedBeforeTimeTravel() {
-        return isTableCreatedBeforeTimeTravel;
-    }
+  public boolean isTableCreatedBeforeTimeTravel() {
+    return isTableCreatedBeforeTimeTravel;
+  }
 
-    public SnapshoterRequest getBqSnapshoterRequest() {
-        return bqSnapshoterRequest;
-    }
+  public SnapshoterRequest getBqSnapshoterRequest() {
+    return bqSnapshoterRequest;
+  }
 
-    public String getBackupPolicySource() {
-        return backupPolicySource;
-    }
+  public String getBackupPolicySource() {
+    return backupPolicySource;
+  }
 }

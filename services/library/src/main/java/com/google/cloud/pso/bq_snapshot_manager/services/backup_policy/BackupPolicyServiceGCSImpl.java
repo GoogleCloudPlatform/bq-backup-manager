@@ -23,88 +23,83 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPol
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupState;
 import com.google.cloud.storage.*;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import javax.annotation.Nullable;
 
 public class BackupPolicyServiceGCSImpl implements BackupPolicyService {
 
-    public static final String POLICY_FILE_NAME = "backup_policy.json";
-    public static final String STATE_FILE_NAME = "backup_state.json";
+  public static final String POLICY_FILE_NAME = "backup_policy.json";
+  public static final String STATE_FILE_NAME = "backup_state.json";
 
-    private Storage storage;
-    private String bucketName;
+  private Storage storage;
+  private String bucketName;
 
-    public BackupPolicyServiceGCSImpl(String bucketName) {
-        // Instantiates a client
-        this.storage = StorageOptions.getDefaultInstance().getService();
-        this.bucketName = bucketName;
+  public BackupPolicyServiceGCSImpl(String bucketName) {
+    // Instantiates a client
+    this.storage = StorageOptions.getDefaultInstance().getService();
+    this.bucketName = bucketName;
+  }
+
+  public void createOrUpdateBackupPolicyAndStateForTable(
+      TableSpec tableSpec, BackupPolicyAndState backupPolicyAndState) throws IOException {
+    String policyFilePath = tableToBackupPolicyGcsKey(tableSpec);
+    String stateFilePath = tableToBackupStateGcsKey(tableSpec);
+
+    writeGCSFileAsUTF8(bucketName, policyFilePath, backupPolicyAndState.getPolicy().toJson());
+    writeGCSFileAsUTF8(bucketName, stateFilePath, backupPolicyAndState.getState().toJson());
+  }
+
+  private void writeGCSFileAsUTF8(String bucketName, String filePath, String contentStr)
+      throws IOException {
+    BlobId blobId = BlobId.of(bucketName, filePath);
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text").build();
+
+    byte[] contentBytes = contentStr.getBytes(StandardCharsets.UTF_8);
+    storage.createFrom(blobInfo, new ByteArrayInputStream(contentBytes));
+  }
+
+  public @Nullable BackupPolicyAndState getBackupPolicyAndStateForTable(TableSpec tableSpec) {
+    String policyFilePath = tableToBackupPolicyGcsKey(tableSpec);
+    String stateFilePath = tableToBackupStateGcsKey(tableSpec);
+
+    // Read policy file (file is expected to be there)
+    String policyContent = readGcsFileAsUTF8(bucketName, policyFilePath);
+    if (policyContent == null) {
+      return null;
     }
 
+    // Read state file (file will not be there in the first run)
+    String stateContent = readGcsFileAsUTF8(bucketName, stateFilePath);
 
-    public void createOrUpdateBackupPolicyAndStateForTable(TableSpec tableSpec,
-                                                           BackupPolicyAndState backupPolicyAndState)
-            throws IOException {
-        String policyFilePath = tableToBackupPolicyGcsKey(tableSpec);
-        String stateFilePath = tableToBackupStateGcsKey(tableSpec);
+    return new BackupPolicyAndState(
+        BackupPolicy.fromJson(policyContent),
+        stateContent == null ? null : BackupState.fromJson(stateContent));
+  }
 
-        writeGCSFileAsUTF8(bucketName, policyFilePath, backupPolicyAndState.getPolicy().toJson());
-        writeGCSFileAsUTF8(bucketName, stateFilePath, backupPolicyAndState.getState().toJson());
+  private @Nullable String readGcsFileAsUTF8(String bucketName, String filePath) {
+    BlobId blobId = BlobId.of(bucketName, filePath);
+    Blob blob = storage.get(blobId);
+    if (blob == null) {
+      return null;
+    } else {
+      byte[] contentBytes = storage.readAllBytes(blobId);
+      return new String(contentBytes, StandardCharsets.UTF_8);
     }
+  }
 
-    private void writeGCSFileAsUTF8(String bucketName, String filePath, String contentStr) throws IOException {
-        BlobId blobId = BlobId.of(bucketName, filePath);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text").build();
+  @Override
+  public void shutdown() {
+    // do nothing
+  }
 
-        byte[] contentBytes = contentStr.getBytes(StandardCharsets.UTF_8);
-        storage.createFrom(blobInfo, new ByteArrayInputStream(contentBytes));
-    }
+  public String tableToBackupPolicyGcsKey(TableSpec tableSpec) {
+    return String.format(
+        "%s/%s/%s", "policy", tableSpec.toHivePartitionPostfix(), POLICY_FILE_NAME);
+  }
 
-
-    public @Nullable BackupPolicyAndState getBackupPolicyAndStateForTable(TableSpec tableSpec) {
-        String policyFilePath = tableToBackupPolicyGcsKey(tableSpec);
-        String stateFilePath = tableToBackupStateGcsKey(tableSpec);
-
-        // Read policy file (file is expected to be there)
-        String policyContent = readGcsFileAsUTF8(bucketName, policyFilePath);
-        if(policyContent == null){
-            return null;
-        }
-
-        // Read state file (file will not be there in the first run)
-        String stateContent = readGcsFileAsUTF8(bucketName, stateFilePath);
-
-        return new BackupPolicyAndState(
-                BackupPolicy.fromJson(policyContent),
-                stateContent == null? null: BackupState.fromJson(stateContent)
-        );
-    }
-
-    private @Nullable String readGcsFileAsUTF8(String bucketName, String filePath){
-        BlobId blobId = BlobId.of(bucketName, filePath);
-        Blob blob = storage.get(blobId);
-        if (blob == null) {
-            return null;
-        } else {
-            byte[] contentBytes = storage.readAllBytes(blobId);
-            return new String(contentBytes, StandardCharsets.UTF_8);
-        }
-    }
-
-    @Override
-    public void shutdown() {
-        // do nothing
-    }
-
-    public String tableToBackupPolicyGcsKey(TableSpec tableSpec) {
-        return String.format("%s/%s/%s" , "policy", tableSpec.toHivePartitionPostfix(), POLICY_FILE_NAME);
-    }
-
-    public String tableToBackupStateGcsKey(TableSpec tableSpec) {
-        return String.format("%s/%s/%s" , "state", tableSpec.toHivePartitionPostfix(), STATE_FILE_NAME);
-    }
-
-
+  public String tableToBackupStateGcsKey(TableSpec tableSpec) {
+    return String.format("%s/%s/%s", "state", tableSpec.toHivePartitionPostfix(), STATE_FILE_NAME);
+  }
 }

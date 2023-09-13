@@ -23,35 +23,36 @@ import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 
 public class Environment {
 
-    public DispatcherConfig toConfig(){
-        return new DispatcherConfig(
-                getProjectId(),
-                getComputeRegionId(),
-                getDataRegionId(),
-                getOutputTopic(),
-                getApplicationName()
-        );
-    }
+  public DispatcherConfig toConfig() {
+    return new DispatcherConfig(
+        getProjectId(),
+        getComputeRegionId(),
+        getDataRegionId(),
+        getOutputTopic(),
+        getApplicationName());
+  }
 
-    public String getProjectId(){
-        return Utils.getConfigFromEnv("PROJECT_ID", true);
-    }
+  public String getProjectId() {
+    return Utils.getConfigFromEnv("PROJECT_ID", true);
+  }
 
-    public String getComputeRegionId(){
-        return Utils.getConfigFromEnv("COMPUTE_REGION_ID", true);
-    }
+  public String getComputeRegionId() {
+    return Utils.getConfigFromEnv("COMPUTE_REGION_ID", true);
+  }
 
-    public String getDataRegionId(){
-        return Utils.getConfigFromEnv("DATA_REGION_ID", true);
-    }
+  public String getDataRegionId() {
+    return Utils.getConfigFromEnv("DATA_REGION_ID", true);
+  }
 
-    public String getOutputTopic() { return Utils.getConfigFromEnv("OUTPUT_TOPIC", true); }
+  public String getOutputTopic() {
+    return Utils.getConfigFromEnv("OUTPUT_TOPIC", true);
+  }
 
-    public String getGcsFlagsBucket(){
-        return Utils.getConfigFromEnv("GCS_FLAGS_BUCKET", true);
-    }
+  public String getGcsFlagsBucket() {
+    return Utils.getConfigFromEnv("GCS_FLAGS_BUCKET", true);
+  }
 
-    public String getApplicationName(){
-        return Utils.getConfigFromEnv("APPLICATION_NAME", true);
-    }
+  public String getApplicationName() {
+    return Utils.getConfigFromEnv("APPLICATION_NAME", true);
+  }
 }

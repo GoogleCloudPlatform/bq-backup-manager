@@ -27,96 +27,91 @@ import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
-
 import java.io.IOException;
 
 public class Tagger {
 
-    private final LoggingHelper logger;
+  private final LoggingHelper logger;
 
-    private final TaggerConfig config;
-    private final BackupPolicyService backupPolicyService;
-    private final PersistentSet persistentSet;
-    private final String persistentSetObjectPrefix;
+  private final TaggerConfig config;
+  private final BackupPolicyService backupPolicyService;
+  private final PersistentSet persistentSet;
+  private final String persistentSetObjectPrefix;
 
+  public Tagger(
+      TaggerConfig config,
+      BackupPolicyService backupPolicyService,
+      PersistentSet persistentSet,
+      String persistentSetObjectPrefix,
+      Integer functionNumber) {
+    this.config = config;
+    this.backupPolicyService = backupPolicyService;
+    this.persistentSet = persistentSet;
+    this.persistentSetObjectPrefix = persistentSetObjectPrefix;
 
-    public Tagger(TaggerConfig config, BackupPolicyService backupPolicyService, PersistentSet persistentSet, String persistentSetObjectPrefix, Integer functionNumber) {
-        this.config = config;
-        this.backupPolicyService = backupPolicyService;
-        this.persistentSet = persistentSet;
-        this.persistentSetObjectPrefix = persistentSetObjectPrefix;
+    logger =
+        new LoggingHelper(
+            Tagger.class.getSimpleName(),
+            functionNumber,
+            config.getProjectId(),
+            config.getApplicationName());
+  }
 
-        logger = new LoggingHelper(
-                Tagger.class.getSimpleName(),
-                functionNumber,
-                config.getProjectId(),
-                config.getApplicationName()
-        );
+  /**
+   * @param request
+   * @param pubSubMessageId
+   * @return The backup policy attached to the target table
+   * @throws NonRetryableApplicationException
+   */
+  public TaggerResponse execute(TaggerRequest request, String pubSubMessageId)
+      throws NonRetryableApplicationException, RetryableApplicationException, IOException {
+
+    // run common service start logging and checks
+    Utils.runServiceStartRoutines(
+        logger,
+        request,
+        persistentSet,
+        // This service might be called twice in case of the "Both" backup method. We need to
+        // differentiate the key
+        String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
+        request.getTrackingId());
+
+    BackupState updatedState =
+        new BackupState(
+            request.getLastBackUpAt(),
+            request.getAppliedBackupMethod().equals(BackupMethod.BIGQUERY_SNAPSHOT)
+                ? request.getBigQuerySnapshotTableSpec().toResourceUrl()
+                : null,
+            request.getAppliedBackupMethod().equals(BackupMethod.GCS_SNAPSHOT)
+                ? request.getGcsSnapshotUri()
+                : null);
+
+    BackupPolicyAndState updatedPolicyAndState =
+        new BackupPolicyAndState(request.getBackupPolicyAndState().getPolicy(), updatedState);
+
+    if (!request.isDryRun()) {
+      // update the tag
+      // API Calls
+      backupPolicyService.createOrUpdateBackupPolicyAndStateForTable(
+          request.getTargetTable(), updatedPolicyAndState);
     }
 
-    /**
-     *
-     * @param request
-     * @param pubSubMessageId
-     * @return The backup policy attached to the target table
-     * @throws NonRetryableApplicationException
-     */
-    public TaggerResponse execute(
-            TaggerRequest request,
-            String pubSubMessageId
-    ) throws NonRetryableApplicationException, RetryableApplicationException, IOException {
+    // run common service end logging and adding pubsub message to processed list
+    Utils.runServiceEndRoutines(
+        logger,
+        request,
+        persistentSet,
+        // This service might be called twice in case of the "Both" backup method. We need to
+        // differentiate the key
+        String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
+        request.getTrackingId());
 
-        // run common service start logging and checks
-        Utils.runServiceStartRoutines(
-                logger,
-                request,
-                persistentSet,
-                // This service might be called twice in case of the "Both" backup method. We need to differentiate the key
-                String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
-                request.getTrackingId()
-        );
-
-
-            BackupState updatedState = new BackupState(
-                    request.getLastBackUpAt(),
-                    request.getAppliedBackupMethod().equals(BackupMethod.BIGQUERY_SNAPSHOT)?
-                            request.getBigQuerySnapshotTableSpec().toResourceUrl(): null,
-                    request.getAppliedBackupMethod().equals(BackupMethod.GCS_SNAPSHOT)?
-                            request.getGcsSnapshotUri(): null
-            );
-
-            BackupPolicyAndState updatedPolicyAndState =  new BackupPolicyAndState(
-                    request.getBackupPolicyAndState().getPolicy(),
-                    updatedState
-            );
-
-            if(!request.isDryRun()){
-                // update the tag
-                // API Calls
-                backupPolicyService.createOrUpdateBackupPolicyAndStateForTable(
-                        request.getTargetTable(),
-                        updatedPolicyAndState
-                );
-            }
-
-            // run common service end logging and adding pubsub message to processed list
-            Utils.runServiceEndRoutines(
-                    logger,
-                    request,
-                    persistentSet,
-                    // This service might be called twice in case of the "Both" backup method. We need to differentiate the key
-                    String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
-                    request.getTrackingId()
-            );
-
-            return new TaggerResponse(
-                    request.getTargetTable(),
-                    request.getRunId(),
-                    request.getTrackingId(),
-                    request.isDryRun(),
-                    request.getBackupPolicyAndState(),
-                    updatedPolicyAndState
-            );
-
-    }
+    return new TaggerResponse(
+        request.getTargetTable(),
+        request.getRunId(),
+        request.getTrackingId(),
+        request.isDryRun(),
+        request.getBackupPolicyAndState(),
+        updatedPolicyAndState);
+  }
 }

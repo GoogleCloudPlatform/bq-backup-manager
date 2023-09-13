@@ -22,7 +22,7 @@ import com.google.gson.Gson;
 
 public class JsonMessage {
 
-    public String toJsonString() {
-        return new Gson().toJson(this);
-    }
+  public String toJsonString() {
+    return new Gson().toJson(this);
+  }
 }

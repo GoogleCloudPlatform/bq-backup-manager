@@ -19,7 +19,7 @@
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
 public class RetryableApplicationException extends Exception {
-    public RetryableApplicationException(String msg){
-        super(msg);
-    }
+  public RetryableApplicationException(String msg) {
+    super(msg);
+  }
 }

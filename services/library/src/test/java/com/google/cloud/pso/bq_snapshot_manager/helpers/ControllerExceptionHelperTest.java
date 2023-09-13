@@ -18,200 +18,199 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.helpers;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.storage.StorageException;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import javax.net.ssl.SSLException;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 
-import javax.net.ssl.SSLException;
-
-import static org.junit.Assert.assertEquals;
-
 public class ControllerExceptionHelperTest {
 
-    @Test
-    public void testRetryableApiException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
+  @Test
+  public void testRetryableApiException() {
+    LoggingHelper logger =
+        new LoggingHelper(
+            ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
-        try {
+    try {
 
-            throw new ApiException(new Exception("Test Retryable ApiException"), new StatusCode() {
-                @Override
-                public Code getCode() {
-                    return Code.RESOURCE_EXHAUSTED;
-                }
+      throw new ApiException(
+          new Exception("Test Retryable ApiException"),
+          new StatusCode() {
+            @Override
+            public Code getCode() {
+              return Code.RESOURCE_EXHAUSTED;
+            }
 
-                @Override
-                public Object getTransportCode() {
-                    return null;
-                }
-            }, true);
+            @Override
+            public Object getTransportCode() {
+              return null;
+            }
+          },
+          true);
 
-        } catch (Exception e) {
+    } catch (Exception e) {
 
-            assertEquals(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    ControllerExceptionHelper
-                            .handleException(e, logger, "retryableTracker", null).x()
-                            .getStatusCode()
-                    );
-
-        }
-
+      assertEquals(
+          HttpStatus.TOO_MANY_REQUESTS,
+          ControllerExceptionHelper.handleException(e, logger, "retryableTracker", null)
+              .x()
+              .getStatusCode());
     }
+  }
 
-    @Test
-    public void testNonRetryableApiException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test","bq_backup_manager");
+  @Test
+  public void testNonRetryableApiException() {
+    LoggingHelper logger =
+        new LoggingHelper(
+            ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
-        try {
+    try {
 
-            throw new ApiException(new Exception("Test Non Retryable ApiException"), new StatusCode() {
-                @Override
-                public Code getCode() {
-                    return Code.UNAUTHENTICATED;
-                }
+      throw new ApiException(
+          new Exception("Test Non Retryable ApiException"),
+          new StatusCode() {
+            @Override
+            public Code getCode() {
+              return Code.UNAUTHENTICATED;
+            }
 
-                @Override
-                public Object getTransportCode() {
-                    return null;
-                }
-            }, false);
+            @Override
+            public Object getTransportCode() {
+              return null;
+            }
+          },
+          false);
 
-        } catch (Exception e) {
+    } catch (Exception e) {
 
-            assertEquals(
-                    HttpStatus.OK,
-                    ControllerExceptionHelper
-                            .handleException(e, logger, "nonRetryableTracker", null).x()
-                            .getStatusCode()
-                    );
-
-        }
-
+      assertEquals(
+          HttpStatus.OK,
+          ControllerExceptionHelper.handleException(e, logger, "nonRetryableTracker", null)
+              .x()
+              .getStatusCode());
     }
+  }
 
-    @Test
-    public void testRetryableIOException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
+  @Test
+  public void testRetryableIOException() {
+    LoggingHelper logger =
+        new LoggingHelper(
+            ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
-        try {
+    try {
 
-            throw new SSLException("Testing standard Retryable Exception");
+      throw new SSLException("Testing standard Retryable Exception");
 
-        } catch (Exception e) {
+    } catch (Exception e) {
 
-            assertEquals(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    ControllerExceptionHelper
-                            .handleException(e, logger, "retryableTracker", null).x()
-                            .getStatusCode()
-                    );
-
-        }
+      assertEquals(
+          HttpStatus.TOO_MANY_REQUESTS,
+          ControllerExceptionHelper.handleException(e, logger, "retryableTracker", null)
+              .x()
+              .getStatusCode());
     }
+  }
 
-    @Test
-    public void testRetryableRuntimeStatusResourceExhaustedException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
+  @Test
+  public void testRetryableRuntimeStatusResourceExhaustedException() {
+    LoggingHelper logger =
+        new LoggingHelper(
+            ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
-        try {
+    try {
 
-            throw new StatusRuntimeException(Status.RESOURCE_EXHAUSTED);
+      throw new StatusRuntimeException(Status.RESOURCE_EXHAUSTED);
 
-        } catch (Exception e) {
+    } catch (Exception e) {
 
-            assertEquals(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    ControllerExceptionHelper
-                            .handleException(e, logger, "resourceExhaustedTracker", null).x()
-                            .getStatusCode()
-            );
-
-        }
+      assertEquals(
+          HttpStatus.TOO_MANY_REQUESTS,
+          ControllerExceptionHelper.handleException(e, logger, "resourceExhaustedTracker", null)
+              .x()
+              .getStatusCode());
     }
+  }
 
-    @Test
-    public void testRetryableResourceExhaustedException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
+  @Test
+  public void testRetryableResourceExhaustedException() {
+    LoggingHelper logger =
+        new LoggingHelper(
+            ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
-        try {
+    try {
 
-            throw new ResourceExhaustedException("resource Exhausted Exception",
-                    new Exception("resource Exhausted Exception"),
-                    new StatusCode() {
-                        @Override
-                        public Code getCode() {
-                            return Code.RESOURCE_EXHAUSTED;
-                        }
+      throw new ResourceExhaustedException(
+          "resource Exhausted Exception",
+          new Exception("resource Exhausted Exception"),
+          new StatusCode() {
+            @Override
+            public Code getCode() {
+              return Code.RESOURCE_EXHAUSTED;
+            }
 
-                        @Override
-                        public Object getTransportCode() {
-                            return null;
-                        }
-                    },
-                    true
-                    );
+            @Override
+            public Object getTransportCode() {
+              return null;
+            }
+          },
+          true);
 
-        } catch (Exception e) {
+    } catch (Exception e) {
 
-            assertEquals(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    ControllerExceptionHelper
-                            .handleException(e, logger, "resourceExhaustedTracker", null).x()
-                            .getStatusCode()
-            );
-
-        }
+      assertEquals(
+          HttpStatus.TOO_MANY_REQUESTS,
+          ControllerExceptionHelper.handleException(e, logger, "resourceExhaustedTracker", null)
+              .x()
+              .getStatusCode());
     }
+  }
 
-    @Test
-    public void testNestedRetryableException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
+  @Test
+  public void testNestedRetryableException() {
+    LoggingHelper logger =
+        new LoggingHelper(
+            ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
-        try {
-            Throwable cause = new java.net.SocketException ("test socket exception");
+    try {
+      Throwable cause = new java.net.SocketException("test socket exception");
 
-            //  StorageException is not retryable on its own but the cause SocketException is
-            throw new StorageException(
-                    0,
-                    "test reason",
-                    cause
-                    );
+      //  StorageException is not retryable on its own but the cause SocketException is
+      throw new StorageException(0, "test reason", cause);
 
-        } catch (Exception e) {
+    } catch (Exception e) {
 
-            assertEquals(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    ControllerExceptionHelper
-                            .handleException(e, logger, "resourceExhaustedTracker", null).x()
-                            .getStatusCode()
-            );
-
-        }
+      assertEquals(
+          HttpStatus.TOO_MANY_REQUESTS,
+          ControllerExceptionHelper.handleException(e, logger, "resourceExhaustedTracker", null)
+              .x()
+              .getStatusCode());
     }
+  }
 
+  @Test
+  public void testNonRetryableException() {
+    LoggingHelper logger =
+        new LoggingHelper(
+            ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
 
-    @Test
-    public void testNonRetryableException() {
-        LoggingHelper logger = new LoggingHelper(ControllerExceptionHelperTest.class.getSimpleName(), 0, "test", "bq_backup_manager");
+    try {
 
-        try {
+      throw new IndexOutOfBoundsException("Testing standard Non Retryable Exception");
 
-            throw new IndexOutOfBoundsException("Testing standard Non Retryable Exception");
+    } catch (Exception e) {
 
-        } catch (Exception e) {
-
-            assertEquals(
-                    HttpStatus.OK,
-                    ControllerExceptionHelper
-                            .handleException(e, logger, "nonRetryableTracker", null).x()
-                            .getStatusCode()
-                    );
-        }
+      assertEquals(
+          HttpStatus.OK,
+          ControllerExceptionHelper.handleException(e, logger, "nonRetryableTracker", null)
+              .x()
+              .getStatusCode());
     }
+  }
 }

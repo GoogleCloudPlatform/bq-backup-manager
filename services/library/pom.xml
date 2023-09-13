@@ -89,7 +89,7 @@
             <artifactId>google-cloud-storage</artifactId>
         </dependency>
 
-         <!-- copied from prev solution -->
+        <!-- copied from prev solution -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
