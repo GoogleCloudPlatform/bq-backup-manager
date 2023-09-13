@@ -108,12 +108,15 @@ public class LoggingHelper {
     }
 
     // To log failed processing of projects, datasets or tables
-    public void logFailedDispatcherEntityId(String trackingId, @Nullable TableSpec tableSpec, String entityId, Exception ex) {
+    public void logFailedDispatcherEntityId(String trackingId, @Nullable TableSpec tableSpec, String entityId,
+                                            String exceptionMessage,
+                                            String exceptionClassName
+                                            ) {
 
         Object [] attributes = new Object[]{
                 kv("failed_dispatcher_entity_id", entityId),
-                kv("failed_dispatcher_ex_name", ex.getClass().getName()),
-                kv("failed_dispatcher_ex_msg", ex.getMessage())
+                kv("failed_dispatcher_ex_name", exceptionClassName),
+                kv("failed_dispatcher_ex_msg", exceptionMessage)
         };
 
         logWithTracker(
@@ -123,8 +126,8 @@ public class LoggingHelper {
                 tableSpec,
                 String.format("Failed to process entity `%s`.Exception: %s. Msg: %s",
                         entityId,
-                        ex.getClass().getName(),
-                        ex.getMessage()
+                        exceptionClassName,
+                        exceptionMessage
                         ),
                 Level.ERROR,
                 attributes

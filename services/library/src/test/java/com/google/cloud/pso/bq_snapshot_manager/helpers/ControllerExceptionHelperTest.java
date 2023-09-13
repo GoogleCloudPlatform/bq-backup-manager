@@ -176,7 +176,7 @@ public class ControllerExceptionHelperTest {
         try {
             Throwable cause = new java.net.SocketException ("test socket exception");
 
-            //  StorageException is not retryable on it's own but the cause SocketException is
+            //  StorageException is not retryable on its own but the cause SocketException is
             throw new StorageException(
                     0,
                     "test reason",

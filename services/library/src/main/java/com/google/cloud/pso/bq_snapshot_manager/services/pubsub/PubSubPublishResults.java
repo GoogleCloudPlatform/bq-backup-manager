@@ -38,6 +38,9 @@ public class PubSubPublishResults {
         return failedMessages;
     }
 
+    public Boolean hasSuccessMessages (){return successMessages == null;}
+    public Boolean hasFailedMessages (){return failedMessages == null;}
+
     @Override
     public String toString() {
         return "PubSubPublishResults{" +

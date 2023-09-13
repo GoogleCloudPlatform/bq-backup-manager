@@ -227,6 +227,7 @@ public class Configurator {
                 request.getTrackingId()
         );
 
+
         return new ConfiguratorResponse(
                 request.getTargetTable(),
                 request.getRunId(),
