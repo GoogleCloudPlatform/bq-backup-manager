@@ -25,7 +25,6 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.ConfiguratorRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
-import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.FailedPubSubMessage;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishResults;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubService;
@@ -143,7 +142,8 @@ public class Dispatcher {
                     request.getTrackingId(),
                     request.getTargetTable(),
                     request.getTargetTable().toSqlString(),
-                    msg.getException()
+                    msg.getExceptionMessage(),
+                    msg.getExceptionClass()
             );
         }
 

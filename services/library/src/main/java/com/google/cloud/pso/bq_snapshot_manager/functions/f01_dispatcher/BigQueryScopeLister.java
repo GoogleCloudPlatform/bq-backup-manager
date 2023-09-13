@@ -151,7 +151,7 @@ public class BigQueryScopeLister {
                 }
             } catch (Exception ex) {
                 // log and continue
-                logger.logFailedDispatcherEntityId(runId, tableSpec, table, ex);
+                logger.logFailedDispatcherEntityId(runId, tableSpec, table, ex.getMessage(), ex.getClass().getName());
             }
         }
         return output;
@@ -196,7 +196,7 @@ public class BigQueryScopeLister {
                 }
             } catch (Exception exception) {
                 // log and continue
-                logger.logFailedDispatcherEntityId(runId, null, dataset, exception);
+                logger.logFailedDispatcherEntityId(runId, null, dataset, exception.getMessage(), exception.getClass().getName());
             }
         }
         return processTables(
@@ -249,7 +249,7 @@ public class BigQueryScopeLister {
 
             } catch (Exception exception) {
                 // log and continue
-                logger.logFailedDispatcherEntityId(runId, null, project, exception);
+                logger.logFailedDispatcherEntityId(runId, null, project, exception.getMessage(), exception.getClass().getName());
             }
 
         }
@@ -297,7 +297,7 @@ public class BigQueryScopeLister {
 
             } catch (Exception exception) {
                 // log and continue
-                logger.logFailedDispatcherEntityId(runId, null, folder.toString(), exception);
+                logger.logFailedDispatcherEntityId(runId, null, folder.toString(), exception.getMessage(), exception.getClass().getName());
             }
 
         }
