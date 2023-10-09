@@ -15,33 +15,53 @@
 #
 
 resource "google_cloud_scheduler_job" "scheduler_job" {
-  project = var.project
-  name = var.scheduler_name
+  project     = var.project
+  name        = var.scheduler_name
   description = "CRON job to trigger BigQuery Backup Manager"
-  schedule = var.cron_expression
+  schedule    = var.cron_expression
+
+  # The deadline for job attempts.
+  # If the request handler does not respond by this deadline then the request is cancelled and the attempt is marked as
+  # a DEADLINE_EXCEEDED failure.
+  # The failed attempt can be viewed in execution logs. Cloud Scheduler will retry the job according to the RetryConfig.
+  # The allowed duration for this deadline is 15 seconds to 30 mins for HTTP targets
+
+  # 30 mins is max even if Cloud run supports 60 mins timeout
+  # nevertheless, if the retry count is 0 then no new request will be sent. Worst case scenario is the
+  # Cloud Scheduler will repot failure but the message is still being processed by Cloud Run
+  attempt_deadline = "1800s"
 
   retry_config {
     retry_count = 0
   }
 
-  pubsub_target {
-    # topic.id is the topic's full resource name.
-    topic_name = var.target_uri
-    data = base64encode(jsonencode(
-    {
-      isForceRun = lookup(var.payload, "is_force_run"),
-      isDryRun = lookup(var.payload, "is_dry_run"),
-      bigQueryScope = {
-        folderIncludeList = lookup(var.payload, "folders_include_list"),
-        projectIncludeList = lookup(var.payload, "projects_include_list"),
-        projectExcludeList = lookup(var.payload, "projects_exclude_list"),
-        datasetIncludeList = lookup(var.payload, "datasets_include_list"),
-        datasetExcludeList = lookup(var.payload, "datasets_exclude_list"),
-        tableIncludeList = lookup(var.payload, "tables_include_list"),
-        tableExcludeList = lookup(var.payload, "tables_exclude_list")
-      }
+  http_target {
+    http_method = "POST"
+    uri         = var.target_uri
+
+    body = base64encode(jsonencode(
+      {
+        isForceRun    = lookup(var.payload, "is_force_run"),
+        isDryRun      = lookup(var.payload, "is_dry_run"),
+        bigQueryScope = {
+          folderIncludeList  = lookup(var.payload, "folders_include_list"),
+          projectIncludeList = lookup(var.payload, "projects_include_list"),
+          projectExcludeList = lookup(var.payload, "projects_exclude_list"),
+          datasetIncludeList = lookup(var.payload, "datasets_include_list"),
+          datasetExcludeList = lookup(var.payload, "datasets_exclude_list"),
+          tableIncludeList   = lookup(var.payload, "tables_include_list"),
+          tableExcludeList   = lookup(var.payload, "tables_exclude_list")
+        }
+      }))
+
+    headers = {
+      "Content-Type" = "application/json"
     }
-    ))
+
+    oidc_token {
+      service_account_email = var.oidc_token_email
+    }
+
   }
 }
 

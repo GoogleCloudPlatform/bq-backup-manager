@@ -64,7 +64,7 @@ public class DispatcherController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public ResponseEntity receiveMessage(@RequestBody PubSubEvent requestBody) {
+    public ResponseEntity receiveMessage(@RequestBody DispatcherRequest dispatcherRequest) {
 
         String runId = TrackingHelper.MIN_RUN_ID;
         String state = "";
@@ -72,20 +72,20 @@ public class DispatcherController {
 
         try {
 
-            if (requestBody == null || requestBody.getMessage() == null) {
-                String msg = "Bad Request: invalid message format";
-                logger.logSevereWithTracker(runId, null, msg);
-                throw new NonRetryableApplicationException("Request body or message is Null.");
-            }
-
-            String requestJsonString = requestBody.getMessage().dataToUtf8String();
-
-            // remove any escape characters (e.g. from Terraform
-            requestJsonString = requestJsonString.replace("\\", "");
-
-            logger.logInfoWithTracker(runId, null, String.format("Received payload: %s", requestJsonString));
-
-            DispatcherRequest dispatcherRequest = gson.fromJson(requestJsonString, DispatcherRequest.class);
+//            if (requestBody == null || requestBody.getMessage() == null) {
+//                String msg = "Bad Request: invalid message format";
+//                logger.logSevereWithTracker(runId, null, msg);
+//                throw new NonRetryableApplicationException("Request body or message is Null.");
+//            }
+//
+//            String requestJsonString = requestBody.getMessage().dataToUtf8String();
+//
+//            // remove any escape characters (e.g. from Terraform
+//            requestJsonString = requestJsonString.replace("\\", "");
+//
+//            logger.logInfoWithTracker(runId, null, String.format("Received payload: %s", requestJsonString));
+//
+//            DispatcherRequest dispatcherRequest = gson.fromJson(requestJsonString, DispatcherRequest.class);
 
             if(dispatcherRequest.isDryRun()){
                 runId = TrackingHelper.generateDryRunId();
@@ -97,7 +97,11 @@ public class DispatcherController {
                 }
             }
 
-            logger.logInfoWithTracker(dispatcherRequest.isDryRun(), runId, null, String.format("Parsed dispatcher request %s ", dispatcherRequest.toString()));
+            logger.logInfoWithTracker(dispatcherRequest.isDryRun(),
+                    runId,
+                    null,
+                    String.format("Parsed dispatcher request %s ",
+                            dispatcherRequest.toString()));
 
             Dispatcher dispatcher = new Dispatcher(
                     environment.toConfig(),
@@ -109,7 +113,9 @@ public class DispatcherController {
                     runId
             );
 
-            PubSubPublishResults results = dispatcher.execute(dispatcherRequest, requestBody.getMessage().getMessageId());
+            //TODO: remove the re-processing flags from dispatcher since we're not using PubSub anymore
+            PubSubPublishResults results = dispatcher.execute(dispatcherRequest,
+                    String.valueOf(System.currentTimeMillis()));
 
             state = String.format("Publishing results: %s SUCCESS MESSAGES and %s FAILED MESSAGES",
                     results.getSuccessMessages().size(),

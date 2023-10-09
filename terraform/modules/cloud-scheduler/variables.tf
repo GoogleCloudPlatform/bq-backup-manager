@@ -28,18 +28,6 @@ variable "cron_expression" {
   type = string
 }
 
-# BigQuery Scope
-# Fromat:
-//# {
-//is_force_run = boolean
-//folders_include_list = []
-//projects_include_list = []
-//projects_exclude_list = []
-//datasets_include_list = []
-//datasets_exclude_list = []
-//tables_include_list = []
-//tables_exclude_list = []
-//}
 variable "payload" {
   type = object({
     is_force_run = bool,
@@ -52,4 +40,8 @@ variable "payload" {
     tables_include_list = list(string),
     tables_exclude_list = list(string),
   })
+}
+
+variable "oidc_token_email" {
+  type = string
 }

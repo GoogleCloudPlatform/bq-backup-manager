@@ -390,7 +390,9 @@ module "cloud-scheduler" {
   source = "./modules/cloud-scheduler"
   count = length(var.schedulers)
   project = var.project
-  target_uri = module.pubsub-dispatcher.topic-id
+
+  target_uri = module.cloud-run-dispatcher.service_endpoint
+  oidc_token_email = module.iam.sa_dispatcher_tasks_email
 
   scheduler_name = lookup(var.schedulers[count.index], "name")
   cron_expression = lookup(var.schedulers[count.index], "cron")
