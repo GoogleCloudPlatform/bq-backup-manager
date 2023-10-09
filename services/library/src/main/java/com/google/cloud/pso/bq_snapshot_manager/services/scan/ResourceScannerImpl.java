@@ -20,6 +20,7 @@ package com.google.cloud.pso.bq_snapshot_manager.services.scan;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.cloudresourcemanager.v3.model.ListProjectsResponse;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -59,6 +60,8 @@ public class ResourceScannerImpl implements ResourceScanner {
 
     private Datastore datastore;
 
+    public final Integer RESOURCE_MANAGER_PAGE_SIZE = 300;
+
     public ResourceScannerImpl() throws IOException, GeneralSecurityException {
 
         bqService = BigQueryOptions.getDefaultInstance().getService();
@@ -68,7 +71,9 @@ public class ResourceScannerImpl implements ResourceScanner {
 
     @Override
     public List<String> listTables(String projectId, String datasetId) {
-        return StreamSupport.stream(bqService.listTables(DatasetId.of(projectId, datasetId)).iterateAll().spliterator(),
+        return StreamSupport.stream(bqService.listTables(DatasetId.of(projectId, datasetId))
+                                .iterateAll() // lazy fetching of pages
+                                .spliterator(),
                         false)
                 .filter(t -> t.getDefinition().getType().equals(TableDefinition.Type.TABLE))
                 .map(t -> String.format("%s.%s.%s", projectId, datasetId, t.getTableId().getTable()))
@@ -78,7 +83,7 @@ public class ResourceScannerImpl implements ResourceScanner {
     @Override
     public List<String> listDatasets(String projectId) {
         return StreamSupport.stream(bqService.listDatasets(projectId)
-                                .iterateAll()
+                                .iterateAll() // lazy fetching of pages
                                 .spliterator(),
                         false)
                 .map(d -> String.format("%s.%s", projectId, d.getDatasetId().getDataset()))
@@ -88,17 +93,41 @@ public class ResourceScannerImpl implements ResourceScanner {
     @Override
     public List<String> listProjects(Long folderId) throws IOException {
 
-        List<Project> projects = cloudResourceManager.projects().list()
+        ListProjectsResponse listProjectsResponse = cloudResourceManager.projects().list()
                 .setParent("folders/" + folderId)
-                .execute()
-                .getProjects();
+                .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
+                .execute();
 
-        return projects
-                .stream()
+        List<String> allProjects = pagedProjectsToList(listProjectsResponse.getProjects());
+
+        String nextPageToken = listProjectsResponse.getNextPageToken();
+
+        while (nextPageToken != null){
+
+            // submit a new request for the next page
+            listProjectsResponse = cloudResourceManager.projects()
+                    .list()
+                    .setParent("folders/" + folderId)
+                    .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
+                    .setPageToken(nextPageToken)
+                    .execute();
+
+            // add all entries listed in that page
+            allProjects.addAll(pagedProjectsToList(listProjectsResponse.getProjects()));
+
+            // set the next page
+            nextPageToken = listProjectsResponse.getNextPageToken();
+        }
+
+        return allProjects.stream().distinct().toList();
+    }
+
+    public List<String> pagedProjectsToList(List<Project> pagedProjects){
+        return pagedProjects.stream()
                 .map(Project::getProjectId)
                 .collect(Collectors.toCollection(ArrayList::new));
-
     }
+
 
 
     /**
