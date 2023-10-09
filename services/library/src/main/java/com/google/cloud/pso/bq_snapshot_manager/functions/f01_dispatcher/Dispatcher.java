@@ -74,6 +74,8 @@ public class Dispatcher {
 
     public PubSubPublishResults execute(DispatcherRequest dispatcherRequest, String pubSubMessageId) throws IOException, NonRetryableApplicationException, InterruptedException {
 
+      long functionStartTs = System.currentTimeMillis();
+
         /*
            Check if we already processed this pubSubMessageId before to avoid re-running the dispatcher (and the whole process)
            in case we have unexpected errors with PubSub re-sending the message. This is an extra measure to avoid unnecessary cost.
@@ -104,8 +106,16 @@ public class Dispatcher {
                 runId
         );
 
+        long listingStartTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId, null, "Starting to list down tables in scope..");
+
         // List down which tables to publish a request for based on the input scan scope
         List<TableSpec> tablesInScope = bqScopeLister.listTablesInScope(dispatcherRequest.getBigQueryScope());
+
+        long listingEndTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId,
+                null,
+                String.format("Finished listing down tables in-scope in %s ms.", listingEndTs-listingStartTs));
 
         // Convert each table in scope to a ConfiguratorRequest to be sent as a PubSub message
         List<JsonMessage> pubSubMessagesToPublish = new ArrayList<>();
@@ -124,12 +134,25 @@ public class Dispatcher {
             );
         }
 
+      long publishingStartTs = System.currentTimeMillis();
+      logger.logInfoWithTracker(runId, null,
+              String.format("Starting to publish to PubSub: %s messages", pubSubMessagesToPublish.size())
+              );
+
         // Publish the list of requests to PubSub
         PubSubPublishResults publishResults = pubSubService.publishTableOperationRequests(
                 config.getProjectId(),
                 config.getOutputTopic(),
                 pubSubMessagesToPublish
         );
+
+      long publishingEndTs = System.currentTimeMillis();
+      logger.logInfoWithTracker(runId, null,
+              String.format("Finished publishing to PubSub in %s ms: %s success messages, %s failed messages",
+                      publishingEndTs - publishingStartTs,
+                      publishResults.getSuccessMessages().size(),
+                      publishResults.getFailedMessages().size())
+      );
 
         // handle failed publishing requests
         for (FailedPubSubMessage msg : publishResults.getFailedMessages()) {
@@ -147,6 +170,9 @@ public class Dispatcher {
             );
         }
 
+      long dispatcherLogStartTs = System.currentTimeMillis();
+      logger.logInfoWithTracker(runId, null, "Starting to list creating dispatched tables log..");
+
         // handle success publishing requests
         for (SuccessPubSubMessage msg : publishResults.getSuccessMessages()) {
             // this enable us to detect dispatched messages within a runId that fail in later stages (i.e. Tagger)
@@ -154,6 +180,21 @@ public class Dispatcher {
 
             logger.logSuccessDispatcherTrackingId(runId, request.getTrackingId(), request.getTargetTable());
         }
+
+      long dispatcherLogEndTs = System.currentTimeMillis();
+      logger.logInfoWithTracker(runId,
+              null,
+              String.format("Finished creating dispatched  tables log in %s ms.", listingEndTs-listingStartTs));
+
+
+      logger.logInfoWithTracker(runId, null,
+              String.format("Dispatcher stats (ms): total time %s, time to list scope %s, time to publish to PubSub %s, time to create dispatcher log %s ",
+                      dispatcherLogEndTs - functionStartTs,
+                      listingEndTs - listingStartTs,
+                      publishingEndTs - publishingStartTs,
+                      dispatcherLogEndTs - dispatcherLogStartTs
+                      )
+      );
 
         logger.logFunctionEnd(runId, null);
 

@@ -212,7 +212,7 @@ variable "dispatcher_service_timeout_seconds" {
   description = "Max period for the cloud run service to complete a request. Otherwise, it terminates with HTTP 504 and NAK to PubSub (retry)"
   type = number
   # Dispatcher might need relatively long time to process large BigQuery scan scopes
-  default = 60 * 30 # 30mins
+  default = 60 * 60 # 60mins
 }
 
 variable "dispatcher_subscription_ack_deadline_seconds" {
