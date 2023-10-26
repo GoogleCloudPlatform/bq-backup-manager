@@ -1,0 +1,10 @@
+diagrams/*
+terraform/*
+target/*
+target/
+terraform/
+diagrams/
+.idea/
+.idea/*
+.github/
+.github/*

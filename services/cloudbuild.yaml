@@ -1,0 +1,25 @@
+steps:
+  - name: maven:3.8.6-openjdk-18
+    id: deploy_services
+    env:
+      - 'DISPATCHER_IMAGE=${_DISPATCHER_IMAGE}'
+      - 'CONFIGURATOR_IMAGE=${_CONFIGURATOR_IMAGE}'
+      - 'SNAPSHOTER_BQ_IMAGE=${_SNAPSHOTER_BQ_IMAGE}'
+      - 'SNAPSHOTER_GCS_IMAGE=${_SNAPSHOTER_GCS_IMAGE}'
+      - 'TAGGER_IMAGE=${_TAGGER_IMAGE}'
+    script:
+
+      mvn install
+
+      mvn compile jib:build -f=dispatcher-app/pom.xml -Dimage=${DISPATCHER_IMAGE}
+      
+      mvn compile jib:build -f=configurator-app/pom.xml -Dimage="${CONFIGURATOR_IMAGE}"
+
+      mvn compile jib:build -f=snapshoter-bq-app/pom.xml -Dimage="${SNAPSHOTER_BQ_IMAGE}"
+
+      mvn compile jib:build -f=snapshoter-gcs-app/pom.xml -Dimage="${SNAPSHOTER_GCS_IMAGE}"
+
+      mvn compile jib:build -f=tagger-app/pom.xml -Dimage="${TAGGER_IMAGE}"
+
+
+
