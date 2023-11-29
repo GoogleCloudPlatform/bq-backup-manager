@@ -87,7 +87,7 @@ public class DispatcherTables {
         String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, pubSubMessageId);
         if (persistentSet.contains(flagFileName)) {
             // log error and ACK and return
-            String msg = String.format("PubSub message ID '%s' has been processed before by the dispatcher. The message should be ACK to PubSub to stop retries. Please investigate further why the message was retried in the first place.",
+            String msg = String.format("PubSub message ID '%s' has been processed before by the tables dispatcher. The message should be ACK to PubSub to stop retries. Please investigate further why the message was retried in the first place.",
                     pubSubMessageId);
             throw new NonRetryableApplicationException(msg);
         } else {
