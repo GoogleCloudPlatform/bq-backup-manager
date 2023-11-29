@@ -16,10 +16,9 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher;
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
-import com.google.gson.Gson;
 
 public class DispatcherRequest extends JsonMessage {
 

@@ -193,6 +193,21 @@
       },
       {
         "mode": "NULLABLE",
+        "name": "dispatched_datasetspec",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatched_datasetspec_project",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatched_datasetspec_dataset",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
         "name": "failed_dispatcher_entity_id",
         "type": "STRING"
       },

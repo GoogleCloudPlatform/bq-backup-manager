@@ -17,6 +17,8 @@
 variable "project" {type = string}
 variable "sa_dispatcher" {type = string}
 variable "sa_dispatcher_tasks" {type = string}
+variable "sa_dispatcher_tables" {type = string}
+variable "sa_dispatcher_tables_tasks" {type = string}
 variable "sa_configurator" {type = string}
 variable "sa_configurator_tasks" {type = string}
 variable "sa_snapshoter_bq" {type = string}

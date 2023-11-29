@@ -16,28 +16,32 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.functions.f01_2_dispatcher_tables;
 
 import com.google.cloud.Timestamp;
+import com.google.cloud.Tuple;
+import com.google.cloud.pso.bq_snapshot_manager.entities.GlobalVariables;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.BigQueryScopeLister;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.DispatcherConfig;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.ConfiguratorRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
+import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.FailedPubSubMessage;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishResults;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubService;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.SuccessPubSubMessage;
 import com.google.cloud.pso.bq_snapshot_manager.services.scan.*;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
-
-public class Dispatcher {
+public class DispatcherTables {
 
     private final LoggingHelper logger;
     private final PubSubService pubSubService;
@@ -48,13 +52,13 @@ public class Dispatcher {
     private final Integer functionNumber;
     private final String runId;
 
-    public Dispatcher(DispatcherConfig config,
-                      PubSubService pubSubService,
-                      ResourceScanner resourceScanner,
-                      PersistentSet persistentSet,
-                      String persistentSetObjectPrefix,
-                      Integer functionNumber,
-                      String runId) {
+    public DispatcherTables(DispatcherConfig config,
+                            PubSubService pubSubService,
+                            ResourceScanner resourceScanner,
+                            PersistentSet persistentSet,
+                            String persistentSetObjectPrefix,
+                            Integer functionNumber,
+                            String runId) {
 
         this.config = config;
         this.pubSubService = pubSubService;
@@ -65,15 +69,16 @@ public class Dispatcher {
         this.runId = runId;
 
         logger = new LoggingHelper(
-                Dispatcher.class.getSimpleName(),
+                DispatcherTables.class.getSimpleName(),
                 functionNumber,
                 config.getProjectId(),
                 config.getApplicationName()
         );
     }
 
-    public PubSubPublishResults execute(DispatcherRequest dispatcherRequest, String pubSubMessageId) throws IOException, NonRetryableApplicationException, InterruptedException {
+    public PubSubPublishResults execute(DispatcherTableRequest dispatcherRequest, String pubSubMessageId) throws IOException, NonRetryableApplicationException, InterruptedException {
 
+        long functionStartTs = System.currentTimeMillis();
         /*
            Check if we already processed this pubSubMessageId before to avoid re-running the dispatcher (and the whole process)
            in case we have unexpected errors with PubSub re-sending the message. This is an extra measure to avoid unnecessary cost.
@@ -92,20 +97,55 @@ public class Dispatcher {
             persistentSet.add(flagFileName);
         }
 
-        // construct a BigQueryScopeLister using the input resourceScanner implementation
-        BigQueryScopeLister bqScopeLister = new BigQueryScopeLister(
-                resourceScanner,
-                new LoggingHelper(
-                        BigQueryScopeLister.class.getSimpleName(),
-                        functionNumber,
-                        config.getProjectId(),
-                        config.getApplicationName()
-                ),
-                runId
-        );
+        // list down all tables in the dataset
+        List<String> tablesInclusionList;
 
-        // List down which tables to publish a request for based on the input scan scope
-        List<TableSpec> tablesInScope = bqScopeLister.listTablesInScope(dispatcherRequest.getBigQueryScope());
+        long listingStartTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId, null, "Starting to list and filter tables in scope..");
+
+        // tables to process are explict passed as tablesInclusionList from the original BigQueryScanScope or
+        // implicitly via the project and dataset info
+        if (dispatcherRequest.getTablesExclusionList() == null || dispatcherRequest.getTablesExclusionList().isEmpty()){
+            tablesInclusionList = resourceScanner.listTables(
+                    dispatcherRequest.getDatasetSpec().getProject(),
+                    dispatcherRequest.getDatasetSpec().getDataset());
+        }else{
+            tablesInclusionList = dispatcherRequest.getTablesInclusionList();
+        }
+
+        // extract the exclusion REGEX elements from the exclusion list
+        List<Pattern> tableExcludeListPatterns = Utils.extractAndCompilePatterns(
+                dispatcherRequest.getTablesExclusionList(),
+                GlobalVariables.REGEX_PREFIX);
+
+        List<TableSpec> tablesInScope = new ArrayList<>();
+
+        // filter the tables in the dataset by excluding the ones with matches in the exclusion list
+        for (String table : tablesInclusionList) {
+            TableSpec tableSpec = TableSpec.fromSqlString(table);
+            try {
+                Tuple<Boolean, String> checkResults = Utils.isElementMatchLiteralOrRegexList(table,
+                        dispatcherRequest.getTablesExclusionList(),
+                        tableExcludeListPatterns);
+                if (!checkResults.x()) {
+                    tablesInScope.add(tableSpec);
+                } else {
+                    logger.logInfoWithTracker(runId,
+                            tableSpec,
+                            String.format("Table %s is excluded by %s", table, checkResults.y()));
+                }
+            } catch (Exception ex) {
+                // log and continue
+                logger.logFailedDispatcherEntityId(runId, tableSpec, table, ex.getMessage(), ex.getClass().getName());
+            }
+        }
+
+        long listingEndTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId,
+                null,
+                String.format("Finished listing and filtering down tables in-scope in %s ms.", listingEndTs-listingStartTs));
+
+        // publish the tables in scope to the Configurator
 
         // Convert each table in scope to a ConfiguratorRequest to be sent as a PubSub message
         List<JsonMessage> pubSubMessagesToPublish = new ArrayList<>();
@@ -124,6 +164,11 @@ public class Dispatcher {
             );
         }
 
+        long publishingStartTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId, null,
+                String.format("Starting to publish to PubSub: %s messages", pubSubMessagesToPublish.size())
+        );
+
         // Publish the list of requests to PubSub
         PubSubPublishResults publishResults = pubSubService.publishTableOperationRequests(
                 config.getProjectId(),
@@ -131,11 +176,19 @@ public class Dispatcher {
                 pubSubMessagesToPublish
         );
 
+        long publishingEndTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId, null,
+                String.format("Finished publishing to PubSub in %s ms: %s success messages, %s failed messages",
+                        publishingEndTs - publishingStartTs,
+                        publishResults.getSuccessMessages().size(),
+                        publishResults.getFailedMessages().size())
+        );
+
         // handle failed publishing requests
         for (FailedPubSubMessage msg : publishResults.getFailedMessages()) {
             ConfiguratorRequest request = (ConfiguratorRequest) msg.getMsg();
 
-            String logMsg = String.format("Failed to publish this PubSub messages %s", msg.toString());
+            String logMsg = String.format("Failed to publish this PubSub messages %s", msg);
             logger.logWarnWithTracker(runId, request.getTargetTable(), logMsg);
 
             logger.logFailedDispatcherEntityId(
@@ -147,6 +200,9 @@ public class Dispatcher {
             );
         }
 
+        long dispatcherLogStartTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId, null, "Starting to list creating dispatched tables log..");
+
         // handle success publishing requests
         for (SuccessPubSubMessage msg : publishResults.getSuccessMessages()) {
             // this enable us to detect dispatched messages within a runId that fail in later stages (i.e. Tagger)
@@ -154,6 +210,21 @@ public class Dispatcher {
 
             logger.logSuccessDispatcherTrackingId(runId, request.getTrackingId(), request.getTargetTable());
         }
+
+        long dispatcherLogEndTs = System.currentTimeMillis();
+        logger.logInfoWithTracker(runId,
+                null,
+                String.format("Finished creating dispatched  tables log in %s ms.", listingEndTs-listingStartTs));
+
+        String timersJson = "Execution Timers (ms): {'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
+        logger.logInfoWithTracker(runId, null,
+                String.format(timersJson,
+                        dispatcherLogEndTs - functionStartTs,
+                        listingEndTs - listingStartTs,
+                        publishingEndTs - publishingStartTs,
+                        dispatcherLogEndTs - dispatcherLogStartTs
+                )
+        );
 
         logger.logFunctionEnd(runId, null);
 

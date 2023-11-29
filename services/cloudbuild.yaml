@@ -3,15 +3,27 @@ steps:
     id: deploy_services
     env:
       - 'DISPATCHER_IMAGE=${_DISPATCHER_IMAGE}'
+      - 'DISPATCHER_TABLES_IMAGE=${_DISPATCHER_TABLES_IMAGE}'
       - 'CONFIGURATOR_IMAGE=${_CONFIGURATOR_IMAGE}'
       - 'SNAPSHOTER_BQ_IMAGE=${_SNAPSHOTER_BQ_IMAGE}'
       - 'SNAPSHOTER_GCS_IMAGE=${_SNAPSHOTER_GCS_IMAGE}'
       - 'TAGGER_IMAGE=${_TAGGER_IMAGE}'
     script:
 
+      set -e
+      
+      echo "DISPATCHER_IMAGE = ${DISPATCHER_IMAGE}"
+      echo "DISPATCHER_TABLES_IMAGE = ${DISPATCHER_TABLES_IMAGE}"
+      echo "CONFIGURATOR_IMAGE = ${CONFIGURATOR_IMAGE}"
+      echo "SNAPSHOTER_BQ_IMAGE = ${SNAPSHOTER_BQ_IMAGE}"
+      echo "SNAPSHOTER_GCS_IMAGE = ${SNAPSHOTER_GCS_IMAGE}"
+      echo "TAGGER_IMAGE = ${TAGGER_IMAGE}"
+
       mvn install
 
       mvn compile jib:build -f=dispatcher-app/pom.xml -Dimage=${DISPATCHER_IMAGE}
+      
+      mvn compile jib:build -f=dispatcher-tables-app/pom.xml -Dimage=${DISPATCHER_TABLES_IMAGE}
       
       mvn compile jib:build -f=configurator-app/pom.xml -Dimage="${CONFIGURATOR_IMAGE}"
 

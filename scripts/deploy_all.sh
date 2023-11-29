@@ -24,6 +24,6 @@ set -e
 # set the working dir as the scripts directory
 cd "$(dirname "$0")"
 
-./deploy_services.sh
+./deploy_services_cloudbuild.sh
 
 ./deploy_terraform.sh

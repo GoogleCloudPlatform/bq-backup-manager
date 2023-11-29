@@ -20,6 +20,7 @@ package com.google.cloud.pso.bq_snapshot_manager.helpers;
 
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.*;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f01_2_dispatcher_tables.DispatcherTableRequest;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,11 +98,33 @@ public class LoggingHelper {
         };
 
         logWithTracker(
-                ApplicationLog.DISPATCHED_REQUESTS_LOG,
+                ApplicationLog.DISPATCHED_TABLE_REQUESTS_LOG,
                 null,
                 trackingId,
                 tableSpec,
                 String.format("Dispatched request for table '%s' with trackingId `%s`", tableSpec.toSqlString(), dispatchedTrackingId),
+                Level.INFO,
+                attributes
+        );
+    }
+
+    public void logSuccessDispatcherDataset(String runId, DispatcherTableRequest request) {
+
+        Object [] attributes = new Object[]{
+                kv("dispatched_datasetspec",
+                        request.getDatasetSpec() != null? request.getDatasetSpec().toSqlString(): null),
+                kv("dispatched_datasetspec_project",
+                        request.getDatasetSpec() != null? request.getDatasetSpec().getProject(): null),
+                kv("dispatched_datasetspec_dataset",
+                        request.getDatasetSpec() != null? request.getDatasetSpec().getDataset(): null),
+        };
+
+        logWithTracker(
+                ApplicationLog.DISPATCHED_DATASET_REQUESTS_LOG,
+                request.isDryRun(),
+                runId,
+                null,
+                String.format("Dispatched request %s", request.toString()),
                 Level.INFO,
                 attributes
         );

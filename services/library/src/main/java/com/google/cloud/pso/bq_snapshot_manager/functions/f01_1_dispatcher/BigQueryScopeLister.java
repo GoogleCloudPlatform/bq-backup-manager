@@ -16,9 +16,11 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher;
 
 import com.google.cloud.Tuple;
+import com.google.cloud.pso.bq_snapshot_manager.entities.DatasetSpec;
+import com.google.cloud.pso.bq_snapshot_manager.entities.GlobalVariables;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
@@ -27,7 +29,6 @@ import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScanner;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BigQueryScopeLister {
@@ -36,7 +37,7 @@ public class BigQueryScopeLister {
     private LoggingHelper logger;
     private final String runId;
 
-    private static final String REGEX_PREFIX = "regex:";
+    private static final String REGEX_PREFIX = GlobalVariables.REGEX_PREFIX;
 
     public BigQueryScopeLister(ResourceScanner resourceScanner,
                                LoggingHelper logger,
@@ -47,25 +48,21 @@ public class BigQueryScopeLister {
     }
 
     /**
-     * List and filer down all tables that should be in scope based on BigQueryScope object
+     * List and filer down all datasets that should be in scope based on BigQueryScope object
      * <p>
-     * Detecting which resources to list is done bottom up TABLES > DATASETS > PROJECTS > FOLDERS
-     * where lower levels configs (e.g. Tables) ignore higher level configs (e.g. Datasets)
+     * Detecting which resources to list is done bottom up  DATASETS > PROJECTS > FOLDERS
+     * where lower levels configs (e.g. Datasets) ignore higher level configs (e.g. Projects)
      * For example:
-     * If TABLES_INCLUDE list is provided:
-     * * List only these tables
-     * * SKIP tables in TABLES_EXCLUDE list
-     * * IGNORE all other INCLUDE lists
      * If DATASETS_INCLUDE list is provided:
-     * * List only tables in these datasets
+     * * List only these datasets
      * * SKIP datasets in DATASETS_EXCLUDE
      * * SKIP tables in TABLES_EXCLUDE
-     * * IGNORE all other INCLUDE lists
+     * * IGNORE other INCLUDE lists
      * If PROJECTS_INCLUDE list is provided:
      * * List only datasets and tables in these projects
      * * SKIP datasets in DATASETS_EXCLUDE
      * * SKIP tables in TABLES_EXCLUDE
-     * * IGNORE all other INCLUDE lists
+     * * IGNORE other INCLUDE lists
      * If FOLDERS_INCLUDE list is provided:
      * * List only projects, datasets and tables in these folders
      * * SKIP projects in PROJECTS_EXCLUDE
@@ -77,100 +74,65 @@ public class BigQueryScopeLister {
      * @return List<TableSpec>
      * @throws NonRetryableApplicationException
      */
-    public List<TableSpec> listTablesInScope(BigQueryScope bqScope) throws NonRetryableApplicationException {
+    public List<DatasetSpec> listDatasetsInScope(BigQueryScope bqScope) throws NonRetryableApplicationException {
 
-        List<TableSpec> tablesInScope;
+        List<DatasetSpec> datasetsInScope;
 
         // Pre-compile all regular expressions in exclude lists to improve performance
-        List<Pattern> tableExcludeListPatterns = extractAndCompilePatterns(bqScope.getTableExcludeList(), REGEX_PREFIX);
-        List<Pattern> datasetExcludeListPatterns = extractAndCompilePatterns(bqScope.getDatasetExcludeList(), REGEX_PREFIX);
-        List<Pattern> projectExcludeListPatterns = extractAndCompilePatterns(bqScope.getProjectExcludeList(), REGEX_PREFIX);
+        List<Pattern> datasetExcludeListPatterns = Utils.extractAndCompilePatterns(bqScope.getDatasetExcludeList(),
+                REGEX_PREFIX);
+        List<Pattern> projectExcludeListPatterns = Utils.extractAndCompilePatterns(bqScope.getProjectExcludeList(),
+                REGEX_PREFIX);
 
-        if (!bqScope.getTableIncludeList().isEmpty()) {
-            tablesInScope = processTables(
-                    bqScope.getTableIncludeList(),
-                    bqScope.getTableExcludeList(),
-                    tableExcludeListPatterns
-            );
-        } else {
 
             if (!bqScope.getDatasetIncludeList().isEmpty()) {
-                tablesInScope = processDatasets(
+                datasetsInScope = processDatasets(
                         bqScope.getDatasetIncludeList(),
                         bqScope.getDatasetExcludeList(),
-                        bqScope.getTableExcludeList(),
-                        datasetExcludeListPatterns,
-                        tableExcludeListPatterns
+                        datasetExcludeListPatterns
                 );
             } else {
                 if (!bqScope.getProjectIncludeList().isEmpty()) {
-                    tablesInScope = processProjects(
+                    datasetsInScope = processProjects(
                             bqScope.getProjectIncludeList(),
                             bqScope.getProjectExcludeList(),
                             bqScope.getDatasetExcludeList(),
-                            bqScope.getTableExcludeList(),
                             projectExcludeListPatterns,
-                            datasetExcludeListPatterns,
-                            tableExcludeListPatterns
+                            datasetExcludeListPatterns
                     );
                 } else {
                     if (!bqScope.getFolderIncludeList().isEmpty()) {
-                        tablesInScope = processFolders(
+                        datasetsInScope = processFolders(
                                 bqScope.getFolderIncludeList(),
                                 bqScope.getProjectExcludeList(),
                                 bqScope.getDatasetExcludeList(),
-                                bqScope.getTableExcludeList(),
                                 projectExcludeListPatterns,
-                                datasetExcludeListPatterns,
-                                tableExcludeListPatterns
+                                datasetExcludeListPatterns
                         );
                     } else {
                         throw new NonRetryableApplicationException("At least one of of the following params must be not empty [tableIncludeList, datasetIncludeList, projectIncludeList, folderIncludeList]");
                     }
                 }
             }
-        }
 
-        return tablesInScope;
+
+        return datasetsInScope;
     }
 
-    private List<TableSpec> processTables(List<String> tableIncludeList,
-                                          List<String> tableExcludeList,
-                                          List<Pattern> tableExcludeListPatterns
-    ) {
-        List<TableSpec> output = new ArrayList<>();
-
-        for (String table : tableIncludeList) {
-            TableSpec tableSpec = TableSpec.fromSqlString(table);
-            try {
-                Tuple<Boolean, String> checkResults = isIncluded(table, tableExcludeList, tableExcludeListPatterns);
-                if (!checkResults.x()) {
-                    output.add(tableSpec);
-                } else {
-                    logger.logInfoWithTracker(runId, tableSpec, String.format("Table %s is excluded by %s", table, checkResults.y()));
-                }
-            } catch (Exception ex) {
-                // log and continue
-                logger.logFailedDispatcherEntityId(runId, tableSpec, table, ex.getMessage(), ex.getClass().getName());
-            }
-        }
-        return output;
-    }
-
-    private List<TableSpec> processDatasets(List<String> datasetIncludeList,
+    private List<DatasetSpec> processDatasets(List<String> datasetIncludeList,
                                             List<String> datasetExcludeList,
-                                            List<String> tableExcludeList,
-                                            List<Pattern> datasetExcludeListPatterns,
-                                            List<Pattern> tableExcludeListPatterns
+                                            List<Pattern> datasetExcludeListPatterns
     ) {
 
-        List<String> tablesIncludeList = new ArrayList<>();
+        List<DatasetSpec> datasetsInScope = new ArrayList<>();
 
         for (String dataset : datasetIncludeList) {
 
             try {
 
-                Tuple<Boolean, String> checkResults = isIncluded(dataset, datasetExcludeList, datasetExcludeListPatterns);
+                Tuple<Boolean, String> checkResults = Utils.isElementMatchLiteralOrRegexList(dataset,
+                        datasetExcludeList,
+                        datasetExcludeListPatterns);
 
                 if (!checkResults.x()) {
 
@@ -178,42 +140,34 @@ public class BigQueryScopeLister {
                     String projectId = tokens.get(0);
                     String datasetId = tokens.get(1);
 
-                    // get all tables under dataset
-                    List<String> datasetTables = resourceScanner.listTables(projectId, datasetId);
-                    tablesIncludeList.addAll(datasetTables);
+                    datasetsInScope.add(new DatasetSpec(projectId, datasetId));
 
-                    if (datasetTables.isEmpty()) {
-                        String msg = String.format(
-                                "No Tables found under dataset '%s'",
-                                dataset);
-
-                        logger.logWarnWithTracker(runId, null, msg);
-                    } else {
-                        logger.logInfoWithTracker(runId, null, String.format("Found %s tables under dataset %s", datasetTables.size(), dataset));
-                    }
                 } else {
-                    logger.logInfoWithTracker(runId, null, String.format("Dataset %s is excluded by %s", dataset, checkResults.y()));
+                    logger.logInfoWithTracker(runId,
+                            null,
+                            String.format("Dataset %s is excluded by %s",
+                                    dataset,
+                                    checkResults.y()));
                 }
             } catch (Exception exception) {
                 // log and continue
-                logger.logFailedDispatcherEntityId(runId, null, dataset, exception.getMessage(), exception.getClass().getName());
+                logger.logFailedDispatcherEntityId(runId,
+                        null,
+                        dataset,
+                        exception.getMessage(),
+                        exception.getClass().getName());
             }
         }
-        return processTables(
-                tablesIncludeList,
-                tableExcludeList,
-                tableExcludeListPatterns);
+        return datasetsInScope;
     }
 
 
-    private List<TableSpec> processProjects(
+    private List<DatasetSpec> processProjects(
             List<String> projectIncludeList,
             List<String> projectExcludeList,
             List<String> datasetExcludeList,
-            List<String> tableExcludeList,
             List<Pattern> projectExcludeListPatterns,
-            List<Pattern> datasetExcludeListPatterns,
-            List<Pattern> tableExcludeListPatterns
+            List<Pattern> datasetExcludeListPatterns
     ) {
 
         List<String> datasetIncludeList = new ArrayList<>();
@@ -223,7 +177,7 @@ public class BigQueryScopeLister {
         for (String project : projectIncludeList) {
             try {
 
-                Tuple<Boolean, String> checkResults = isIncluded(project, projectExcludeList, projectExcludeListPatterns);
+                Tuple<Boolean, String> checkResults = Utils.isElementMatchLiteralOrRegexList(project, projectExcludeList, projectExcludeListPatterns);
 
                 if (!checkResults.x()) {
 
@@ -256,19 +210,15 @@ public class BigQueryScopeLister {
         return processDatasets(
                 datasetIncludeList,
                 datasetExcludeList,
-                tableExcludeList,
-                datasetExcludeListPatterns,
-                tableExcludeListPatterns);
+                datasetExcludeListPatterns);
     }
 
-    private List<TableSpec> processFolders(
+    private List<DatasetSpec> processFolders(
             List<Long> folderIncludeList,
             List<String> projectExcludeList,
             List<String> datasetExcludeList,
-            List<String> tableExcludeList,
             List<Pattern> projectExcludeListPatterns,
-            List<Pattern> datasetExcludeListPatterns,
-            List<Pattern> tableExcludeListPatterns
+            List<Pattern> datasetExcludeListPatterns
     ) {
 
         List<String> projectIncludeList = new ArrayList<>();
@@ -305,49 +255,12 @@ public class BigQueryScopeLister {
                 projectIncludeList,
                 projectExcludeList,
                 datasetExcludeList,
-                tableExcludeList,
                 projectExcludeListPatterns,
-                datasetExcludeListPatterns,
-                tableExcludeListPatterns);
+                datasetExcludeListPatterns);
     }
 
-    private Tuple<Boolean, String> isIncluded(String input, List<String> list, List<Pattern> patterns) {
 
-        // check if the input matches any regex
-        for (Pattern pattern : patterns) {
-            Matcher matcher = pattern.matcher(input);
-            if (matcher.find()) {
-                return Tuple.of(true, pattern.toString());
-            }
-        }
 
-        // check if the input matches any literal element in the list
-        for (String listElement : list) {
-            // check if the input matches any literal element in the list
-            if (listElement.equalsIgnoreCase(input)) {
-                return Tuple.of(true, listElement);
-            }
-        }
 
-        // if the input is not found, return false and no matching elements
-        return Tuple.of(false, null);
-    }
-
-    /**
-     * Extract elements starting with a certain prefix, compile them and return them in a new List
-     *
-     * @param list
-     * @return List of compiled regular expression patterns
-     */
-    private static List<Pattern> extractAndCompilePatterns(List<String> list, String prefix) {
-        List<Pattern> patterns = new ArrayList<>();
-        for (String element : list) {
-            if (element.toLowerCase().startsWith(prefix)) {
-                String regex = element.substring(prefix.length());
-                patterns.add(Pattern.compile(regex));
-            }
-        }
-        return patterns;
-    }
 
 }

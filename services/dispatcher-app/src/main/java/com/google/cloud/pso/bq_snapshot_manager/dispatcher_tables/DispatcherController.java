@@ -16,13 +16,13 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.dispatcher_tables;
 
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.PubSubEvent;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher.Dispatcher;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher.DispatcherRequest;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.Dispatcher;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.DispatcherRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishResults;

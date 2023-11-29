@@ -6,7 +6,7 @@ jsonPayload.dispatched_tablespec_dataset AS tablesspec_dataset,
 jsonPayload.dispatched_tablespec_table AS tablespec_table,
 jsonPayload.dispatched_tablespec AS tablespec,
 FROM `${project}.${dataset}.${logging_table}`
-WHERE jsonPayload.global_app_log = 'DISPATCHED_REQUESTS_LOG'
+WHERE jsonPayload.global_app_log = 'DISPATCHED_TABLE_REQUESTS_LOG'
 )
 , configurator AS
 (

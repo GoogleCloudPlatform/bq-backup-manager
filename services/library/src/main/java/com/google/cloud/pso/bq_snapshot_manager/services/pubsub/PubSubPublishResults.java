@@ -18,9 +18,11 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.pubsub;
 
+import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
+
 import java.util.List;
 
-public class PubSubPublishResults {
+public class PubSubPublishResults extends JsonMessage {
 
     private List<SuccessPubSubMessage> successMessages;
     private List<FailedPubSubMessage> failedMessages;

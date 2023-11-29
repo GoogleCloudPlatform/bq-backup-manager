@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
 
@@ -95,7 +97,9 @@ public class Utils {
                                                String trackingId
     ) throws NonRetryableApplicationException {
         logger.logFunctionStart(request.getTrackingId(), request.getTargetTable());
-        logger.logInfoWithTracker(request.getTrackingId(),
+        logger.logInfoWithTracker(
+                request.isDryRun(),
+                request.getTrackingId(),
                 request.getTargetTable(),
                 String.format("Request : %s", request.toString()));
 
@@ -123,7 +127,9 @@ public class Utils {
         // are required in case PubSub is in a loop of retrying due to ACK timeout while the service has already processed the request
         // This is an extra measure to avoid unnecessary cost due to config issues.
         String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, trackingId);
-        logger.logInfoWithTracker(request.getTrackingId(),
+        logger.logInfoWithTracker(
+                request.isDryRun(),
+                request.getTrackingId(),
                 request.getTargetTable(),
                 String.format("Persisting processing key for tracking_id %s", trackingId));
         persistentSet.add(flagFileName);
@@ -175,5 +181,44 @@ public class Utils {
 
     public static Timestamp addSeconds(Timestamp timestamp, Long secondsDelta){
         return Timestamp.ofTimeSecondsAndNanos(timestamp.getSeconds() + secondsDelta , timestamp.getNanos());
+    }
+
+    /**
+     * Extract elements starting with a certain prefix, compile them and return them in a new List
+     *
+     * @param list
+     * @return List of compiled regular expression patterns
+     */
+    public static List<Pattern> extractAndCompilePatterns(List<String> list, String prefix) {
+        List<Pattern> patterns = new ArrayList<>();
+        for (String element : list) {
+            if (element.toLowerCase().startsWith(prefix)) {
+                String regex = element.substring(prefix.length());
+                patterns.add(Pattern.compile(regex));
+            }
+        }
+        return patterns;
+    }
+
+    public static Tuple<Boolean, String> isElementMatchLiteralOrRegexList(String input, List<String> list, List<Pattern> patterns) {
+
+        // check if the input matches any regex
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(input);
+            if (matcher.find()) {
+                return Tuple.of(true, pattern.toString());
+            }
+        }
+
+        // check if the input matches any literal element in the list
+        for (String listElement : list) {
+            // check if the input matches any literal element in the list
+            if (listElement.equalsIgnoreCase(input)) {
+                return Tuple.of(true, listElement);
+            }
+        }
+
+        // if the input is not found, return false and no matching elements
+        return Tuple.of(false, null);
     }
 }

@@ -8,4 +8,4 @@ jsonPayload.dispatched_tablespec_table AS table_id
 FROM
 `${project}.${dataset}.${logging_table}`
 WHERE
-jsonPayload.global_app_log = 'DISPATCHED_REQUESTS_LOG'
+jsonPayload.global_app_log = 'DISPATCHED_TABLE_REQUESTS_LOG'

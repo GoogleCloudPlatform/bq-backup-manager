@@ -16,7 +16,7 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher;
 
 public class DispatcherConfig {
 

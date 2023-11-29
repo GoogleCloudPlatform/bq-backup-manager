@@ -20,7 +20,7 @@ package com.google.cloud.pso.bq_snapshot_manager.services.pubsub;
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 
-public class FailedPubSubMessage {
+public class FailedPubSubMessage extends JsonMessage {
 
     private JsonMessage msg;
     private String exceptionMessage;

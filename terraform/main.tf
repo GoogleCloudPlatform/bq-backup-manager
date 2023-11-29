@@ -116,6 +116,8 @@ module "iam" {
   sa_tagger_tasks = var.sa_tagger_tasks
   sa_configurator = var.sa_configurator
   sa_configurator_tasks = var.sa_configurator_tasks
+  sa_dispatcher_tables = var.sa_dispatcher_tables
+  sa_dispatcher_tables_tasks = var.sa_dispatcher_tables_tasks
 }
 
 module "gcs" {
@@ -126,6 +128,7 @@ module "gcs" {
   # both dispatchers should be admins. Add the inspection-dispatcher-sa only if it's being deployed
   gcs_flags_bucket_admins = [
     "serviceAccount:${module.iam.sa_dispatcher_email}",
+    "serviceAccount:${module.iam.sa_dispatcher_tables_email}",
     "serviceAccount:${module.iam.sa_configurator_email}",
     "serviceAccount:${module.iam.sa_snapshoter_bq_email}",
     "serviceAccount:${module.iam.sa_snapshoter_gcs_email}",
@@ -174,6 +177,30 @@ module "cloud-run-dispatcher" {
   timeout_seconds = var.dispatcher_service_timeout_seconds
   # We don't need high conc for the entry point
   max_containers = 1
+  # We need more than 1 CPU to help accelerate processing of large BigQuery Scan scope
+  max_cpu = 2
+  # Use the common variables.tf in addition to specific variables.tf for this service
+  environment_variables = concat(local.common_cloud_run_variables, [
+    {
+      name = "OUTPUT_TOPIC",
+      value = module.pubsub-dispatcher-tables.topic-name,
+    },
+  ]
+  )
+  common_labels = local.common_labels
+  vpc_access_connector = module.vpc_connector.id
+}
+
+module "cloud-run-dispatcher-tables" {
+  source = "./modules/cloud-run"
+  project = var.project
+  region = var.compute_region
+  service_image = var.dispatcher_tables_service_image
+  service_name = var.dispatcher_tables_service_name
+  service_account_email = module.iam.sa_dispatcher_tables_email
+  invoker_service_account_email = module.iam.sa_dispatcher_tables_tasks_email
+  # Dispatcher could take time to list large number of tables
+  timeout_seconds = var.dispatcher_service_timeout_seconds
   # We need more than 1 CPU to help accelerate processing of large BigQuery Scan scope
   max_cpu = 2
   # Use the common variables.tf in addition to specific variables.tf for this service
@@ -315,6 +342,23 @@ module "pubsub-dispatcher" {
   common_labels = local.common_labels
 }
 
+module "pubsub-dispatcher-tables" {
+  source = "./modules/pubsub"
+  project = var.project
+  subscription_endpoint = module.cloud-run-dispatcher-tables.service_endpoint
+  subscription_name = var.dispatcher_tables_pubsub_sub
+  subscription_service_account = module.iam.sa_dispatcher_tables_tasks_email
+  topic = var.dispatcher_tables_pubsub_topic
+  topic_publishers_sa_emails = [module.iam.sa_dispatcher_email]
+  # use a deadline large enough to process BQ listing for large scopes
+  subscription_ack_deadline_seconds = var.dispatcher_subscription_ack_deadline_seconds
+  # avoid resending dispatcher messages if things went wrong and the msg was NAK (e.g. timeout expired, app error, etc)
+  # min value must be at equal to the ack_deadline_seconds
+  subscription_message_retention_duration = var.dispatcher_subscription_message_retention_duration
+
+  common_labels = local.common_labels
+}
+
 module "pubsub-configurator" {
   source = "./modules/pubsub"
   project = var.project
@@ -323,7 +367,7 @@ module "pubsub-configurator" {
   subscription_service_account = module.iam.sa_configurator_tasks_email
   topic = var.configurator_pubsub_topic
   topic_publishers_sa_emails = [
-    module.iam.sa_dispatcher_email]
+    module.iam.sa_dispatcher_tables_email]
   subscription_ack_deadline_seconds = var.configurator_subscription_ack_deadline_seconds
   # How long to retain unacknowledged messages in the subscription's backlog, from the moment a message is published.
   # In case of unexpected problems we want to avoid a buildup that re-trigger functions
