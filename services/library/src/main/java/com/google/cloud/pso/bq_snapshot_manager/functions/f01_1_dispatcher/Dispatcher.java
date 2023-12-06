@@ -83,9 +83,15 @@ public class Dispatcher {
         String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, pubSubMessageId);
         if (persistentSet.contains(flagFileName)) {
             // log error and ACK and return
-            String msg = String.format("PubSub message ID '%s' has been processed before by the dispatcher. The message should be ACK to PubSub to stop retries. Please investigate further why the message was retried in the first place.",
+            String msg = String.format("PubSub message ID '%s' has been processed before by the tables dispatcher. " +
+                            "This is probably retried by PubSub due to it's subscription_ack_deadline_seconds being" +
+                            " 10min or less (max) while the dispatcher process is taking more. The message is not " +
+                            "going to be re-processed and ignored instead.",
                     pubSubMessageId);
-            throw new NonRetryableApplicationException(msg);
+            logger.logWarnWithTracker(dispatcherRequest.isDryRun(), runId, null, msg);
+
+            // end execution successfully and the controller will ACK the request to PubSub and stop retries
+            return new PubSubPublishResults(new ArrayList<>(0), new ArrayList<>(0));
         } else {
             logger.logInfoWithTracker(runId,
                     null,
