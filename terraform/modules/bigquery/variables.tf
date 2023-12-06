@@ -38,6 +38,10 @@ variable "gcs_backup_policies_bucket_name" {
   type = string
 }
 
+variable "gcs_dispatched_tables_bucket_name" {
+  type = string
+}
+
 
 
 

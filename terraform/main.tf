@@ -142,6 +142,10 @@ module "gcs" {
   gcs_backup_policies_bucket_name = "${var.project}-${var.gcs_backup_policies_bucket_name}"
   compute_region                  = var.compute_region
   data_region                     = var.data_region
+
+  gcs_dispatcher_tracker_bucket_name = var.gcs_dispatcher_tracker_bucket_name
+  gcs_dispatcher_tracker_bucket_ttl_days = var.gcs_dispatcher_tracker_bucket_ttl_days
+  gcs_dispatched_tables_bucket_admins = ["serviceAccount:${module.iam.sa_dispatcher_tables_email}"]
 }
 
 module "bigquery" {
@@ -152,6 +156,7 @@ module "bigquery" {
   logging_sink_sa = module.cloud_logging.service_account
   common_labels = local.common_labels
   gcs_backup_policies_bucket_name = module.gcs.create_gcs_backup_policies_bucket_name
+  gcs_dispatched_tables_bucket_name = module.gcs.create_gcs_dispatched_tables_bucket_name
 }
 
 module "cloud_logging" {
@@ -208,6 +213,10 @@ module "cloud-run-dispatcher-tables" {
     {
       name = "OUTPUT_TOPIC",
       value = module.pubsub-configurator.topic-name,
+    },
+    {
+      name = "DISPATCHED_TABLES_BUCKET_NAME",
+      value = module.gcs.create_gcs_dispatched_tables_bucket_name,
     },
   ]
   )

@@ -20,10 +20,7 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f01_2_dispatcher_tabl
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
-import com.google.cloud.pso.bq_snapshot_manager.entities.GlobalVariables;
-import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
-import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
-import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
+import com.google.cloud.pso.bq_snapshot_manager.entities.*;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.BigQueryScopeLister;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.DispatcherConfig;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.ConfiguratorRequest;
@@ -36,10 +33,13 @@ import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubService;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.SuccessPubSubMessage;
 import com.google.cloud.pso.bq_snapshot_manager.services.scan.*;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
+import com.google.cloud.pso.bq_snapshot_manager.services.tracking.ObjectTracker;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class DispatcherTables {
 
@@ -48,7 +48,10 @@ public class DispatcherTables {
     private final ResourceScanner resourceScanner;
     private final DispatcherConfig config;
     private final PersistentSet persistentSet;
+
+    private final ObjectTracker dispatchedTablesTracker;
     private final String persistentSetObjectPrefix;
+
     private final Integer functionNumber;
     private final String runId;
 
@@ -56,6 +59,7 @@ public class DispatcherTables {
                             PubSubService pubSubService,
                             ResourceScanner resourceScanner,
                             PersistentSet persistentSet,
+                            ObjectTracker dispatchedTablesTracker,
                             String persistentSetObjectPrefix,
                             Integer functionNumber,
                             String runId) {
@@ -64,6 +68,7 @@ public class DispatcherTables {
         this.pubSubService = pubSubService;
         this.resourceScanner = resourceScanner;
         this.persistentSet = persistentSet;
+        this.dispatchedTablesTracker = dispatchedTablesTracker;
         this.persistentSetObjectPrefix = persistentSetObjectPrefix;
         this.functionNumber = functionNumber;
         this.runId = runId;
@@ -207,20 +212,21 @@ public class DispatcherTables {
         }
 
         long dispatcherLogStartTs = System.currentTimeMillis();
-        logger.logInfoWithTracker(runId, null, "Starting to list creating dispatched tables log..");
+        logger.logInfoWithTracker(runId, null, "Starting to create dispatched tables log in GCS ..");
 
-        // handle success publishing requests
-        for (SuccessPubSubMessage msg : publishResults.getSuccessMessages()) {
-            // this enable us to detect dispatched messages within a runId that fail in later stages (i.e. Tagger)
-            ConfiguratorRequest request = (ConfiguratorRequest) msg.getMsg();
+        // To scale up dispatched tables logging we write the full list as JSON to GCS and use it as an external table
+        // in bq. The schema of the file should follow DispatchedTableInfo
+        List<Object> dispatchedTablesList = publishResults.getSuccessMessages().stream()
+                .map( x -> (ConfiguratorRequest) x.getMsg())
+                .map( x -> new DispatchedTableInfo(x.getTargetTable(), x.getTrackingId()))
+               .collect(Collectors.toCollection(ArrayList::new));
 
-            logger.logSuccessDispatcherTrackingId(runId, request.getTrackingId(), request.getTargetTable());
-        }
+        dispatchedTablesTracker.trackObjects(dispatchedTablesList, runId);
 
         long dispatcherLogEndTs = System.currentTimeMillis();
         logger.logInfoWithTracker(runId,
                 null,
-                String.format("Finished creating dispatched  tables log in %s ms.", listingEndTs-listingStartTs));
+                String.format("Finished creating dispatched tables log in GCS in %s ms.", listingEndTs-listingStartTs));
 
         String timersJson = "Execution Timers (ms): {'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
         logger.logInfoWithTracker(runId, null,

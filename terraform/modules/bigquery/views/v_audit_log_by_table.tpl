@@ -1,12 +1,11 @@
 WITH dispatched_tables AS
 (
 SELECT DISTINCT
-jsonPayload.dispatched_tablespec_project AS tablespec_project,
-jsonPayload.dispatched_tablespec_dataset AS tablesspec_dataset,
-jsonPayload.dispatched_tablespec_table AS tablespec_table,
-jsonPayload.dispatched_tablespec AS tablespec,
-FROM `${project}.${dataset}.${logging_table}`
-WHERE jsonPayload.global_app_log = 'DISPATCHED_TABLE_REQUESTS_LOG'
+project_id  AS tablespec_project,
+dataset_id AS tablesspec_dataset,
+table_id AS tablespec_table,
+tablespec
+FROM `${project}.${dataset}.${tracking_id_to_table_map}`
 )
 , configurator AS
 (

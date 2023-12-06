@@ -31,6 +31,7 @@ import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishRes
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubServiceImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScannerImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.GCSPersistentSetImpl;
+import com.google.cloud.pso.bq_snapshot_manager.services.tracking.GCSObjectTracker;
 import com.google.gson.Gson;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -107,6 +108,7 @@ public class DispatcherTablesController {
                     new PubSubServiceImpl(),
                     new ResourceScannerImpl(),
                     new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
+                    new GCSObjectTracker(environment.getDispatchedTablesBucketName(), "tables"),
                     "dispatcher-tables-flags",
                     functionNumber,
                     runId

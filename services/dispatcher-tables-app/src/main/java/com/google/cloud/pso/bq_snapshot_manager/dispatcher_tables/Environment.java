@@ -54,4 +54,8 @@ public class Environment {
     public String getApplicationName(){
         return Utils.getConfigFromEnv("APPLICATION_NAME", true);
     }
+    public String getDispatchedTablesBucketName(){
+        return Utils.getConfigFromEnv("DISPATCHED_TABLES_BUCKET_NAME", true);
+    }
+
 }

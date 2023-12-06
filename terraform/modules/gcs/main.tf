@@ -64,3 +64,34 @@ resource "google_storage_bucket_iam_binding" "gcs_backup_policies_iam_bindings" 
   role = "roles/storage.objectAdmin"
   members = var.gcs_backup_policies_bucket_admins
 }
+
+// Dispatched tables bucket
+
+resource "google_storage_bucket" "gcs_dispatched_tables_bucket" {
+  project = var.project
+  name          = var.gcs_dispatcher_tracker_bucket_name
+  # This bucket must be created in the same region that BigQuery dataset is created
+  location      = var.data_region
+
+  lifecycle_rule {
+    condition {
+      # Clean up old flags to save storage and GCS operations overhead
+      age = var.gcs_dispatcher_tracker_bucket_ttl_days # days
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  force_destroy = false
+
+  uniform_bucket_level_access = true
+
+  labels = var.common_labels
+}
+
+resource "google_storage_bucket_iam_binding" "gcs_dispatched_tables_iam_bindings" {
+  bucket = google_storage_bucket.gcs_dispatched_tables_bucket.name
+  role = "roles/storage.objectAdmin"
+  members = var.gcs_dispatched_tables_bucket_admins
+}

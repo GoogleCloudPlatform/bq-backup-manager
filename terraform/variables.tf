@@ -207,6 +207,16 @@ variable "gcs_backup_policies_bucket_name" {
   default = "bq-backup-manager-policies"
 }
 
+variable "gcs_dispatcher_tracker_bucket_name" {
+  type = string
+  default = "bq-backup-manager-dispatched-tables"
+}
+
+variable "gcs_dispatcher_tracker_bucket_ttl_days" {
+  type = number
+  default = 30
+}
+
 # Images
 variable "dispatcher_service_image" {
   type = string
