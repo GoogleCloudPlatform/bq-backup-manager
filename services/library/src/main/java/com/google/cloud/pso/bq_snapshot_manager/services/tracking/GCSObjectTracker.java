@@ -14,15 +14,13 @@ import java.util.List;
 public class GCSObjectTracker implements ObjectTracker {
 
     private String bucketName;
-    private String objectPrefix;
 
-    public GCSObjectTracker(String bucketName, String objectPrefix) {
+    public GCSObjectTracker(String bucketName) {
         this.bucketName = bucketName;
-        this.objectPrefix = objectPrefix;
     }
 
     @Override
-    public void trackObjects(List<Object> objects, String runId) throws IOException {
+    public void trackObjects(List<Object> objects, String objectPrefix) throws IOException {
 
         // Initialize GSON
         Gson gson = new Gson();
@@ -47,7 +45,7 @@ public class GCSObjectTracker implements ObjectTracker {
         writer.close();
         baos.close();
 
-        String objectName = String.format("%s/runId=%s/data.json", objectPrefix, runId);
+        String objectName = String.format("%s/data.json", objectPrefix);
 
         // Create the blob information
         BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectName).setContentType("application/json").build();

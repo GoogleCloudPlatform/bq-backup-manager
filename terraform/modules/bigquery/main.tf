@@ -355,7 +355,7 @@ resource "google_bigquery_table" "external_gcs_dispatched_tables" {
     source_format = "NEWLINE_DELIMITED_JSON"
     hive_partitioning_options {
       mode = "CUSTOM" # Custom means you must encode the partition key schema within the source_uri_prefix
-      source_uri_prefix = "gs://${var.gcs_dispatched_tables_bucket_name}/tables/{runId:STRING}"
+      source_uri_prefix = "gs://${var.gcs_dispatched_tables_bucket_name}/tables/{runId:STRING}/{project:STRING}/{dataset:STRING}"
 
     }
     source_uris = [

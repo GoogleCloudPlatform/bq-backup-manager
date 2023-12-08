@@ -108,7 +108,7 @@ public class DispatcherTablesController {
                     new PubSubServiceImpl(),
                     new ResourceScannerImpl(),
                     new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
-                    new GCSObjectTracker(environment.getDispatchedTablesBucketName(), "tables"),
+                    new GCSObjectTracker(environment.getDispatchedTablesBucketName()),
                     "dispatcher-tables-flags",
                     functionNumber,
                     runId

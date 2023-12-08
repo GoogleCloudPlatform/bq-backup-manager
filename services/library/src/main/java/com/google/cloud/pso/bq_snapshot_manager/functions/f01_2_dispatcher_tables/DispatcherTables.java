@@ -83,6 +83,13 @@ public class DispatcherTables {
 
     public PubSubPublishResults execute(DispatcherTableRequest dispatcherRequest, String pubSubMessageId) throws IOException, NonRetryableApplicationException, InterruptedException {
 
+        //TODO: update the loggingHelper to accept DatasetSpec in logging methods
+        TableSpec loggingDatasetSpec = new TableSpec(
+                dispatcherRequest.getDatasetSpec().getProject(),
+                dispatcherRequest.getDatasetSpec().getDataset(),
+                ""
+        );
+
         long functionStartTs = System.currentTimeMillis();
         /*
            Check if we already processed this pubSubMessageId before to avoid re-running the dispatcher (and the whole process)
@@ -97,13 +104,13 @@ public class DispatcherTables {
                             " 10min or less (max) while the dispatcher process is taking more. The message is not " +
                             "going to be re-processed and ignored instead.",
                     pubSubMessageId);
-            logger.logWarnWithTracker(dispatcherRequest.isDryRun(), dispatcherRequest.getRunId(), null, msg);
+            logger.logWarnWithTracker(dispatcherRequest.isDryRun(), dispatcherRequest.getRunId(), loggingDatasetSpec, msg);
 
             // end execution successfully and the controller will ACK the request to PubSub and stop retries
             return new PubSubPublishResults(new ArrayList<>(0), new ArrayList<>(0));
         } else {
             logger.logInfoWithTracker(runId,
-                    null,
+                    loggingDatasetSpec,
                     String.format("Persisting processing key for PubSub message ID %s", pubSubMessageId));
             persistentSet.add(flagFileName);
         }
@@ -112,7 +119,7 @@ public class DispatcherTables {
         List<String> tablesInclusionList;
 
         long listingStartTs = System.currentTimeMillis();
-        logger.logInfoWithTracker(runId, null, "Starting to list and filter tables in scope..");
+        logger.logInfoWithTracker(runId, loggingDatasetSpec, "Starting to list and filter tables in scope..");
 
         // tables to process are explict passed as tablesInclusionList from the original BigQueryScanScope or
         // implicitly via the project and dataset info
@@ -153,7 +160,7 @@ public class DispatcherTables {
 
         long listingEndTs = System.currentTimeMillis();
         logger.logInfoWithTracker(runId,
-                null,
+                loggingDatasetSpec,
                 String.format("Finished listing and filtering down tables in-scope in %s ms.", listingEndTs-listingStartTs));
 
         // publish the tables in scope to the Configurator
@@ -176,7 +183,7 @@ public class DispatcherTables {
         }
 
         long publishingStartTs = System.currentTimeMillis();
-        logger.logInfoWithTracker(runId, null,
+        logger.logInfoWithTracker(runId, loggingDatasetSpec,
                 String.format("Starting to publish to PubSub: %s messages", pubSubMessagesToPublish.size())
         );
 
@@ -188,7 +195,7 @@ public class DispatcherTables {
         );
 
         long publishingEndTs = System.currentTimeMillis();
-        logger.logInfoWithTracker(runId, null,
+        logger.logInfoWithTracker(runId, loggingDatasetSpec,
                 String.format("Finished publishing to PubSub in %s ms: %s success messages, %s failed messages",
                         publishingEndTs - publishingStartTs,
                         publishResults.getSuccessMessages().size(),
@@ -212,7 +219,7 @@ public class DispatcherTables {
         }
 
         long dispatcherLogStartTs = System.currentTimeMillis();
-        logger.logInfoWithTracker(runId, null, "Starting to create dispatched tables log in GCS ..");
+        logger.logInfoWithTracker(runId, loggingDatasetSpec, "Starting to create dispatched tables log in GCS ..");
 
         // To scale up dispatched tables logging we write the full list as JSON to GCS and use it as an external table
         // in bq. The schema of the file should follow DispatchedTableInfo
@@ -221,16 +228,22 @@ public class DispatcherTables {
                 .map( x -> new DispatchedTableInfo(x.getTargetTable(), x.getTrackingId()))
                .collect(Collectors.toCollection(ArrayList::new));
 
-        dispatchedTablesTracker.trackObjects(dispatchedTablesList, runId);
+        String dispatchedTablesObjectPrefix = String.format("tables/runId=%s/project=%s/dataset=%s",
+                runId,
+                dispatcherRequest.getDatasetSpec().getProject(),
+                dispatcherRequest.getDatasetSpec().getDataset()
+                );
+        dispatchedTablesTracker.trackObjects(dispatchedTablesList, dispatchedTablesObjectPrefix);
 
         long dispatcherLogEndTs = System.currentTimeMillis();
         logger.logInfoWithTracker(runId,
-                null,
+                loggingDatasetSpec,
                 String.format("Finished creating dispatched tables log in GCS in %s ms.", listingEndTs-listingStartTs));
 
-        String timersJson = "Execution Timers (ms): {'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
-        logger.logInfoWithTracker(runId, null,
+        String timersJson = "Execution Timers (ms): {'tables_count': %s, 'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
+        logger.logInfoWithTracker(runId, loggingDatasetSpec,
                 String.format(timersJson,
+                        dispatchedTablesList.size(),
                         dispatcherLogEndTs - functionStartTs,
                         listingEndTs - listingStartTs,
                         publishingEndTs - publishingStartTs,
@@ -238,7 +251,7 @@ public class DispatcherTables {
                 )
         );
 
-        logger.logFunctionEnd(runId, null);
+        logger.logFunctionEnd(runId, loggingDatasetSpec);
 
         return publishResults;
     }

@@ -197,6 +197,7 @@ public class Dispatcher {
         logger.logInfoWithTracker(runId, null, "Starting to list creating dispatched datasets log..");
 
         // handle success publishing requests
+        //TODO: improve and standardize this by writing the log to GCS as external BQ table (like in tables dispatcher)
         for (SuccessPubSubMessage msg : publishResults.getSuccessMessages()) {
             DispatcherTableRequest request = (DispatcherTableRequest) msg.getMsg();
 
@@ -208,9 +209,10 @@ public class Dispatcher {
                 null,
                 String.format("Finished creating dispatched datasets log in %s ms.", listingEndTs-listingStartTs));
 
-        String timersJson = "Execution Timers (ms): {'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
+        String timersJson = "Execution Timers (ms): {'datasets_count': %s, 'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
         logger.logInfoWithTracker(runId, null,
                 String.format(timersJson,
+                        publishResults.getSuccessMessages().size(),
                         dispatcherLogEndTs - functionStartTs,
                         listingEndTs - listingStartTs,
                         publishingEndTs - publishingStartTs,

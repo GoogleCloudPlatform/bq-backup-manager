@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface ObjectTracker {
 
-    void trackObjects(List<Object> objects, String runId) throws IOException;
+    void trackObjects(List<Object> objects, String objectPrefix) throws IOException;
 }
