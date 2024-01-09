@@ -303,6 +303,27 @@ resource "google_bigquery_table" "view_errors_dispatcher" {
   labels = var.common_labels
 }
 
+resource "google_bigquery_table" "view_dispatcher_counters" {
+  dataset_id = google_bigquery_dataset.results_dataset.dataset_id
+  table_id = "v_dispatcher_counters"
+
+  deletion_protection = false
+
+  view {
+    use_legacy_sql = false
+    query = templatefile("modules/bigquery/views/v_dispatcher_counters.tpl",
+      {
+        project = var.project
+        dataset = var.dataset
+        logging_table = google_bigquery_table.logging_table.table_id
+      }
+    )
+  }
+
+  labels = var.common_labels
+}
+
+
 ########## External tables #####################################
 
 resource "google_bigquery_table" "external_gcs_backup_policies" {

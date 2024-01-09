@@ -240,16 +240,18 @@ public class DispatcherTables {
                 loggingDatasetSpec,
                 String.format("Finished creating dispatched tables log in GCS in %s ms.", listingEndTs-listingStartTs));
 
-        String timersJson = "Execution Timers (ms): {'tables_count': %s, 'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
-        logger.logInfoWithTracker(runId, loggingDatasetSpec,
-                String.format(timersJson,
-                        dispatchedTablesList.size(),
-                        dispatcherLogEndTs - functionStartTs,
-                        listingEndTs - listingStartTs,
-                        publishingEndTs - publishingStartTs,
-                        dispatcherLogEndTs - dispatcherLogStartTs
-                )
-        );
+        // log counters for this dispatcher invocation
+        logger.logDispatcherCounters(
+                runId,
+                dispatcherRequest.isDryRun(),
+                "tables-dispatcher",
+                dispatcherRequest.getDatasetSpec().toSqlString(),
+                dispatchedTablesList.size(),
+                dispatcherLogEndTs - functionStartTs,
+                listingEndTs - listingStartTs,
+                publishingEndTs - publishingStartTs,
+                dispatcherLogEndTs - dispatcherLogStartTs
+                );
 
         logger.logFunctionEnd(runId, loggingDatasetSpec);
 

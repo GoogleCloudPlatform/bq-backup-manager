@@ -86,7 +86,7 @@ public class DatasetSpec {
 
     @Override
     public String toString() {
-        return "TableSpec{" +
+        return "DatasetSpec{" +
                 "project='" + project + '\'' +
                 ", dataset='" + dataset + '\'' +
                 '}';

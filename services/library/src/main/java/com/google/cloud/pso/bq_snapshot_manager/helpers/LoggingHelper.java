@@ -87,22 +87,36 @@ public class LoggingHelper {
         logWithTracker(log,isDryRun, tracker, tableSpec, msg, level, new Object[]{});
     }
 
-    public void logSuccessDispatcherTrackingId(String trackingId, String dispatchedTrackingId, TableSpec tableSpec) {
+    public void logDispatcherCounters(String runId,
+                                      Boolean isDryRun,
+                                      String dispatcherType,
+                                      String entitySpec,
+                                      Integer entitiesCount,
+                                      Long totalMs,
+                                      Long listingMs,
+                                      Long pubsubPublishingMs,
+                                      Long createDispatcherLogMs
+                                      ){
 
         Object [] attributes = new Object[]{
-                kv("dispatched_tracking_id", dispatchedTrackingId),
-                kv("dispatched_tablespec", tableSpec.toSqlString()),
-                kv("dispatched_tablespec_project", tableSpec.getProject()),
-                kv("dispatched_tablespec_dataset", tableSpec.getDataset()),
-                kv("dispatched_tablespec_table", tableSpec.getTable()),
+                kv("dispatcher_counters_dispatcher_type", dispatcherType),
+                kv("dispatcher_counters_entity_spec", entitySpec),
+                kv("dispatcher_counters_entities_count", entitiesCount),
+                kv("dispatcher_counters_total_ms", totalMs),
+                kv("dispatcher_counters_listing_ms", listingMs),
+                kv("dispatcher_counters_pubsub_publishing_ms", pubsubPublishingMs),
+                kv("dispatcher_counters_create_dispatcher_log_ms", createDispatcherLogMs),
+
         };
 
+        String msg = "Execution Timers for %s dispatcher (ms): {'tables_count': %s, 'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
+
         logWithTracker(
-                ApplicationLog.DISPATCHED_TABLE_REQUESTS_LOG,
+                ApplicationLog.DISPATCHER_COUNTERS_LOG,
+                isDryRun,
+                runId,
                 null,
-                trackingId,
-                tableSpec,
-                String.format("Dispatched request for table '%s' with trackingId `%s`", tableSpec.toSqlString(), dispatchedTrackingId),
+                String.format(msg, dispatcherType, entitiesCount, totalMs, listingMs, pubsubPublishingMs, createDispatcherLogMs),
                 Level.INFO,
                 attributes
         );

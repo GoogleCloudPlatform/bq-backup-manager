@@ -209,15 +209,17 @@ public class Dispatcher {
                 null,
                 String.format("Finished creating dispatched datasets log in %s ms.", listingEndTs-listingStartTs));
 
-        String timersJson = "Execution Timers (ms): {'datasets_count': %s, 'total': %s, 'listing_scope': %s, 'publish_to_pubsub': %s, 'create_dispatcher_log': %s}";
-        logger.logInfoWithTracker(runId, null,
-                String.format(timersJson,
-                        publishResults.getSuccessMessages().size(),
-                        dispatcherLogEndTs - functionStartTs,
-                        listingEndTs - listingStartTs,
-                        publishingEndTs - publishingStartTs,
-                        dispatcherLogEndTs - dispatcherLogStartTs
-                )
+        // log counters for this dispatcher invocation
+        logger.logDispatcherCounters(
+                runId,
+                dispatcherRequest.isDryRun(),
+                "datasets-dispatcher",
+                dispatcherRequest.getBigQueryScope().toString(),
+                pubSubMessagesToPublish.size(),
+                dispatcherLogEndTs - functionStartTs,
+                listingEndTs - listingStartTs,
+                publishingEndTs - publishingStartTs,
+                dispatcherLogEndTs - dispatcherLogStartTs
         );
 
         logger.logFunctionEnd(runId, null);
