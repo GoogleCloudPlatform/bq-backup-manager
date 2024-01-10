@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.pubsub;
 
+
 import com.google.api.core.ApiFuture;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import com.google.cloud.pubsub.v1.Publisher;

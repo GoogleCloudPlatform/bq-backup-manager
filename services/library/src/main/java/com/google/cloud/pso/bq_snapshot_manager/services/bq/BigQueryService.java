@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.bq;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;

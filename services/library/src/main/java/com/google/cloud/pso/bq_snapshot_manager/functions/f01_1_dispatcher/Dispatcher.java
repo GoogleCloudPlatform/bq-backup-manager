@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.entities.DatasetSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -201,7 +202,8 @@ public class Dispatcher {
     logger.logInfoWithTracker(runId, null, "Starting to list creating dispatched datasets log..");
 
     // handle success publishing requests
-    // TODO: improve and standardize this by writing the log to GCS as external BQ table (like in
+    // TODO: improve and standardize this by writing the log to GCS as external BQ table (like
+    // in
     // tables dispatcher)
     for (SuccessPubSubMessage msg : publishResults.getSuccessMessages()) {
       DispatcherTableRequest request = (DispatcherTableRequest) msg.getMsg();

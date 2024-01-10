@@ -600,7 +600,8 @@ public class ConfiguratorTest {
             "1665734583289-T",
             "1665734583289-T-xyz",
             false,
-            // This is a System policy with an existing state. Configurator should use the latest
+            // This is a System policy with an existing state. Configurator should use
+            // the latest
             // fallback policy\
             // and the state from the previous run
             new BackupPolicyAndState(

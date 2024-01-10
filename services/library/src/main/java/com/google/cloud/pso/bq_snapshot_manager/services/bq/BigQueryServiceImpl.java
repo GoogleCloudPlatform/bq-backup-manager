@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.bq;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.bigquery.*;
@@ -64,7 +65,8 @@ public class BigQueryServiceImpl implements BigQueryService {
           .getMessage()
           .toLowerCase()
           .contains("caused by a transient issue")) {
-        // In some cases snapshot jobs faces the below error. In such case we should retry it.
+        // In some cases snapshot jobs faces the below error. In such case we should retry
+        // it.
         // IMPROVE: detect the error based on a code or reason and not the error message
         /*
         An internal error occurred and the request could not be completed.

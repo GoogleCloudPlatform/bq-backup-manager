@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.helpers;
 
+
 import com.google.cloud.Timestamp;
 import java.util.UUID;
 
@@ -50,13 +51,15 @@ public class TrackingHelper {
   }
 
   public static String parseRunIdAsPrefix(String runId) {
-    // currentTimeMillis() will always be 13 chars between Sep 9 2001 at 01:46:40.000 UTC and Nov 20
+    // currentTimeMillis() will always be 13 chars between Sep 9 2001 at 01:46:40.000 UTC and
+    // Nov 20
     // 2286 at 17:46:39.999 UTC
     return runId.substring(0, (13 + suffixLength));
   }
 
   public static Long parseRunIdAsMilliSeconds(String runId) {
-    // currentTimeMillis() will always be 13 chars between Sep 9 2001 at 01:46:40.000 UTC and Nov 20
+    // currentTimeMillis() will always be 13 chars between Sep 9 2001 at 01:46:40.000 UTC and
+    // Nov 20
     // 2286 at 17:46:39.999 UTC
     return Long.valueOf(runId.substring(0, 13));
   }

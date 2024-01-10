@@ -46,9 +46,8 @@ public class BigQueryScopeListerTest {
             new ArrayList<>(), // folders - should have no effect
             Arrays.asList("p1", "p2"), // projects include - should have no effect
             new ArrayList<>(), // projects exclude
-            Arrays.asList(
-                "p1.d2",
-                "p2.d2"), // datasets include - should be the only include list affecting the scope
+            Arrays.asList("p1.d2", "p2.d2"), // datasets include - should be the only include list
+            // affecting the scope
             new ArrayList<>(), // datasets exclude
             Arrays.asList(),
             Arrays.asList() // tables exclude
@@ -68,9 +67,8 @@ public class BigQueryScopeListerTest {
     BigQueryScope bigQueryScope =
         new BigQueryScope(
             new ArrayList<>(), // folders - should have no effect
-            Arrays.asList(
-                "p1",
-                "p2"), // projects include - should be the only include list affecting the scope
+            Arrays.asList("p1", "p2"), // projects include - should be the only include list
+            // affecting the scope
             new ArrayList<>(), // projects exclude
             Arrays.asList(), // datasets include - should have no effect
             Arrays.asList("p1.d1"), // datasets exclude
@@ -94,7 +92,8 @@ public class BigQueryScopeListerTest {
 
     BigQueryScope bigQueryScope =
         new BigQueryScope(
-            Arrays.asList(1L, 2L), // folders - should be the only include list affecting the scope
+            Arrays.asList(1L, 2L), // folders - should be the only include list affecting the
+            // scope
             Arrays.asList(),
             Arrays.asList("p4"), // projects exclude
             Arrays.asList(), //
@@ -120,7 +119,8 @@ public class BigQueryScopeListerTest {
 
     BigQueryScope bigQueryScope =
         new BigQueryScope(
-            Arrays.asList(1L, 2L), // folders - should be the only include list affecting the scope
+            Arrays.asList(1L, 2L), // folders - should be the only include list affecting the
+            // scope
             Arrays.asList(), // projects include - should have no effect
             Arrays.asList("p3", "regex:^p4$"), // projects exclude - p3 as literal and p4 as regex
             Arrays.asList(), // datasets include - should have no effect

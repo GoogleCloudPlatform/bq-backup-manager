@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
@@ -283,10 +284,13 @@ public class Configurator {
           request.getTargetTable(),
           String.format("Will use a %s-level fallback policy", fallbackBackupPolicyTuple.x()));
 
-      // if there is a system attached policy, then only use the last_xyz fields from it and use the
+      // if there is a system attached policy, then only use the last_xyz fields from it and
+      // use the
       // latest fallback policy
-      // the last_backup_at needs to be checked to determine if we should take a backup in this run
-      // the last_xyz_uri fields need to be propagated to the Tagger service so that they are not
+      // the last_backup_at needs to be checked to determine if we should take a backup in
+      // this run
+      // the last_xyz_uri fields need to be propagated to the Tagger service so that they are
+      // not
       // lost on each run
       if (attachedBackupPolicyAndState != null
           && attachedBackupPolicyAndState.getConfigSource().equals(BackupConfigSource.SYSTEM)) {
@@ -324,7 +328,8 @@ public class Configurator {
 
     if (configSource.equals(BackupConfigSource.SYSTEM) && lastBackupAt == null) {
       // this means the table has not been backed up before
-      // CASE 1: It's a fallback configuration (SYSTEM) running for the first time --> take backup
+      // CASE 1: It's a fallback configuration (SYSTEM) running for the first time --> take
+      // backup
       takeBackup = true;
     } else {
 
@@ -334,7 +339,8 @@ public class Configurator {
         takeBackup = true;
       } else {
 
-        // CASE 3: It's MANUAL OR SYSTEM config that ran before and already attached to the table
+        // CASE 3: It's MANUAL OR SYSTEM config that ran before and already attached to the
+        // table
         // --> decide based on CRON next trigger check
 
         Tuple<Boolean, LocalDateTime> takeBackupTuple =
@@ -368,7 +374,8 @@ public class Configurator {
   public static boolean isBackupTime(
       boolean isForceRun, boolean isBackupCronTime, boolean isTableCreatedBeforeTimeTravel) {
     // table must have enough history to use the time travel feature.
-    // In addition to that, the run has to be a force run or the backup is due based on the backup
+    // In addition to that, the run has to be a force run or the backup is due based on the
+    // backup
     // cron
 
     return isTableCreatedBeforeTimeTravel && (isForceRun || isBackupCronTime);

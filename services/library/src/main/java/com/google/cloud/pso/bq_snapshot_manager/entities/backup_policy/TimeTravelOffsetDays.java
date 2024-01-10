@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy;
 
+
 import java.util.Arrays;
 
 public enum TimeTravelOffsetDays {

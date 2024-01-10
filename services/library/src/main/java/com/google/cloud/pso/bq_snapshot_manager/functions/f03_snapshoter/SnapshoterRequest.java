@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestResponse;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
@@ -61,7 +62,8 @@ public class SnapshoterRequest extends TableOperationRequestResponse {
   }
 
   public String computeBackupOperationProject() {
-    // if the backup policy specifies a project to run the backup operations on, use it. Otherwise,
+    // if the backup policy specifies a project to run the backup operations on, use it.
+    // Otherwise,
     // use the source table project
     return this.backupPolicyAndState.getBackupOperationProject() != null
         ? this.backupPolicyAndState.getBackupOperationProject()

@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy;
 
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -169,7 +170,8 @@ public class FallbackBackupPolicy {
     Map<String, BackupPolicy> policyMap = new HashMap<>();
 
     Gson gson = new Gson();
-    // each node consists of K,V pair where the K is string and V is map corresponding of a backup
+    // each node consists of K,V pair where the K is string and V is map corresponding of a
+    // backup
     // policy
     Type jsonNodeType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
     Map<String, Map<String, String>> jsonNodeMap =

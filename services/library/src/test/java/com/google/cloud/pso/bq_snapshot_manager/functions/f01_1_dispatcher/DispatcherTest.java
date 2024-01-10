@@ -63,7 +63,8 @@ public class DispatcherTest {
 
     List<String> expectedDatasetIncludeList = Arrays.asList("p1.d1.t1", "p1.d1.t2");
 
-    // pubsub should publish a DispatcherTableRequest with tablesIncludeList only and no DatasetSpec
+    // pubsub should publish a DispatcherTableRequest with tablesIncludeList only and no
+    // DatasetSpec
     PubSubService pubSubServiceTestImpl =
         new PubSubService() {
           @Override
@@ -123,7 +124,8 @@ public class DispatcherTest {
 
     List<String> expectedDatasetIncludeList = Arrays.asList("p1.d2", "p2.d1", "p2.d2");
 
-    // pubsub should publish a DispatcherTableRequest with tablesIncludeList only and no DatasetSpec
+    // pubsub should publish a DispatcherTableRequest with tablesIncludeList only and no
+    // DatasetSpec
     PubSubService pubSubServiceTestImpl =
         new PubSubService() {
           @Override

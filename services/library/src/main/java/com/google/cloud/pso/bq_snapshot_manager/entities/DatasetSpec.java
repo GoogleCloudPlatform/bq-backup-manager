@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
+
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import java.util.List;

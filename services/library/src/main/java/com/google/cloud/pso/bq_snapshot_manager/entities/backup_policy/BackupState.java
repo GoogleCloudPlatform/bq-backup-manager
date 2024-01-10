@@ -1,5 +1,6 @@
 package com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy;
 
+
 import com.google.cloud.Timestamp;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;

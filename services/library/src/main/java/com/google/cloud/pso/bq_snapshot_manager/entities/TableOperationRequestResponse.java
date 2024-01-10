@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
+
 import com.google.common.base.Objects;
 
 public class TableOperationRequestResponse extends JsonMessage {

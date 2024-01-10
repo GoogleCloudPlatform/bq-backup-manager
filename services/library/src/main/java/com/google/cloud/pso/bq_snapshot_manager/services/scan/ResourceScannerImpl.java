@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.scan;
 
+
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.cloudresourcemanager.v3.CloudResourceManager;

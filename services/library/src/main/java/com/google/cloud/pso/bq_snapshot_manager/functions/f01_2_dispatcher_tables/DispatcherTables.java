@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f01_2_dispatcher_tables;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.*;
@@ -236,7 +237,8 @@ public class DispatcherTables {
     logger.logInfoWithTracker(
         runId, loggingDatasetSpec, "Starting to create dispatched tables log in GCS ..");
 
-    // To scale up dispatched tables logging we write the full list as JSON to GCS and use it as an
+    // To scale up dispatched tables logging we write the full list as JSON to GCS and use it as
+    // an
     // external table
     // in bq. The schema of the file should follow DispatchedTableInfo
     List<Object> dispatchedTablesList =

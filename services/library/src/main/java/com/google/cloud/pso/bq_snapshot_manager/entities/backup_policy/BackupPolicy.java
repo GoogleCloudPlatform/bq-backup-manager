@@ -1,4 +1,25 @@
+/*
+ *
+ *
+ *  Copyright 2024 Google LLC
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *
+ */
+
 package com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy;
+
 
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import com.google.common.base.Objects;
@@ -57,7 +78,8 @@ public class BackupPolicy {
     if (!missingFields.isEmpty()) {
       throw new IllegalArgumentException(
           String.format(
-              "Backup policy is invalid for backup method '%s'. The following fields are missing %s",
+              "Backup policy is invalid for backup method '%s'. The following fields are missing"
+                  + " %s",
               builder.method, missingFields));
     }
 
@@ -227,7 +249,8 @@ public class BackupPolicy {
     String backupStorageProject =
         Utils.getOrFail(fieldsMap, BackupPolicyFields.backup_storage_project.toString());
 
-    // config source is not required in the fallback policies. It defaults to SYSTEM if not present
+    // config source is not required in the fallback policies. It defaults to SYSTEM if not
+    // present
     String configSourceStr =
         fieldsMap.getOrDefault(BackupPolicyFields.config_source.toString(), null);
 
@@ -241,7 +264,8 @@ public class BackupPolicy {
             cron, method, timeTravelOffsetDays, configSource, backupStorageProject);
 
     // parse optional fields
-    // these fields might not exist in the attached tag template if not filled. Same for fallback
+    // these fields might not exist in the attached tag template if not filled. Same for
+    // fallback
     // policies
 
     backupPolicyBuilder.setBackupOperationProject(

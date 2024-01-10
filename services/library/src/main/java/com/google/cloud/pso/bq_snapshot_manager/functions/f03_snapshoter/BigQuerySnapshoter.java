@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -226,7 +227,8 @@ public class BigQuerySnapshoter {
         snapshotDataset,
         // Construct a snapshot table name that
         // 1. doesn't collide with other snapshots from other datasets, projects or runs
-        // 2. propagates the time travel used to take this snapshot (we don't use labels to avoid
+        // 2. propagates the time travel used to take this snapshot (we don't use labels to
+        // avoid
         // extra API calls)
         String.format(
             "%s_%s_%s_%s_%s",

@@ -17,6 +17,7 @@
  */
 package com.google.cloud.pso.bq_snapshot_manager.snapshoter_bq;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterConfig;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 

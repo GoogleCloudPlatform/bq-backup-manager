@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
+
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 

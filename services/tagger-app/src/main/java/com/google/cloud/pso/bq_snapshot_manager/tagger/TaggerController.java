@@ -17,6 +17,7 @@
  */
 package com.google.cloud.pso.bq_snapshot_manager.tagger;
 
+
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.PubSubEvent;

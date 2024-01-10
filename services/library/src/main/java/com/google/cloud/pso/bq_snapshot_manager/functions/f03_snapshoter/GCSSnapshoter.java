@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -155,9 +156,11 @@ public class GCSSnapshoter {
               request.getTrackingId(), config.getApplicationName());
 
       // We create the tagging request and added it to a persistent storage
-      // The Tagger service will receive notifications of export job completion via log sinks and
+      // The Tagger service will receive notifications of export job completion via log sinks
+      // and
       // pick up the tagger request from the persistent storage
-      // Make sure the file is stored first before running the export job. In case of non-fatal
+      // Make sure the file is stored first before running the export job. In case of
+      // non-fatal
       // error of file creation and retry, we don't re-run the export job
       TaggerRequest taggerRequest =
           new TaggerRequest(

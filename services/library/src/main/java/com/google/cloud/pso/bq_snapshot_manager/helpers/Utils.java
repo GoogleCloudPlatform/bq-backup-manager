@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.helpers;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -118,7 +119,8 @@ public class Utils {
       String persistentSetObjectPrefix,
       String trackingId) {
     // Add a flag key marking that we already completed this request and no additional runs
-    // are required in case PubSub is in a loop of retrying due to ACK timeout while the service has
+    // are required in case PubSub is in a loop of retrying due to ACK timeout while the service
+    // has
     // already processed the request
     // This is an extra measure to avoid unnecessary cost due to config issues.
     String flagFileName = String.format("%s/%s", persistentSetObjectPrefix, trackingId);
@@ -150,7 +152,8 @@ public class Utils {
       // always use time travel for consistency and traceability
       timeTravelMs = refPointMs;
     } else {
-      // use a buffer (milliseconds) to count for the operation time. 1 MIN = 60000 MILLISECONDS
+      // use a buffer (milliseconds) to count for the operation time. 1 MIN = 60000
+      // MILLISECONDS
       Long bufferMs = timeTravelOffsetDays.equals(TimeTravelOffsetDays.DAYS_7) ? 60 * 60000L : 0L;
       // milli seconds per day * number of days
       Long timeTravelOffsetMs =

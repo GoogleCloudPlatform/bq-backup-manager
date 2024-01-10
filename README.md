@@ -671,3 +671,12 @@ SELECT * FROM `bq_backup_manager.ext_backup_policies`
 * Each `backup_operation_project` can run up to 50,000 table snapshot jobs per day.
 * Each `backup_operation_project` can run 100,000 export jobs per day (e.g. to GCS). Could be extended by slot reservation.
 * Each `backup_operation_project` can export 50 TB per day for free using the shared slots pool (e.g. to GCS). Could be extended by slot reservation.
+
+## Java Formatting
+The project is following the GOOGLE_JAVA_FORMAT. There is super-linter step applied
+as part of a [GitHub flow](.github/workflows/main.yml) on pull requests.
+For that, a Maven plugin "fmt-maven-plugin" is used to check for Java format when 'mvn install'
+is invoked. This step only checks for code format and to re-format one could run `mvn com.coveo:fmt-maven-plugin:format`
+or instead set the plugin goal from `check` to `format`. PS: the manual format step might 
+through an error. If that happens, runs `mvn install` again to make sure all applicable files
+have been reformatted.

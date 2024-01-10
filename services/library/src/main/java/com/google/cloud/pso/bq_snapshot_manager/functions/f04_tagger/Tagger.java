@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
@@ -71,7 +72,8 @@ public class Tagger {
         logger,
         request,
         persistentSet,
-        // This service might be called twice in case of the "Both" backup method. We need to
+        // This service might be called twice in case of the "Both" backup method. We need
+        // to
         // differentiate the key
         String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
         request.getTrackingId());
@@ -101,7 +103,8 @@ public class Tagger {
         logger,
         request,
         persistentSet,
-        // This service might be called twice in case of the "Both" backup method. We need to
+        // This service might be called twice in case of the "Both" backup method. We need
+        // to
         // differentiate the key
         String.format("%s/%s", persistentSetObjectPrefix, request.getAppliedBackupMethod()),
         request.getTrackingId());
