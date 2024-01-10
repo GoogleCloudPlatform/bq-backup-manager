@@ -26,10 +26,17 @@ do
 
   echo "Preparing Dispatcher SA permissions on data project ${project} .."
   # Dispatcher permissions
-  # Dispatcher needs to list datasets and tables in a project and know the location of datasets
+  # Dispatcher needs to list datasets in a project and know the location of datasets
   gcloud projects add-iam-policy-binding "${project}" \
       --member="serviceAccount:${SA_DISPATCHER_EMAIL}" \
      --role="roles/bigquery.metadataViewer"
+
+    echo "Preparing DispatcherTables SA permissions on data project ${project} .."
+    # Dispatcher permissions
+    # DispatcherTables needs to list tables in a project and know the location of datasets
+    gcloud projects add-iam-policy-binding "${project}" \
+        --member="serviceAccount:${SA_DISPATCHER_TABLES_EMAIL}" \
+       --role="roles/bigquery.metadataViewer"
 
   echo "Preparing Configurator SA permissions on data project ${project} .."
 

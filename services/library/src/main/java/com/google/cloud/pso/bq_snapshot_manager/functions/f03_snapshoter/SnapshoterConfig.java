@@ -45,10 +45,16 @@ public class SnapshoterConfig {
 
     @Override
     public String toString() {
-        return "SnapshoterConfig{" +
-                "projectId='" + projectId + '\'' +
-                ", outputTopic='" + outputTopic + '\'' +
-                ", applicationName='" + applicationName + '\'' +
-                '}';
+        return "SnapshoterConfig{"
+                + "projectId='"
+                + projectId
+                + '\''
+                + ", outputTopic='"
+                + outputTopic
+                + '\''
+                + ", applicationName='"
+                + applicationName
+                + '\''
+                + '}';
     }
 }

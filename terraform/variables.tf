@@ -49,6 +49,17 @@ variable "sa_dispatcher_tasks" {
   default = "dispatcher-tasks"
 }
 
+variable "sa_dispatcher_tables" {
+  type = string
+  default = "dispatcher-tables"
+}
+
+
+variable "sa_dispatcher_tables_tasks" {
+  type = string
+  default = "dispatcher-table-tasks"
+}
+
 variable "sa_configurator" {
   type = string
   default = "configurator"
@@ -97,7 +108,12 @@ variable "log_sink_name" {
 
 variable "dispatcher_service_name" {
   type = string
-  default = "s1-dispatcher"
+  default = "s1a-dispatcher"
+}
+
+variable "dispatcher_tables_service_name" {
+  type = string
+  default = "s1b-dispatcher-tables"
 }
 
 variable "configurator_service_name" {
@@ -129,6 +145,16 @@ variable "dispatcher_pubsub_topic" {
 variable "dispatcher_pubsub_sub" {
   type = string
   default = "dispatcher_push_sub"
+}
+
+variable "dispatcher_tables_pubsub_topic" {
+  type = string
+  default = "dispatcher_tables_topic"
+}
+
+variable "dispatcher_tables_pubsub_sub" {
+  type = string
+  default = "dispatcher_tables_push_sub"
 }
 
 variable "configurator_pubsub_topic" {
@@ -181,8 +207,22 @@ variable "gcs_backup_policies_bucket_name" {
   default = "bq-backup-manager-policies"
 }
 
+variable "gcs_dispatcher_tracker_bucket_name" {
+  type = string
+  default = "bq-backup-manager-dispatched-tables"
+}
+
+variable "gcs_dispatcher_tracker_bucket_ttl_days" {
+  type = number
+  default = 30
+}
+
 # Images
 variable "dispatcher_service_image" {
+  type = string
+}
+
+variable "dispatcher_tables_service_image" {
   type = string
 }
 
@@ -212,7 +252,7 @@ variable "dispatcher_service_timeout_seconds" {
   description = "Max period for the cloud run service to complete a request. Otherwise, it terminates with HTTP 504 and NAK to PubSub (retry)"
   type = number
   # Dispatcher might need relatively long time to process large BigQuery scan scopes
-  default = 540 # 9m
+  default = 3600 # 60m
 }
 
 variable "dispatcher_subscription_ack_deadline_seconds" {

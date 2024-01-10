@@ -16,7 +16,7 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher;
 
 public class DispatcherConfig {
 
@@ -27,12 +27,12 @@ public class DispatcherConfig {
 
     private String applicationName;
 
-    public DispatcherConfig(String projectId,
-                            String computeRegionId,
-                            String dataRegionId,
-                            String outputTopic,
-                            String applicationName
-                            ) {
+    public DispatcherConfig(
+            String projectId,
+            String computeRegionId,
+            String dataRegionId,
+            String outputTopic,
+            String applicationName) {
         this.projectId = projectId;
         this.computeRegionId = computeRegionId;
         this.dataRegionId = dataRegionId;
@@ -62,12 +62,22 @@ public class DispatcherConfig {
 
     @Override
     public String toString() {
-        return "DispatcherConfig{" +
-                "projectId='" + projectId + '\'' +
-                ", computeRegionId='" + computeRegionId + '\'' +
-                ", dataRegionId='" + dataRegionId + '\'' +
-                ", outputTopic='" + outputTopic + '\'' +
-                ", applicationName='" + applicationName + '\'' +
-                '}';
+        return "DispatcherConfig{"
+                + "projectId='"
+                + projectId
+                + '\''
+                + ", computeRegionId='"
+                + computeRegionId
+                + '\''
+                + ", dataRegionId='"
+                + dataRegionId
+                + '\''
+                + ", outputTopic='"
+                + outputTopic
+                + '\''
+                + ", applicationName='"
+                + applicationName
+                + '\''
+                + '}';
     }
 }

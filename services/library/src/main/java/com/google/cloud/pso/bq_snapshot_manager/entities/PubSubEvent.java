@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
+
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -46,7 +47,8 @@ public class PubSubEvent {
 
         public Message() {}
 
-        public Message(String messageId, String publishTime, byte[] data, Map<String, String> attributes) {
+        public Message(
+                String messageId, String publishTime, byte[] data, Map<String, String> attributes) {
             this.messageId = messageId;
             this.publishTime = publishTime;
             this.data = data;
@@ -85,18 +87,25 @@ public class PubSubEvent {
             this.attributes = attributes;
         }
 
-        public String dataToUtf8String (){
+        public String dataToUtf8String() {
             return new String(data, StandardCharsets.UTF_8);
         }
 
         @Override
         public String toString() {
-            return "Message{" +
-                    "messageId='" + messageId + '\'' +
-                    ", publishTime='" + publishTime + '\'' +
-                    ", data='" + data + '\'' +
-                    ", attributes=" + attributes +
-                    '}';
+            return "Message{"
+                    + "messageId='"
+                    + messageId
+                    + '\''
+                    + ", publishTime='"
+                    + publishTime
+                    + '\''
+                    + ", data='"
+                    + data
+                    + '\''
+                    + ", attributes="
+                    + attributes
+                    + '}';
         }
     }
 }

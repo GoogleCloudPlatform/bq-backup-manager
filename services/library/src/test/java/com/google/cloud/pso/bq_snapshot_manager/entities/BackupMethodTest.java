@@ -18,10 +18,10 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupMethod;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class BackupMethodTest {
 

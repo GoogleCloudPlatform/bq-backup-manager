@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -31,7 +32,6 @@ import com.google.cloud.pso.bq_snapshot_manager.services.bq.BigQueryService;
 import com.google.cloud.pso.bq_snapshot_manager.services.map.PersistentMap;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubService;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,15 +50,15 @@ public class GCSSnapshoter {
 
     private final String persistentMapObjectPrefix;
 
-    public GCSSnapshoter(SnapshoterConfig config,
-                         BigQueryService bqService,
-                         PubSubService pubSubService,
-                         PersistentSet persistentSet,
-                         String persistentSetObjectPrefix,
-                         PersistentMap persistentMap,
-                         String persistentMapObjectPrefix,
-                         Integer functionNumber
-    ) {
+    public GCSSnapshoter(
+            SnapshoterConfig config,
+            BigQueryService bqService,
+            PubSubService pubSubService,
+            PersistentSet persistentSet,
+            String persistentSetObjectPrefix,
+            PersistentMap persistentMap,
+            String persistentMapObjectPrefix,
+            Integer functionNumber) {
         this.config = config;
         this.bqService = bqService;
         this.pubSubService = pubSubService;
@@ -67,42 +67,44 @@ public class GCSSnapshoter {
         this.persistentMap = persistentMap;
         this.persistentMapObjectPrefix = persistentMapObjectPrefix;
 
-        logger = new LoggingHelper(
-                GCSSnapshoter.class.getSimpleName(),
-                functionNumber,
-                config.getProjectId(),
-                config.getApplicationName()
-        );
+        logger =
+                new LoggingHelper(
+                        GCSSnapshoter.class.getSimpleName(),
+                        functionNumber,
+                        config.getProjectId(),
+                        config.getApplicationName());
     }
 
-    public static void validateRequest(SnapshoterRequest request){
+    public static void validateRequest(SnapshoterRequest request) {
         // validate required params
-        if (! (request.getBackupPolicyAndState().getMethod().equals(BackupMethod.GCS_SNAPSHOT) ||
-                request.getBackupPolicyAndState().getMethod().equals(BackupMethod.BOTH))) {
-            throw new IllegalArgumentException(String.format("BackupMethod must be GCS_SNAPSHOT or BOTH. Received %s",
-                    request.getBackupPolicyAndState().getMethod()));
+        if (!(request.getBackupPolicyAndState().getMethod().equals(BackupMethod.GCS_SNAPSHOT)
+                || request.getBackupPolicyAndState().getMethod().equals(BackupMethod.BOTH))) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "BackupMethod must be GCS_SNAPSHOT or BOTH. Received %s",
+                            request.getBackupPolicyAndState().getMethod()));
         }
         if (request.getBackupPolicyAndState().getGcsExportFormat() == null) {
-            throw new IllegalArgumentException(String.format("GCSExportFormat is missing in the BackupPolicy %s",
-                    request.getBackupPolicyAndState()));
+            throw new IllegalArgumentException(
+                    String.format(
+                            "GCSExportFormat is missing in the BackupPolicy %s",
+                            request.getBackupPolicyAndState()));
         }
         if (request.getBackupPolicyAndState().getGcsSnapshotStorageLocation() == null) {
-            throw new IllegalArgumentException(String.format("GcsSnapshotStorageLocation is missing in the BackupPolicy %s",
-                    request.getBackupPolicyAndState()));
+            throw new IllegalArgumentException(
+                    String.format(
+                            "GcsSnapshotStorageLocation is missing in the BackupPolicy %s",
+                            request.getBackupPolicyAndState()));
         }
     }
 
-    public GCSSnapshoterResponse execute(SnapshoterRequest request, Timestamp operationTs, String pubSubMessageId) throws IOException, NonRetryableApplicationException, InterruptedException {
+    public GCSSnapshoterResponse execute(
+            SnapshoterRequest request, Timestamp operationTs, String pubSubMessageId)
+            throws IOException, NonRetryableApplicationException, InterruptedException {
 
         // run common service start logging and checks
         Utils.runServiceStartRoutines(
-                logger,
-                request,
-                persistentSet,
-                persistentSetObjectPrefix,
-                request.getTrackingId()
-        );
-
+                logger, request, persistentSet, persistentSetObjectPrefix, request.getTrackingId());
 
         // validate required input
         validateRequest(request);
@@ -110,66 +112,76 @@ public class GCSSnapshoter {
         // Perform the Snapshot operation using the BigQuery service
 
         // time travel is calculated relative to the operation time
-        Tuple<TableSpec, Long> sourceTableWithTimeTravelTuple = Utils.getTableSpecWithTimeTravel(
-                request.getTargetTable(),
-                request.getBackupPolicyAndState().getTimeTravelOffsetDays(),
-                operationTs
-        );
+        Tuple<TableSpec, Long> sourceTableWithTimeTravelTuple =
+                Utils.getTableSpecWithTimeTravel(
+                        request.getTargetTable(),
+                        request.getBackupPolicyAndState().getTimeTravelOffsetDays(),
+                        operationTs);
 
-        // construct the backup folder for this run in the format project/dataset/table/trackingid/timetravelstamp
-        String backupFolder = String.format("%s/%s/%s/%s/%s/%s",
-                request.getTargetTable().getProject(),
-                request.getTargetTable().getDataset(),
-                request.getTargetTable().getTable(),
-                request.getTrackingId(),
-                sourceTableWithTimeTravelTuple.y(), // include the time travel millisecond for transparency
-                request.getBackupPolicyAndState().getGcsExportFormat()
-                );
+        // construct the backup folder for this run in the format
+        // project/dataset/table/trackingid/timetravelstamp
+        String backupFolder =
+                String.format(
+                        "%s/%s/%s/%s/%s/%s",
+                        request.getTargetTable().getProject(),
+                        request.getTargetTable().getDataset(),
+                        request.getTargetTable().getTable(),
+                        request.getTrackingId(),
+                        sourceTableWithTimeTravelTuple
+                                .y(), // include the time travel millisecond for transparency
+                        request.getBackupPolicyAndState().getGcsExportFormat());
 
-        String gcsDestinationUri = prepareGcsUriForMultiFileExport(
-                request.getBackupPolicyAndState().getGcsSnapshotStorageLocation(),
-                backupFolder
-                );
+        String gcsDestinationUri =
+                prepareGcsUriForMultiFileExport(
+                        request.getBackupPolicyAndState().getGcsSnapshotStorageLocation(),
+                        backupFolder);
 
-
-        Timestamp timeTravelTs = Timestamp.ofTimeSecondsAndNanos(sourceTableWithTimeTravelTuple.y() / 1000, 0);
+        Timestamp timeTravelTs =
+                Timestamp.ofTimeSecondsAndNanos(sourceTableWithTimeTravelTuple.y() / 1000, 0);
         logger.logInfoWithTracker(
                 request.isDryRun(),
                 request.getTrackingId(),
                 request.getTargetTable(),
-                String.format("Will take a GCS Snapshot for '%s' to '%s' with time travel timestamp '%s' (%s days)",
+                String.format(
+                        "Will take a GCS Snapshot for '%s' to '%s' with time travel timestamp '%s' (%s days)",
                         request.getTargetTable().toSqlString(),
                         gcsDestinationUri,
                         timeTravelTs,
-                        request.getBackupPolicyAndState().getTimeTravelOffsetDays().getText()
-                )
-        );
+                        request.getBackupPolicyAndState().getTimeTravelOffsetDays().getText()));
 
-        if(!request.isDryRun()){
+        if (!request.isDryRun()) {
             // create an async bq export job
 
-            String jobId = TrackingHelper.generateBQExportJobId(request.getTrackingId(), config.getApplicationName());
+            String jobId =
+                    TrackingHelper.generateBQExportJobId(
+                            request.getTrackingId(), config.getApplicationName());
 
             // We create the tagging request and added it to a persistent storage
-            // The Tagger service will receive notifications of export job completion via log sinks and pick up the tagger request from the persistent storage
-            // Make sure the file is stored first before running the export job. In case of non-fatal error of file creation and retry, we don't re-run the export job
-            TaggerRequest taggerRequest = new TaggerRequest(
-                    request.getTargetTable(),
-                    request.getRunId(),
-                    request.getTrackingId(),
-                    request.isDryRun(),
-                    request.getBackupPolicyAndState(),
-                    BackupMethod.GCS_SNAPSHOT,
-                    null,
-                    gcsDestinationUri,
-                    operationTs
-            );
+            // The Tagger service will receive notifications of export job completion via log sinks
+            // and
+            // pick up the tagger request from the persistent storage
+            // Make sure the file is stored first before running the export job. In case of
+            // non-fatal
+            // error of file creation and retry, we don't re-run the export job
+            TaggerRequest taggerRequest =
+                    new TaggerRequest(
+                            request.getTargetTable(),
+                            request.getRunId(),
+                            request.getTrackingId(),
+                            request.isDryRun(),
+                            request.getBackupPolicyAndState(),
+                            BackupMethod.GCS_SNAPSHOT,
+                            null,
+                            gcsDestinationUri,
+                            operationTs);
 
             String taggerRequestFile = String.format("%s/%s", persistentMapObjectPrefix, jobId);
             persistentMap.put(taggerRequestFile, taggerRequest.toJsonString());
 
             Map<String, String> jobLabels = new HashMap<>();
-            // labels has to be max 63 chars, contain only lowercase letters, numeric characters, underscores, and dashes. All characters must use UTF-8 encoding, and international characters are allowed.
+            // labels has to be max 63 chars, contain only lowercase letters, numeric characters,
+            // underscores, and dashes. All characters must use UTF-8 encoding, and international
+            // characters are allowed.
             jobLabels.put("app", config.getApplicationName());
 
             // API Call
@@ -182,28 +194,20 @@ public class GCSSnapshoter {
                     request.getBackupPolicyAndState().getGcsCsvExportHeader(),
                     request.getBackupPolicyAndState().getGcsUseAvroLogicalTypes(),
                     request.getTrackingId(),
-                    jobLabels
-            );
+                    jobLabels);
         }
 
         logger.logInfoWithTracker(
                 request.isDryRun(),
                 request.getTrackingId(),
                 request.getTargetTable(),
-                String.format("BigQuery GCS export submitted for table %s to %s",
-                        request.getTargetTable().toSqlString(),
-                        gcsDestinationUri
-                )
-        );
+                String.format(
+                        "BigQuery GCS export submitted for table %s to %s",
+                        request.getTargetTable().toSqlString(), gcsDestinationUri));
 
         // run common service end logging and adding pubsub message to processed list
         Utils.runServiceEndRoutines(
-                logger,
-                request,
-                persistentSet,
-                persistentSetObjectPrefix,
-                request.getTrackingId()
-        );
+                logger, request, persistentSet, persistentSetObjectPrefix, request.getTrackingId());
 
         return new GCSSnapshoterResponse(
                 request.getTargetTable(),
@@ -211,10 +215,8 @@ public class GCSSnapshoter {
                 request.getTrackingId(),
                 request.isDryRun(),
                 operationTs,
-                sourceTableWithTimeTravelTuple.x()
-        );
+                sourceTableWithTimeTravelTuple.x());
     }
-
 
     public static String prepareGcsUriForMultiFileExport(String gcsUri, String folderName) {
         // when exporting multiple files the uri should be gs://path/*
@@ -223,6 +225,4 @@ public class GCSSnapshoter {
 
         return String.format("%s/%s/*", cleanUri, cleanFolder);
     }
-
-
 }

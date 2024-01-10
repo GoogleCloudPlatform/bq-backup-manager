@@ -17,13 +17,14 @@
  */
 package com.google.cloud.pso.bq_snapshot_manager.snapshoter_bq;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.PubSubEvent;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.BigQuerySnapshoter;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequest;
 import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.BigQuerySnapshoterResponse;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.ControllerExceptionHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
@@ -55,12 +56,12 @@ public class BigQuerySnapshoterController {
 
         gson = new Gson();
         environment = new Environment();
-        logger = new LoggingHelper(
-                BigQuerySnapshoterController.class.getSimpleName(),
-                functionNumber,
-                environment.getProjectId(),
-                environment.getApplicationName()
-        );
+        logger =
+                new LoggingHelper(
+                        BigQuerySnapshoterController.class.getSimpleName(),
+                        functionNumber,
+                        environment.getProjectId(),
+                        environment.getApplicationName());
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
@@ -74,7 +75,7 @@ public class BigQuerySnapshoterController {
         BigQuerySnapshoterResponse snapshoterResponse = null;
         boolean isSuccess;
         Exception error = null;
-        boolean isRetryableError= false;
+        boolean isRetryableError = false;
 
         try {
 
@@ -89,37 +90,45 @@ public class BigQuerySnapshoterController {
             // remove any escape characters (e.g. from Terraform
             requestJsonString = requestJsonString.replace("\\", "");
 
-            logger.logInfoWithTracker(trackingId, null, String.format("Received payload: %s", requestJsonString));
+            logger.logInfoWithTracker(
+                    trackingId, null, String.format("Received payload: %s", requestJsonString));
 
             snapshoterRequest = gson.fromJson(requestJsonString, SnapshoterRequest.class);
 
-            trackingId =  snapshoterRequest.getTrackingId();
+            trackingId = snapshoterRequest.getTrackingId();
 
-            logger.logInfoWithTracker(snapshoterRequest.isDryRun(), trackingId, snapshoterRequest.getTargetTable(), String.format("Parsed Request: %s",  snapshoterRequest.toString()));
+            logger.logInfoWithTracker(
+                    snapshoterRequest.isDryRun(),
+                    trackingId,
+                    snapshoterRequest.getTargetTable(),
+                    String.format("Parsed Request: %s", snapshoterRequest.toString()));
 
-            BigQuerySnapshoter snapshoter = new BigQuerySnapshoter(
-                    environment.toConfig(),
-                    new BigQueryServiceImpl(snapshoterRequest.computeBackupOperationProject()),
-                    new PubSubServiceImpl(),
-                    new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
-                    "snapshoter-bq-flags",
-                    functionNumber);
+            BigQuerySnapshoter snapshoter =
+                    new BigQuerySnapshoter(
+                            environment.toConfig(),
+                            new BigQueryServiceImpl(
+                                    snapshoterRequest.computeBackupOperationProject()),
+                            new PubSubServiceImpl(),
+                            new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
+                            "snapshoter-bq-flags",
+                            functionNumber);
 
-            snapshoterResponse = snapshoter.execute(
-                    snapshoterRequest,
-                    Timestamp.now(),
-                    requestBody.getMessage().getMessageId());
+            snapshoterResponse =
+                    snapshoter.execute(
+                            snapshoterRequest,
+                            Timestamp.now(),
+                            requestBody.getMessage().getMessageId());
 
             responseEntity = new ResponseEntity("Process completed successfully.", HttpStatus.OK);
             isSuccess = true;
 
         } catch (Exception e) {
-            Tuple<ResponseEntity, Boolean> handlingResults  = ControllerExceptionHelper.handleException(
-                    e,
-                    logger,
-                    trackingId,
-                    snapshoterRequest == null? null: snapshoterRequest.getTargetTable()
-                    );
+            Tuple<ResponseEntity, Boolean> handlingResults =
+                    ControllerExceptionHelper.handleException(
+                            e,
+                            logger,
+                            trackingId,
+                            snapshoterRequest == null ? null : snapshoterRequest.getTargetTable());
             isSuccess = false;
             responseEntity = handlingResults.x();
             isRetryableError = handlingResults.y();
@@ -127,17 +136,16 @@ public class BigQuerySnapshoterController {
         }
 
         logger.logUnified(
-                snapshoterRequest == null? null: snapshoterRequest.isDryRun(),
+                snapshoterRequest == null ? null : snapshoterRequest.isDryRun(),
                 functionNumber.toString(),
-                snapshoterRequest == null? null: snapshoterRequest.getRunId(),
-                snapshoterRequest == null? null: snapshoterRequest.getTrackingId(),
-                snapshoterRequest == null? null : snapshoterRequest.getTargetTable(),
+                snapshoterRequest == null ? null : snapshoterRequest.getRunId(),
+                snapshoterRequest == null ? null : snapshoterRequest.getTrackingId(),
+                snapshoterRequest == null ? null : snapshoterRequest.getTargetTable(),
                 snapshoterRequest,
                 snapshoterResponse,
                 isSuccess,
                 error,
-                isRetryableError
-        );
+                isRetryableError);
 
         return responseEntity;
     }

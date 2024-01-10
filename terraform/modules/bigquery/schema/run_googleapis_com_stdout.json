@@ -193,6 +193,56 @@
       },
       {
         "mode": "NULLABLE",
+        "name": "dispatched_datasetspec",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatched_datasetspec_project",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatched_datasetspec_dataset",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatcher_counters_dispatcher_type",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatcher_counters_entity_spec",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatcher_counters_entities_count",
+        "type": "INTEGER"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatcher_counters_total_ms",
+        "type": "INTEGER"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatcher_counters_listing_ms",
+        "type": "INTEGER"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatcher_counters_pubsub_publishing_ms",
+        "type": "INTEGER"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "dispatcher_counters_create_dispatcher_log_ms",
+        "type": "INTEGER"
+      },
+      {
+        "mode": "NULLABLE",
         "name": "failed_dispatcher_entity_id",
         "type": "STRING"
       },

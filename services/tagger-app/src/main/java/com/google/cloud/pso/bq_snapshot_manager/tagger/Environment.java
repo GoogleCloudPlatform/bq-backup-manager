@@ -17,35 +17,33 @@
  */
 package com.google.cloud.pso.bq_snapshot_manager.tagger;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger.TaggerConfig;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 
 public class Environment {
 
-    public TaggerConfig toConfig (){
-        return new TaggerConfig(
-                getProjectId(),
-                getTagTemplateId(),
-                getApplicationName()
-        );
+    public TaggerConfig toConfig() {
+        return new TaggerConfig(getProjectId(), getTagTemplateId(), getApplicationName());
     }
 
-    public String getProjectId(){
+    public String getProjectId() {
         return Utils.getConfigFromEnv("PROJECT_ID", true);
     }
 
-    public String getTagTemplateId(){
+    public String getTagTemplateId() {
         return Utils.getConfigFromEnv("TAG_TEMPLATE_ID", true);
     }
 
-    public String getGcsFlagsBucket(){
+    public String getGcsFlagsBucket() {
         return Utils.getConfigFromEnv("GCS_FLAGS_BUCKET", true);
     }
-    public String getApplicationName(){
+
+    public String getApplicationName() {
         return Utils.getConfigFromEnv("APPLICATION_NAME", true);
     }
 
-    public String getGcsBackupPoliciesBucket(){
+    public String getGcsBackupPoliciesBucket() {
         return Utils.getConfigFromEnv("GCS_BACKUP_POLICIES_BUCKET", true);
     }
 }

@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy;
 
+
 import java.util.Arrays;
 
 public enum BackupConfigSource {
@@ -41,10 +42,8 @@ public enum BackupConfigSource {
             }
         }
         throw new IllegalArgumentException(
-                String.format("Invalid enum text '%s'. Available values are '%s'",
-                        text,
-                        Arrays.asList(BackupConfigSource.values())
-                )
-        );
+                String.format(
+                        "Invalid enum text '%s'. Available values are '%s'",
+                        text, Arrays.asList(BackupConfigSource.values())));
     }
 }

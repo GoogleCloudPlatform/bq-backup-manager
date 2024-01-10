@@ -69,6 +69,8 @@ resource "google_bigquery_table" "view_audit_log_by_table" {
         project = var.project
         dataset = var.dataset
         logging_table = google_bigquery_table.logging_table.table_id
+        tracking_id_to_table_map = google_bigquery_table.view_tracking_id_map.table_id
+
       }
     )
   }
@@ -232,7 +234,7 @@ resource "google_bigquery_table" "view_tracking_id_map" {
     {
       project = var.project
       dataset = var.dataset
-      logging_table = google_bigquery_table.logging_table.table_id
+      dispatched_tables = google_bigquery_table.external_gcs_dispatched_tables.table_id
     }
     )
   }
@@ -301,6 +303,27 @@ resource "google_bigquery_table" "view_errors_dispatcher" {
   labels = var.common_labels
 }
 
+resource "google_bigquery_table" "view_dispatcher_counters" {
+  dataset_id = google_bigquery_dataset.results_dataset.dataset_id
+  table_id = "v_dispatcher_counters"
+
+  deletion_protection = false
+
+  view {
+    use_legacy_sql = false
+    query = templatefile("modules/bigquery/views/v_dispatcher_counters.tpl",
+      {
+        project = var.project
+        dataset = var.dataset
+        logging_table = google_bigquery_table.logging_table.table_id
+      }
+    )
+  }
+
+  labels = var.common_labels
+}
+
+
 ########## External tables #####################################
 
 resource "google_bigquery_table" "external_gcs_backup_policies" {
@@ -340,6 +363,27 @@ resource "google_bigquery_table" "external_gcs_backup_states" {
     ]
     autodetect = false # Let BigQuery try to autodetect the schema and format of the table.
     schema = file("modules/bigquery/schema/ext_backup_states.json")
+  }
+
+  deletion_protection = false
+}
+
+resource "google_bigquery_table" "external_gcs_dispatched_tables" {
+  dataset_id = google_bigquery_dataset.results_dataset.dataset_id
+  table_id   = "ext_dispatched_tables"
+
+  external_data_configuration {
+    source_format = "NEWLINE_DELIMITED_JSON"
+    hive_partitioning_options {
+      mode = "CUSTOM" # Custom means you must encode the partition key schema within the source_uri_prefix
+      source_uri_prefix = "gs://${var.gcs_dispatched_tables_bucket_name}/tables/{runId:STRING}/{project:STRING}/{dataset:STRING}"
+
+    }
+    source_uris = [
+      "gs://${var.gcs_dispatched_tables_bucket_name}/tables/*.json",
+    ]
+    autodetect = false # Let BigQuery try to autodetect the schema and format of the table.
+    schema = file("modules/bigquery/schema/ext_dispatched_tables.json")
   }
 
   deletion_protection = false

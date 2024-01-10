@@ -14,24 +14,24 @@
 # limitations under the License.
 #
 
-variable "project" {type = string}
+variable "project" { type = string }
 
-variable "compute_region" {type = string}
+variable "compute_region" { type = string }
 
-variable "data_region" {type = string}
+variable "data_region" { type = string }
 
-variable "gcs_flags_bucket_name" {type = string}
+variable "gcs_flags_bucket_name" { type = string }
 
-variable "gcs_flags_bucket_admins" {
-  type = list(string)
-}
+variable "gcs_dispatcher_tracker_bucket_name" { type = string }
 
-variable "gcs_backup_policies_bucket_name" {type = string}
+variable "gcs_dispatcher_tracker_bucket_ttl_days" { type = number }
 
-variable "gcs_backup_policies_bucket_admins" {
-  type = list(string)
-}
+variable "gcs_flags_bucket_admins" { type = list(string) }
 
-variable "common_labels" {
-  type = map(string)
-}
+variable "gcs_backup_policies_bucket_name" { type = string }
+
+variable "gcs_backup_policies_bucket_admins" { type = list(string) }
+
+variable "gcs_dispatched_tables_bucket_admins" { type = list(string) }
+
+variable "common_labels" { type = map(string) }

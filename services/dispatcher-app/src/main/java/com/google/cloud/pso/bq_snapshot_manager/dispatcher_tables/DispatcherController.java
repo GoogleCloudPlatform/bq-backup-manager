@@ -16,13 +16,13 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.dispatcher_tables;
 
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.PubSubEvent;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher.Dispatcher;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher.DispatcherRequest;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.Dispatcher;
+import com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher.DispatcherRequest;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubPublishResults;
@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @SpringBootApplication(scanBasePackages = "com.google.cloud.pso.bq_snapshot_manager")
 @RestController
 public class DispatcherController {
@@ -55,12 +54,12 @@ public class DispatcherController {
 
         gson = new Gson();
         environment = new Environment();
-        logger = new LoggingHelper(
-                DispatcherController.class.getSimpleName(),
-                functionNumber,
-                environment.getProjectId(),
-                environment.getApplicationName()
-                );
+        logger =
+                new LoggingHelper(
+                        DispatcherController.class.getSimpleName(),
+                        functionNumber,
+                        environment.getProjectId(),
+                        environment.getApplicationName());
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
@@ -83,37 +82,46 @@ public class DispatcherController {
             // remove any escape characters (e.g. from Terraform
             requestJsonString = requestJsonString.replace("\\", "");
 
-            logger.logInfoWithTracker(runId, null, String.format("Received payload: %s", requestJsonString));
+            logger.logInfoWithTracker(
+                    runId, null, String.format("Received payload: %s", requestJsonString));
 
-            DispatcherRequest dispatcherRequest = gson.fromJson(requestJsonString, DispatcherRequest.class);
+            DispatcherRequest dispatcherRequest =
+                    gson.fromJson(requestJsonString, DispatcherRequest.class);
 
-            if(dispatcherRequest.isDryRun()){
+            if (dispatcherRequest.isDryRun()) {
                 runId = TrackingHelper.generateDryRunId();
-            }else{
-                if(dispatcherRequest.isForceRun()){
+            } else {
+                if (dispatcherRequest.isForceRun()) {
                     runId = TrackingHelper.generateForcedRunId();
-                }else{
+                } else {
                     runId = TrackingHelper.generateHeartBeatRunId();
                 }
             }
 
-            logger.logInfoWithTracker(dispatcherRequest.isDryRun(), runId, null, String.format("Parsed dispatcher request %s ", dispatcherRequest.toString()));
+            logger.logInfoWithTracker(
+                    dispatcherRequest.isDryRun(),
+                    runId,
+                    null,
+                    String.format("Parsed dispatcher request %s ", dispatcherRequest.toString()));
 
-            Dispatcher dispatcher = new Dispatcher(
-                    environment.toConfig(),
-                    new PubSubServiceImpl(),
-                    new ResourceScannerImpl(),
-                    new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
-                    "dispatcher-flags",
-                    functionNumber,
-                    runId
-            );
+            Dispatcher dispatcher =
+                    new Dispatcher(
+                            environment.toConfig(),
+                            new PubSubServiceImpl(),
+                            new ResourceScannerImpl(),
+                            new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
+                            "dispatcher-flags",
+                            functionNumber,
+                            runId);
 
-            PubSubPublishResults results = dispatcher.execute(dispatcherRequest, requestBody.getMessage().getMessageId());
+            PubSubPublishResults results =
+                    dispatcher.execute(dispatcherRequest, requestBody.getMessage().getMessageId());
 
-            state = String.format("Publishing results: %s SUCCESS MESSAGES and %s FAILED MESSAGES",
-                    results.getSuccessMessages().size(),
-                    results.getFailedMessages().size());
+            state =
+                    String.format(
+                            "Publishing results: %s SUCCESS MESSAGES and %s FAILED MESSAGES",
+                            results.getSuccessMessages().size(),
+                            results.getFailedMessages().size());
 
             logger.logInfoWithTracker(dispatcherRequest.isDryRun(), runId, null, state);
 
@@ -127,12 +135,10 @@ public class DispatcherController {
         // unnecessary runs and costs
 
         return new ResponseEntity(
-                String.format("Process completed with state = %s", state),
-                HttpStatus.OK);
+                String.format("Process completed with state = %s", state), HttpStatus.OK);
     }
 
     public static void main(String[] args) {
         SpringApplication.run(DispatcherController.class, args);
     }
 }
-

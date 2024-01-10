@@ -1,0 +1,29 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "trackingId",
+    "type": "STRING"
+  },
+  {
+    "name": "targetTable",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "table",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "dataset",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "project",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      }
+    ]
+  }
+]

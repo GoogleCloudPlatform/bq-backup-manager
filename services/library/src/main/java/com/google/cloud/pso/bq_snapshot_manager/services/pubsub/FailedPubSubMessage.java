@@ -18,19 +18,19 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.pubsub;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 
-public class FailedPubSubMessage {
+public class FailedPubSubMessage extends JsonMessage {
 
     private JsonMessage msg;
     private String exceptionMessage;
     private String exceptionClass;
 
-
     public FailedPubSubMessage(JsonMessage msg, Exception exception) {
         this.msg = msg;
-        this.exceptionClass = exception != null? exception.getClass().getName(): null;
-        this.exceptionMessage = exception != null? exception.getMessage(): null;
+        this.exceptionClass = exception != null ? exception.getClass().getName() : null;
+        this.exceptionMessage = exception != null ? exception.getMessage() : null;
     }
 
     public JsonMessage getMsg() {
@@ -47,10 +47,15 @@ public class FailedPubSubMessage {
 
     @Override
     public String toString() {
-        return "FailedPubSubMessage{" +
-                "msg=" + msg +
-                ", exceptionMessage='" + exceptionMessage + '\'' +
-                ", exceptionClass='" + exceptionClass + '\'' +
-                '}';
+        return "FailedPubSubMessage{"
+                + "msg="
+                + msg
+                + ", exceptionMessage='"
+                + exceptionMessage
+                + '\''
+                + ", exceptionClass='"
+                + exceptionClass
+                + '\''
+                + '}';
     }
 }

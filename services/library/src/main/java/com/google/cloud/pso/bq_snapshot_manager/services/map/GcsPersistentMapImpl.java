@@ -18,11 +18,11 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.map;
 
-import com.google.cloud.storage.*;
 
+import com.google.cloud.storage.*;
 import java.nio.charset.StandardCharsets;
 
-public class GcsPersistentMapImpl implements PersistentMap{
+public class GcsPersistentMapImpl implements PersistentMap {
 
     private Storage storage;
     private String bucketName;
@@ -44,8 +44,7 @@ public class GcsPersistentMapImpl implements PersistentMap{
     public String get(String key) {
         BlobId blobId = BlobId.of(bucketName, key);
         Blob blob = storage.get(blobId);
-        byte [] content = blob.getContent();
+        byte[] content = blob.getContent();
         return new String(content, StandardCharsets.UTF_8);
     }
-
 }

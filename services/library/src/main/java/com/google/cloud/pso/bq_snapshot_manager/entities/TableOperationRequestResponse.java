@@ -18,9 +18,10 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
+
 import com.google.common.base.Objects;
 
-public class TableOperationRequestResponse extends JsonMessage{
+public class TableOperationRequestResponse extends JsonMessage {
 
     private TableSpec targetTable;
     private String runId;
@@ -28,7 +29,8 @@ public class TableOperationRequestResponse extends JsonMessage{
 
     private boolean isDryRun;
 
-    public TableOperationRequestResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun) {
+    public TableOperationRequestResponse(
+            TableSpec targetTable, String runId, String trackingId, boolean isDryRun) {
         this.targetTable = targetTable;
         this.runId = runId;
         this.trackingId = trackingId;
@@ -53,12 +55,19 @@ public class TableOperationRequestResponse extends JsonMessage{
 
     @Override
     public String toString() {
-        return "TableOperationRequest{" +
-                "targetTable=" + targetTable +
-                ", runId='" + runId + '\'' +
-                ", trackingId='" + trackingId + '\'' +
-                ", isDryRun='" + isDryRun + '\'' +
-                '}';
+        return "TableOperationRequest{"
+                + "targetTable="
+                + targetTable
+                + ", runId='"
+                + runId
+                + '\''
+                + ", trackingId='"
+                + trackingId
+                + '\''
+                + ", isDryRun='"
+                + isDryRun
+                + '\''
+                + '}';
     }
 
     @Override
@@ -66,7 +75,10 @@ public class TableOperationRequestResponse extends JsonMessage{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TableOperationRequestResponse that = (TableOperationRequestResponse) o;
-        return isDryRun == that.isDryRun && Objects.equal(targetTable, that.targetTable) && Objects.equal(runId, that.runId) && Objects.equal(trackingId, that.trackingId);
+        return isDryRun == that.isDryRun
+                && Objects.equal(targetTable, that.targetTable)
+                && Objects.equal(runId, that.runId)
+                && Objects.equal(trackingId, that.trackingId);
     }
 
     @Override

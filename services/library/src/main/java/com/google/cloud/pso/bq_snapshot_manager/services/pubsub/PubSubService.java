@@ -18,12 +18,14 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.pubsub;
 
-import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 
+import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import java.io.IOException;
 import java.util.List;
 
 public interface PubSubService {
 
-    PubSubPublishResults publishTableOperationRequests(String projectId, String topicId, List<JsonMessage> messages) throws IOException, InterruptedException;
+    PubSubPublishResults publishTableOperationRequests(
+            String projectId, String topicId, List<JsonMessage> messages)
+            throws IOException, InterruptedException;
 }

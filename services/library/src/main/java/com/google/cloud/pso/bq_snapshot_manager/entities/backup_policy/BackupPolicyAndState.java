@@ -1,4 +1,3 @@
-
 /*
  *
  *  * Copyright 2023 Google LLC
@@ -19,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy;
 
+
 import com.google.cloud.Timestamp;
 import com.google.common.base.Objects;
 
@@ -26,7 +26,6 @@ public class BackupPolicyAndState {
 
     private BackupPolicy policy;
     private BackupState state;
-
 
     public BackupPolicyAndState(BackupPolicy policy, BackupState state) {
 
@@ -47,63 +46,63 @@ public class BackupPolicyAndState {
     }
 
     public BackupMethod getMethod() {
-        return policy != null? policy.getMethod(): null;
+        return policy != null ? policy.getMethod() : null;
     }
 
     public TimeTravelOffsetDays getTimeTravelOffsetDays() {
-        return policy != null? policy.getTimeTravelOffsetDays(): null;
+        return policy != null ? policy.getTimeTravelOffsetDays() : null;
     }
 
     public Double getBigQuerySnapshotExpirationDays() {
-        return policy != null? policy.getBigQuerySnapshotExpirationDays(): null;
+        return policy != null ? policy.getBigQuerySnapshotExpirationDays() : null;
     }
 
     public String getBackupStorageProject() {
-        return policy != null? policy.getBackupStorageProject(): null;
+        return policy != null ? policy.getBackupStorageProject() : null;
     }
 
     public String getBackupOperationProject() {
-        return policy != null? policy.getBackupOperationProject(): null;
+        return policy != null ? policy.getBackupOperationProject() : null;
     }
 
     public String getBigQuerySnapshotStorageDataset() {
-        return policy != null? policy.getBigQuerySnapshotStorageDataset(): null;
+        return policy != null ? policy.getBigQuerySnapshotStorageDataset() : null;
     }
 
     public String getGcsSnapshotStorageLocation() {
-        return policy != null? policy.getGcsSnapshotStorageLocation(): null;
+        return policy != null ? policy.getGcsSnapshotStorageLocation() : null;
     }
 
     public GCSSnapshotFormat getGcsExportFormat() {
-        return policy != null? policy.getGcsExportFormat(): null;
+        return policy != null ? policy.getGcsExportFormat() : null;
     }
 
     public String getGcsCsvDelimiter() {
-        return policy != null? policy.getGcsCsvDelimiter(): null;
+        return policy != null ? policy.getGcsCsvDelimiter() : null;
     }
 
     public Boolean getGcsCsvExportHeader() {
-        return policy != null? policy.getGcsCsvExportHeader(): null;
+        return policy != null ? policy.getGcsCsvExportHeader() : null;
     }
 
     public Boolean getGcsUseAvroLogicalTypes() {
-        return policy != null? policy.getGcsUseAvroLogicalTypes(): null;
+        return policy != null ? policy.getGcsUseAvroLogicalTypes() : null;
     }
 
     public BackupConfigSource getConfigSource() {
-        return policy != null? policy.getConfigSource(): null;
+        return policy != null ? policy.getConfigSource() : null;
     }
 
     public Timestamp getLastBackupAt() {
-        return state != null? state.getLastBackupAt(): null;
+        return state != null ? state.getLastBackupAt() : null;
     }
 
     public String getLastBqSnapshotStorageUri() {
-        return state != null? state.getLastBqSnapshotStorageUri(): null;
+        return state != null ? state.getLastBqSnapshotStorageUri() : null;
     }
 
     public String getLastGcsSnapshotStorageUri() {
-        return state != null? state.getLastGcsSnapshotStorageUri(): null;
+        return state != null ? state.getLastGcsSnapshotStorageUri() : null;
     }
 
     @Override
@@ -121,9 +120,6 @@ public class BackupPolicyAndState {
 
     @Override
     public String toString() {
-        return "BackupPolicyAndState{" +
-                "policy=" + policy +
-                ", state=" + state +
-                '}';
+        return "BackupPolicyAndState{" + "policy=" + policy + ", state=" + state + '}';
     }
 }

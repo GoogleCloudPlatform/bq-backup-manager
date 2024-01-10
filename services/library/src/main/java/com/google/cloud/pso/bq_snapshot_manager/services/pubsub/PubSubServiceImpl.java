@@ -25,7 +25,6 @@ import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,9 +32,9 @@ import java.util.concurrent.TimeUnit;
 
 public class PubSubServiceImpl implements PubSubService {
 
-
     @Override
-    public PubSubPublishResults publishTableOperationRequests(String projectId, String topicId, List<JsonMessage> messages)
+    public PubSubPublishResults publishTableOperationRequests(
+            String projectId, String topicId, List<JsonMessage> messages)
             throws IOException, InterruptedException {
 
         List<SuccessPubSubMessage> successMessages = new ArrayList<>();
@@ -52,11 +51,11 @@ public class PubSubServiceImpl implements PubSubService {
 
                 // Once published, returns a server-assigned message id (unique within the topic)
                 ApiFuture<String> future = publisher.publish(pubsubMessage);
-                try{
+                try {
                     // wait and retrieves results
                     String messageId = future.get();
                     successMessages.add(new SuccessPubSubMessage(msg, messageId));
-                }catch (Exception ex){
+                } catch (Exception ex) {
                     failedMessages.add(new FailedPubSubMessage(msg, ex));
                 }
             }

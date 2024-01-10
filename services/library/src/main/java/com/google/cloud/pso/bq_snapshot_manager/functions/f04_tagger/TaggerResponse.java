@@ -18,11 +18,10 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f04_tagger;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestResponse;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupState;
-
 import java.util.Objects;
 
 public class TaggerResponse extends TableOperationRequestResponse {
@@ -30,8 +29,13 @@ public class TaggerResponse extends TableOperationRequestResponse {
     private final BackupPolicyAndState originalPolicyAndState;
     private final BackupPolicyAndState updatedPolicyAndState;
 
-    public TaggerResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun,
-                          BackupPolicyAndState  originalPolicyAndState, BackupPolicyAndState  updatedPolicyAndState) {
+    public TaggerResponse(
+            TableSpec targetTable,
+            String runId,
+            String trackingId,
+            boolean isDryRun,
+            BackupPolicyAndState originalPolicyAndState,
+            BackupPolicyAndState updatedPolicyAndState) {
         super(targetTable, runId, trackingId, isDryRun);
         this.originalPolicyAndState = originalPolicyAndState;
         this.updatedPolicyAndState = updatedPolicyAndState;
@@ -57,9 +61,13 @@ public class TaggerResponse extends TableOperationRequestResponse {
 
     @Override
     public String toString() {
-        return "TaggerResponse{" +
-                "originalBackupPolicyAndState=" + originalPolicyAndState + ","+
-                "updatedBackupPolicyAndState=" + updatedPolicyAndState +
-                "} " + super.toString();
+        return "TaggerResponse{"
+                + "originalBackupPolicyAndState="
+                + originalPolicyAndState
+                + ","
+                + "updatedBackupPolicyAndState="
+                + updatedPolicyAndState
+                + "} "
+                + super.toString();
     }
 }

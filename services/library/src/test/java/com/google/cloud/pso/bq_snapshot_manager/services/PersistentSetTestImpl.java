@@ -18,8 +18,8 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services;
 
-import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
 
+import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,7 +27,7 @@ public class PersistentSetTestImpl implements PersistentSet {
 
     Set<String> set;
 
-    public PersistentSetTestImpl(){
+    public PersistentSetTestImpl() {
         set = new HashSet<>();
     }
 
@@ -37,7 +37,9 @@ public class PersistentSetTestImpl implements PersistentSet {
     }
 
     @Override
-    public void remove(String key) {set.remove(key);}
+    public void remove(String key) {
+        set.remove(key);
+    }
 
     @Override
     public boolean contains(String key) {

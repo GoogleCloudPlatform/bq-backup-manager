@@ -16,10 +16,10 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher;
+
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
-import com.google.gson.Gson;
 
 public class DispatcherRequest extends JsonMessage {
 
@@ -50,10 +50,13 @@ public class DispatcherRequest extends JsonMessage {
 
     @Override
     public String toString() {
-        return "DispatcherRequest{" +
-                "isForceRun=" + isForceRun +
-                "isDryRun=" + isDryRun +
-                ", bigQueryScope=" + bigQueryScope +
-                '}';
+        return "DispatcherRequest{"
+                + "isForceRun="
+                + isForceRun
+                + "isDryRun="
+                + isDryRun
+                + ", bigQueryScope="
+                + bigQueryScope
+                + '}';
     }
 }

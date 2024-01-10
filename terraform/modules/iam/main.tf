@@ -22,6 +22,12 @@ resource "google_service_account" "sa_dispatcher" {
   display_name = "Runtime SA for Dispatcher service"
 }
 
+resource "google_service_account" "sa_dispatcher_tables" {
+  project = var.project
+  account_id = var.sa_dispatcher_tables
+  display_name = "Runtime SA for Dispatcher Tables service"
+}
+
 resource "google_service_account" "sa_tagger" {
   project = var.project
   account_id = var.sa_tagger
@@ -31,7 +37,13 @@ resource "google_service_account" "sa_tagger" {
 resource "google_service_account" "sa_dispatcher_tasks" {
   project = var.project
   account_id = var.sa_dispatcher_tasks
-  display_name = "To authorize PubSub Push requests to Tagging Dispatcher Service"
+  display_name = "To authorize PubSub Push requests to Dispatcher Service"
+}
+
+resource "google_service_account" "sa_dispatcher_tables_tasks" {
+  project = var.project
+  account_id = var.sa_dispatcher_tables_tasks
+  display_name = "To authorize PubSub Push requests to Dispatcher Tables Service"
 }
 
 resource "google_service_account" "sa_configurator" {
@@ -89,6 +101,14 @@ resource "google_service_account_iam_member" "sa_dispatcher_account_user_sa_disp
   service_account_id = google_service_account.sa_dispatcher.name
   role = "roles/iam.serviceAccountUser"
   member = "serviceAccount:${google_service_account.sa_dispatcher_tasks.email}"
+}
+
+#### Dispatcher Tables Tasks Permissions ###
+
+resource "google_service_account_iam_member" "sa_dispatcher_account_user_sa_dispatcher_table_tasks" {
+  service_account_id = google_service_account.sa_dispatcher_tables.name
+  role = "roles/iam.serviceAccountUser"
+  member = "serviceAccount:${google_service_account.sa_dispatcher_tables_tasks.email}"
 }
 
 #### Dispatcher SA Permissions ###

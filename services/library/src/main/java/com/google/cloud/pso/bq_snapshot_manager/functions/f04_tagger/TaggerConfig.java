@@ -25,10 +25,7 @@ public class TaggerConfig {
 
     private final String applicationName;
 
-    public TaggerConfig(String projectId,
-                        String tagTemplateId,
-                        String applicationName
-                        ) {
+    public TaggerConfig(String projectId, String tagTemplateId, String applicationName) {
         this.projectId = projectId;
         this.tagTemplateId = tagTemplateId;
         this.applicationName = applicationName;
@@ -48,10 +45,16 @@ public class TaggerConfig {
 
     @Override
     public String toString() {
-        return "TaggerConfig{" +
-                "projectId='" + projectId + '\'' +
-                ", tagTemplateId='" + tagTemplateId + '\'' +
-                ", applicationName='" + applicationName + '\'' +
-                '}';
+        return "TaggerConfig{"
+                + "projectId='"
+                + projectId
+                + '\''
+                + ", tagTemplateId='"
+                + tagTemplateId
+                + '\''
+                + ", applicationName='"
+                + applicationName
+                + '\''
+                + '}';
     }
 }

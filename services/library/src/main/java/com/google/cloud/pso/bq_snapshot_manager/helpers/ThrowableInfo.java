@@ -44,10 +44,14 @@ public class ThrowableInfo {
 
     @Override
     public String toString() {
-        return "ThrowableInfo{" +
-                "exception=" + throwable +
-                ", isRetryable=" + isRetryable +
-                ", notes='" + notes + '\'' +
-                '}';
+        return "ThrowableInfo{"
+                + "exception="
+                + throwable
+                + ", isRetryable="
+                + isRetryable
+                + ", notes='"
+                + notes
+                + '\''
+                + '}';
     }
 }

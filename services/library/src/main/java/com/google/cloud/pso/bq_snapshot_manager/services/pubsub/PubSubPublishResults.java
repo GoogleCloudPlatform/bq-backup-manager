@@ -18,14 +18,17 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.pubsub;
 
+
+import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import java.util.List;
 
-public class PubSubPublishResults {
+public class PubSubPublishResults extends JsonMessage {
 
     private List<SuccessPubSubMessage> successMessages;
     private List<FailedPubSubMessage> failedMessages;
 
-    public PubSubPublishResults(List<SuccessPubSubMessage> successMessages, List<FailedPubSubMessage> failedMessages) {
+    public PubSubPublishResults(
+            List<SuccessPubSubMessage> successMessages, List<FailedPubSubMessage> failedMessages) {
         this.successMessages = successMessages;
         this.failedMessages = failedMessages;
     }
@@ -38,14 +41,21 @@ public class PubSubPublishResults {
         return failedMessages;
     }
 
-    public Boolean hasSuccessMessages (){return successMessages == null;}
-    public Boolean hasFailedMessages (){return failedMessages == null;}
+    public Boolean hasSuccessMessages() {
+        return successMessages == null;
+    }
+
+    public Boolean hasFailedMessages() {
+        return failedMessages == null;
+    }
 
     @Override
     public String toString() {
-        return "PubSubPublishResults{" +
-                "successMessages=" + successMessages +
-                ", failedMessages=" + failedMessages +
-                '}';
+        return "PubSubPublishResults{"
+                + "successMessages="
+                + successMessages
+                + ", failedMessages="
+                + failedMessages
+                + '}';
     }
 }

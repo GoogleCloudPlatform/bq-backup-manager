@@ -18,6 +18,10 @@ output "sa_dispatcher_email" {
   value = google_service_account.sa_dispatcher.email
 }
 
+output "sa_dispatcher_tables_email" {
+  value = google_service_account.sa_dispatcher_tables.email
+}
+
 output "sa_configurator_email" {
   value = google_service_account.sa_configurator.email
 }
@@ -36,6 +40,10 @@ output "sa_tagger_email" {
 
 output "sa_dispatcher_tasks_email" {
   value = google_service_account.sa_dispatcher_tasks.email
+}
+
+output "sa_dispatcher_tables_tasks_email" {
+  value = google_service_account.sa_dispatcher_tables_tasks.email
 }
 
 output "sa_configurator_tasks_email" {

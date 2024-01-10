@@ -25,12 +25,13 @@ task(){
 
    [[ ${#1} -lt 10 ]] && SUFFIX="0${1}" || SUFFIX="$1"
    echo  "${DESTINATION_TABLE_SPEC_PREFIX}_${SUFFIX}"
-   bq cp --force "${ORIGIN_TABLE_SPEC}" "${DESTINATION_TABLE_SPEC_PREFIX}_${SUFFIX}";
+   bq cp --force --quiet=true "${ORIGIN_TABLE_SPEC}" "${DESTINATION_TABLE_SPEC_PREFIX}_${SUFFIX}";
 }
 
-N=50
+# bundle size
+N=100
 (
-for table in {1..1000}; do
+for table in {1..100000}; do
    ((i=i%N)); ((i++==0)) && wait
    task "${table}" &
 done

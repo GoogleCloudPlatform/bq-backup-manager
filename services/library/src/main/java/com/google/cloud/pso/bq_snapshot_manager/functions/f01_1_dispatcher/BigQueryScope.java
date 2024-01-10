@@ -16,7 +16,8 @@
  *
  */
 
-package com.google.cloud.pso.bq_snapshot_manager.functions.f01_dispatcher;
+package com.google.cloud.pso.bq_snapshot_manager.functions.f01_1_dispatcher;
+
 
 import java.util.List;
 import java.util.Objects;
@@ -31,9 +32,14 @@ public class BigQueryScope {
     private List<String> tableIncludeList;
     private List<String> tableExcludeList;
 
-    public BigQueryScope(List<Long> folderIncludeList, List<String> projectIncludeList, List<String> projectExcludeList,
-                         List<String> datasetIncludeList, List<String> datasetExcludeList,
-                         List<String> tableIncludeList, List<String> tableExcludeList) {
+    public BigQueryScope(
+            List<Long> folderIncludeList,
+            List<String> projectIncludeList,
+            List<String> projectExcludeList,
+            List<String> datasetIncludeList,
+            List<String> datasetExcludeList,
+            List<String> tableIncludeList,
+            List<String> tableExcludeList) {
         this.folderIncludeList = folderIncludeList;
         this.projectIncludeList = projectIncludeList;
         this.projectExcludeList = projectExcludeList;
@@ -73,15 +79,22 @@ public class BigQueryScope {
 
     @Override
     public String toString() {
-        return "BigQueryScope{" +
-                "folderIncludeList=" + folderIncludeList +
-                ", projectIncludeList=" + projectIncludeList +
-                ", projectExcludeList=" + projectExcludeList +
-                ", datasetIncludeList=" + datasetIncludeList +
-                ", datasetExcludeList=" + datasetExcludeList +
-                ", tableIncludeList=" + tableIncludeList +
-                ", tableExcludeList=" + tableExcludeList +
-                '}';
+        return "BigQueryScope{"
+                + "folderIncludeList="
+                + folderIncludeList
+                + ", projectIncludeList="
+                + projectIncludeList
+                + ", projectExcludeList="
+                + projectExcludeList
+                + ", datasetIncludeList="
+                + datasetIncludeList
+                + ", datasetExcludeList="
+                + datasetExcludeList
+                + ", tableIncludeList="
+                + tableIncludeList
+                + ", tableExcludeList="
+                + tableExcludeList
+                + '}';
     }
 
     @Override
@@ -89,18 +102,24 @@ public class BigQueryScope {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BigQueryScope that = (BigQueryScope) o;
-        return Objects.equals(getFolderIncludeList(), that.getFolderIncludeList()) &&
-                Objects.equals(getProjectIncludeList(), that.getProjectIncludeList()) &&
-                Objects.equals(getProjectExcludeList(), that.getProjectExcludeList()) &&
-                Objects.equals(getDatasetIncludeList(), that.getDatasetIncludeList()) &&
-                Objects.equals(getDatasetExcludeList(), that.getDatasetExcludeList()) &&
-                Objects.equals(getTableIncludeList(), that.getTableIncludeList()) &&
-                Objects.equals(getTableExcludeList(), that.getTableExcludeList());
+        return Objects.equals(getFolderIncludeList(), that.getFolderIncludeList())
+                && Objects.equals(getProjectIncludeList(), that.getProjectIncludeList())
+                && Objects.equals(getProjectExcludeList(), that.getProjectExcludeList())
+                && Objects.equals(getDatasetIncludeList(), that.getDatasetIncludeList())
+                && Objects.equals(getDatasetExcludeList(), that.getDatasetExcludeList())
+                && Objects.equals(getTableIncludeList(), that.getTableIncludeList())
+                && Objects.equals(getTableExcludeList(), that.getTableExcludeList());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFolderIncludeList(), getProjectIncludeList(), getProjectExcludeList(),
-                getDatasetIncludeList(), getDatasetExcludeList(), getTableIncludeList(), getTableExcludeList());
+        return Objects.hash(
+                getFolderIncludeList(),
+                getProjectIncludeList(),
+                getProjectExcludeList(),
+                getDatasetIncludeList(),
+                getDatasetExcludeList(),
+                getTableIncludeList(),
+                getTableExcludeList());
     }
 }

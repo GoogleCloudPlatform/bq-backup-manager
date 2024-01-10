@@ -17,34 +17,30 @@
  */
 package com.google.cloud.pso.bq_snapshot_manager.snapshoter_gcs;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterConfig;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 
 public class Environment {
 
+    public SnapshoterConfig toConfig() {
 
-
-    public SnapshoterConfig toConfig (){
-
-        return new SnapshoterConfig(
-                getProjectId(),
-                getOutputTopic(),
-                getApplicationName()
-        );
+        return new SnapshoterConfig(getProjectId(), getOutputTopic(), getApplicationName());
     }
 
-
-    public String getProjectId(){
+    public String getProjectId() {
         return Utils.getConfigFromEnv("PROJECT_ID", true);
     }
 
-    public String getOutputTopic() { return Utils.getConfigFromEnv("OUTPUT_TOPIC", true); }
+    public String getOutputTopic() {
+        return Utils.getConfigFromEnv("OUTPUT_TOPIC", true);
+    }
 
-    public String getGcsFlagsBucket(){
+    public String getGcsFlagsBucket() {
         return Utils.getConfigFromEnv("GCS_FLAGS_BUCKET", true);
     }
-    public String getApplicationName(){
+
+    public String getApplicationName() {
         return Utils.getConfigFromEnv("APPLICATION_NAME", true);
     }
-
 }

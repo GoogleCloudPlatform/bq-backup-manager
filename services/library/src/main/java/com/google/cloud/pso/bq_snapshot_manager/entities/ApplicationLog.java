@@ -23,10 +23,8 @@ public enum ApplicationLog {
     DEFAULT_LOG,
     // Used to log function start/stop
     TRACKER_LOG,
-    // Used to log column Level tagging actions
-    TAG_HISTORY_LOG,
-    // Used to log success dispatched requests per run
-    DISPATCHED_REQUESTS_LOG,
+    // Used to log success dispatched table requests per run
+    DISPATCHED_DATASET_REQUESTS_LOG,
     // Used to log failed dispatched requests per run
     FAILED_DISPATCHED_REQUESTS_LOG,
     // To capture trackers with non retryable exceptions during processing
@@ -34,5 +32,7 @@ public enum ApplicationLog {
     // To capture trackers with retryable exceptions during processing
     RETRYABLE_EXCEPTIONS_LOG,
     // Unified log for service requests
-    UNIFIED_LOG
+    UNIFIED_LOG,
+    // To capture counters and durations for dataset and table dispatchers
+    DISPATCHER_COUNTERS_LOG,
 }

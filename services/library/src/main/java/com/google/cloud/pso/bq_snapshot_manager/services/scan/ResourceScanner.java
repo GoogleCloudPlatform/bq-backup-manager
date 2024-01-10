@@ -18,10 +18,9 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.scan;
 
+
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
-import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -29,14 +28,16 @@ import java.util.List;
 public interface ResourceScanner {
 
     // list projects under a folder in the format "project"
-    List<String> listProjects(Long folderId) throws NonRetryableApplicationException, GeneralSecurityException, IOException;
-
+    List<String> listProjects(Long folderId)
+            throws NonRetryableApplicationException, GeneralSecurityException, IOException;
 
     // list datasets under a project in the format "project.dataset"
-    List<String> listDatasets(String project) throws NonRetryableApplicationException, InterruptedException;
+    List<String> listDatasets(String project)
+            throws NonRetryableApplicationException, InterruptedException;
 
     // list tables under a project/dataset in the format "project.dataset.table"
-    List<String> listTables(String project, String dataset) throws InterruptedException, NonRetryableApplicationException;
+    List<String> listTables(String project, String dataset)
+            throws InterruptedException, NonRetryableApplicationException;
 
     Tuple<String, String> getParentFolderId(String project, String runId) throws IOException;
 }

@@ -17,57 +17,59 @@
  */
 package com.google.cloud.pso.bq_snapshot_manager.configurator;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.ConfiguratorConfig;
-import com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter.SnapshoterConfig;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 
 public class Environment {
 
-
-
-    public ConfiguratorConfig toConfig (){
+    public ConfiguratorConfig toConfig() {
 
         return new ConfiguratorConfig(
                 getProjectId(),
                 getBqSnapshoterOutputTopic(),
                 getGCSSnapshoterOutputTopic(),
                 getBackupTagTemplateId(),
-                getApplicationName()
-        );
+                getApplicationName());
     }
 
-    public String getProjectId(){
+    public String getProjectId() {
         return Utils.getConfigFromEnv("PROJECT_ID", true);
     }
 
-    public String getComputeRegionId(){
+    public String getComputeRegionId() {
         return Utils.getConfigFromEnv("COMPUTE_REGION_ID", true);
     }
 
-    public String getDataRegionId(){
+    public String getDataRegionId() {
         return Utils.getConfigFromEnv("DATA_REGION_ID", true);
     }
 
-    public String getBackupPolicyJson(){
+    public String getBackupPolicyJson() {
         return Utils.getConfigFromEnv("BACKUP_POLICY_JSON", true);
     }
 
-    public String getBqSnapshoterOutputTopic() { return Utils.getConfigFromEnv("SNAPSHOTER_BQ_OUTPUT_TOPIC", true); }
+    public String getBqSnapshoterOutputTopic() {
+        return Utils.getConfigFromEnv("SNAPSHOTER_BQ_OUTPUT_TOPIC", true);
+    }
 
-    public String getGCSSnapshoterOutputTopic() { return Utils.getConfigFromEnv("SNAPSHOTER_GCS_OUTPUT_TOPIC", true); }
+    public String getGCSSnapshoterOutputTopic() {
+        return Utils.getConfigFromEnv("SNAPSHOTER_GCS_OUTPUT_TOPIC", true);
+    }
 
-    public String getBackupTagTemplateId() { return Utils.getConfigFromEnv("BACKUP_TAG_TEMPLATE_ID", true); }
+    public String getBackupTagTemplateId() {
+        return Utils.getConfigFromEnv("BACKUP_TAG_TEMPLATE_ID", true);
+    }
 
-    public String getGcsFlagsBucket(){
+    public String getGcsFlagsBucket() {
         return Utils.getConfigFromEnv("GCS_FLAGS_BUCKET", true);
     }
 
-    public String getApplicationName(){
+    public String getApplicationName() {
         return Utils.getConfigFromEnv("APPLICATION_NAME", true);
     }
 
-    public String getGcsBackupPoliciesBucket(){
+    public String getGcsBackupPoliciesBucket() {
         return Utils.getConfigFromEnv("GCS_BACKUP_POLICIES_BUCKET", true);
     }
-
 }

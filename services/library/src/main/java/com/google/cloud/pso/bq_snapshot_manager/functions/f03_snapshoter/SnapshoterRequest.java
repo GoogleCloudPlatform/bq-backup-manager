@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
+
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestResponse;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
@@ -27,7 +28,12 @@ public class SnapshoterRequest extends TableOperationRequestResponse {
 
     private final BackupPolicyAndState backupPolicyAndState;
 
-    public SnapshoterRequest(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicyAndState backupPolicyAndState) {
+    public SnapshoterRequest(
+            TableSpec targetTable,
+            String runId,
+            String trackingId,
+            boolean isDryRun,
+            BackupPolicyAndState backupPolicyAndState) {
         super(targetTable, runId, trackingId, isDryRun);
         this.backupPolicyAndState = backupPolicyAndState;
     }
@@ -38,9 +44,11 @@ public class SnapshoterRequest extends TableOperationRequestResponse {
 
     @Override
     public String toString() {
-        return "SnapshoterRequest{" +
-                "backupPolicy=" + backupPolicyAndState +
-                "} " + super.toString();
+        return "SnapshoterRequest{"
+                + "backupPolicy="
+                + backupPolicyAndState
+                + "} "
+                + super.toString();
     }
 
     @Override
@@ -57,11 +65,12 @@ public class SnapshoterRequest extends TableOperationRequestResponse {
         return Objects.hashCode(super.hashCode(), backupPolicyAndState);
     }
 
-    public String computeBackupOperationProject(){
-        // if the backup policy specifies a project to run the backup operations on, use it. Otherwise,
+    public String computeBackupOperationProject() {
+        // if the backup policy specifies a project to run the backup operations on, use it.
+        // Otherwise,
         // use the source table project
-        return this.backupPolicyAndState.getBackupOperationProject() != null?
-                this.backupPolicyAndState.getBackupOperationProject():
-                this.getTargetTable().getProject();
+        return this.backupPolicyAndState.getBackupOperationProject() != null
+                ? this.backupPolicyAndState.getBackupOperationProject()
+                : this.getTargetTable().getProject();
     }
 }

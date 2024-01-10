@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.helpers;
 
+
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.cloud.BaseServiceException;
@@ -28,21 +29,20 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.common.collect.Sets;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import javax.annotation.Nullable;
-import java.util.Set;
 
 public class ControllerExceptionHelper {
 
     // add more Retryable Exceptions Here
-    private static final Set<Class> RETRYABLE_EXCEPTIONS = Sets.newHashSet(
-            RetryableApplicationException.class,
-            ResourceExhaustedException.class,
-            javax.net.ssl.SSLException.class,
-            java.net.SocketException.class
-    );
+    private static final Set<Class> RETRYABLE_EXCEPTIONS =
+            Sets.newHashSet(
+                    RetryableApplicationException.class,
+                    ResourceExhaustedException.class,
+                    javax.net.ssl.SSLException.class,
+                    java.net.SocketException.class);
 
     public static ThrowableInfo isRetryableException(Throwable throwable) {
 
@@ -53,8 +53,12 @@ public class ControllerExceptionHelper {
         // Thrown by DLP
         if (StatusRuntimeException.class.isAssignableFrom(exceptionClass)) {
             StatusRuntimeException statusRuntimeException = (StatusRuntimeException) throwable;
-            if (statusRuntimeException.getStatus() != null && statusRuntimeException.getStatus().equals(Status.RESOURCE_EXHAUSTED)) {
-                return new ThrowableInfo(throwable, true, "Retryable: 'status' = RESOURCE_EXHAUSTED assignable from StatusRuntimeException");
+            if (statusRuntimeException.getStatus() != null
+                    && statusRuntimeException.getStatus().equals(Status.RESOURCE_EXHAUSTED)) {
+                return new ThrowableInfo(
+                        throwable,
+                        true,
+                        "Retryable: 'status' = RESOURCE_EXHAUSTED assignable from StatusRuntimeException");
             }
         }
 
@@ -63,32 +67,43 @@ public class ControllerExceptionHelper {
             BigQueryException bigQueryException = (BigQueryException) throwable;
             // when hitting the concurrent interactive queries
             // bigQueryException.getReason() is sometimes null.
-            if (bigQueryException.getReason() != null && bigQueryException.getReason().equals("jobRateLimitExceeded")) {
-                return new ThrowableInfo(throwable,
+            if (bigQueryException.getReason() != null
+                    && bigQueryException.getReason().equals("jobRateLimitExceeded")) {
+                return new ThrowableInfo(
+                        throwable,
                         true,
                         "Retryable: 'reason' = jobRateLimitExceeded assignable from BigQueryException");
             }
-            // handling "Exceeded rate limits: too many api requests per user per method for this user_method"
-            if (bigQueryException.getReason() != null && bigQueryException.getReason().equals("rateLimitExceeded")) {
-                return new ThrowableInfo(throwable,
+            // handling "Exceeded rate limits: too many api requests per user per method for this
+            // user_method"
+            if (bigQueryException.getReason() != null
+                    && bigQueryException.getReason().equals("rateLimitExceeded")) {
+                return new ThrowableInfo(
+                        throwable,
                         true,
                         "Retryable: 'reason' = rateLimitExceeded assignable from BigQueryException");
             }
 
-            // handling transit internalError https://cloud.google.com/bigquery/docs/error-messages#errortable
+            // handling transit internalError
+            // https://cloud.google.com/bigquery/docs/error-messages#errortable
             if (bigQueryException.getCode() == 500 || bigQueryException.getCode() == 503) {
-                return new ThrowableInfo(throwable,
+                return new ThrowableInfo(
+                        throwable,
                         true,
-                        String.format("Retryable: 'code' = %s assignable from BigQueryException",
+                        String.format(
+                                "Retryable: 'code' = %s assignable from BigQueryException",
                                 bigQueryException.getCode()));
             }
 
-            // handling transit internalError https://cloud.google.com/bigquery/docs/error-messages#errortable
-            if (bigQueryException.getReason() != null && bigQueryException.getReason().equals("internalError")
-            ) {
-                return new ThrowableInfo(throwable,
+            // handling transit internalError
+            // https://cloud.google.com/bigquery/docs/error-messages#errortable
+            if (bigQueryException.getReason() != null
+                    && bigQueryException.getReason().equals("internalError")) {
+                return new ThrowableInfo(
+                        throwable,
                         true,
-                        String.format("Retryable: 'reason' = %s assignable from BigQueryException",
+                        String.format(
+                                "Retryable: 'reason' = %s assignable from BigQueryException",
                                 bigQueryException.getReason()));
             }
         }
@@ -97,21 +112,33 @@ public class ControllerExceptionHelper {
         if (BaseServiceException.class.isAssignableFrom(exceptionClass)) {
             BaseServiceException baseServiceException = (BaseServiceException) throwable;
             if (baseServiceException.getCode() == 429) {
-                return new ThrowableInfo(throwable, true, "Retryable: 'code' = 429 assignable from BaseServiceException");
+                return new ThrowableInfo(
+                        throwable,
+                        true,
+                        "Retryable: 'code' = 429 assignable from BaseServiceException");
             }
         }
 
-        // 2. check if the exception inherits (at any level) from any Retryable Exception that we explicitly define
+        // 2. check if the exception inherits (at any level) from any Retryable Exception that we
+        // explicitly define
         for (Class retryableExClass : RETRYABLE_EXCEPTIONS) {
             if (retryableExClass.isAssignableFrom(exceptionClass)) {
-                return new ThrowableInfo(throwable, true, String.format("Retryable: isAssignableFrom %s ", retryableExClass.getName()));
+                return new ThrowableInfo(
+                        throwable,
+                        true,
+                        String.format(
+                                "Retryable: isAssignableFrom %s ", retryableExClass.getName()));
             }
         }
 
         // 3. check if the exception is caused by a Retryable Exception
         for (Class retryableExClass : RETRYABLE_EXCEPTIONS) {
             if (retryableExClass.isAssignableFrom(exceptionClass)) {
-                return new ThrowableInfo(throwable, true, String.format("Retryable: isAssignableFrom %s ", retryableExClass.getName()));
+                return new ThrowableInfo(
+                        throwable,
+                        true,
+                        String.format(
+                                "Retryable: isAssignableFrom %s ", retryableExClass.getName()));
             }
         }
 
@@ -122,18 +149,23 @@ public class ControllerExceptionHelper {
         // Check if it's a retryable BaseServiceException
         if (BaseServiceException.class.isAssignableFrom(exceptionClass)) {
             BaseServiceException baseServiceException = (BaseServiceException) throwable;
-            return new ThrowableInfo(throwable, baseServiceException.isRetryable(), String.format("Check: isAssignableFrom BaseServiceException"));
+            return new ThrowableInfo(
+                    throwable,
+                    baseServiceException.isRetryable(),
+                    String.format("Check: isAssignableFrom BaseServiceException"));
         }
 
         // Check if it's Retryable ApiException
         if (ApiException.class.isAssignableFrom(exceptionClass)) {
             ApiException apiEx = (ApiException) throwable;
-            return new ThrowableInfo(throwable, apiEx.isRetryable(), String.format("Check: isAssignableFrom BaseServiceException"));
+            return new ThrowableInfo(
+                    throwable,
+                    apiEx.isRetryable(),
+                    String.format("Check: isAssignableFrom BaseServiceException"));
         }
 
         // if not, log and ACK so that it's not retried
         return new ThrowableInfo(throwable, false, String.format(""));
-
     }
 
     // Checks if the given throwable or recursively any of it's causes are Retryable
@@ -143,8 +175,7 @@ public class ControllerExceptionHelper {
         ThrowableInfo throwableInfo = isRetryableException(throwable);
 
         // if so, stop here (recursion base case)
-        if (throwableInfo.isRetryable())
-            return throwableInfo;
+        if (throwableInfo.isRetryable()) return throwableInfo;
         else {
             // if it has a cause, check if that cause is retryable
 
@@ -162,30 +193,25 @@ public class ControllerExceptionHelper {
      * @param ex
      * @param logger
      * @param trackingId
-     * @return Tuple<ResponseEntity, Boolean> where the Boolean value indicates if the exception is retyrable or not
+     * @return Tuple<ResponseEntity, Boolean> where the Boolean value indicates if the exception is
+     *     retyrable or not
      */
-    public static Tuple<ResponseEntity, Boolean> handleException(Exception ex,
-                                                                 LoggingHelper logger,
-                                                                 String trackingId,
-                                                                 @Nullable TableSpec tableSpec) {
+    public static Tuple<ResponseEntity, Boolean> handleException(
+            Exception ex, LoggingHelper logger, String trackingId, @Nullable TableSpec tableSpec) {
 
         ThrowableInfo exInfo = causedByRetryableException(ex);
 
         if (exInfo.isRetryable()) {
             logger.logRetryableExceptions(trackingId, tableSpec, ex, exInfo.getNotes());
             return Tuple.of(
-                    new ResponseEntity(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS),
-                    true);
+                    new ResponseEntity(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS), true);
 
         } else {
 
             // if it's not retryable, log and ACK so that it's not retried
             ex.printStackTrace();
             logger.logNonRetryableExceptions(trackingId, tableSpec, ex);
-            return Tuple.of(
-                    new ResponseEntity(ex.getMessage(), HttpStatus.OK),
-                    false);
+            return Tuple.of(new ResponseEntity(ex.getMessage(), HttpStatus.OK), false);
         }
     }
-
 }

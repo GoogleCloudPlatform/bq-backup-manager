@@ -21,15 +21,19 @@
 # exit script when errors occur
 set -e
 
+# set the working dir as the scripts directory
+cd "$(dirname "$0")"
 
+cd ../services
 
-cd services
+# make sure that the project is valid before submitting a build job
+mvn install
 
 gcloud builds submit \
 --project $PROJECT_ID \
 --region $COMPUTE_REGION \
 --config cloudbuild.yaml \
---substitutions _DISPATCHER_IMAGE=${DISPATCHER_IMAGE},_CONFIGURATOR_IMAGE=${CONFIGURATOR_IMAGE},_SNAPSHOTER_BQ_IMAGE=${SNAPSHOTER_BQ_IMAGE},_SNAPSHOTER_GCS_IMAGE=${SNAPSHOTER_GCS_IMAGE},_TAGGER_IMAGE=${TAGGER_IMAGE}
+--substitutions _DISPATCHER_IMAGE=${DISPATCHER_IMAGE},_DISPATCHER_TABLES_IMAGE=${DISPATCHER_TABLES_IMAGE},_CONFIGURATOR_IMAGE=${CONFIGURATOR_IMAGE},_SNAPSHOTER_BQ_IMAGE=${SNAPSHOTER_BQ_IMAGE},_SNAPSHOTER_GCS_IMAGE=${SNAPSHOTER_GCS_IMAGE},_TAGGER_IMAGE=${TAGGER_IMAGE}
 
 
 

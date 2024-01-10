@@ -18,10 +18,13 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.scan;
 
+
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.cloudresourcemanager.v3.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.v3.model.ListProjectsResponse;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import com.google.api.services.iam.v1.IamScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.Timestamp;
@@ -30,7 +33,11 @@ import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.TableDefinition;
-
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.Key;
+import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -38,14 +45,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import com.google.api.services.cloudresourcemanager.v3.CloudResourceManager;
-import com.google.api.services.iam.v1.IamScopes;
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
-import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.Key;
-import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 
 public class ResourceScannerImpl implements ResourceScanner {
 
@@ -71,18 +70,26 @@ public class ResourceScannerImpl implements ResourceScanner {
 
     @Override
     public List<String> listTables(String projectId, String datasetId) {
-        return StreamSupport.stream(bqService.listTables(DatasetId.of(projectId, datasetId))
+        return StreamSupport.stream(
+                        bqService
+                                .listTables(DatasetId.of(projectId, datasetId))
                                 .iterateAll() // lazy fetching of pages
                                 .spliterator(),
                         false)
                 .filter(t -> t.getDefinition().getType().equals(TableDefinition.Type.TABLE))
-                .map(t -> String.format("%s.%s.%s", projectId, datasetId, t.getTableId().getTable()))
+                .map(
+                        t ->
+                                String.format(
+                                        "%s.%s.%s",
+                                        projectId, datasetId, t.getTableId().getTable()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override
     public List<String> listDatasets(String projectId) {
-        return StreamSupport.stream(bqService.listDatasets(projectId)
+        return StreamSupport.stream(
+                        bqService
+                                .listDatasets(projectId)
                                 .iterateAll() // lazy fetching of pages
                                 .spliterator(),
                         false)
@@ -93,24 +100,29 @@ public class ResourceScannerImpl implements ResourceScanner {
     @Override
     public List<String> listProjects(Long folderId) throws IOException {
 
-        ListProjectsResponse listProjectsResponse = cloudResourceManager.projects().list()
-                .setParent("folders/" + folderId)
-                .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
-                .execute();
+        ListProjectsResponse listProjectsResponse =
+                cloudResourceManager
+                        .projects()
+                        .list()
+                        .setParent("folders/" + folderId)
+                        .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
+                        .execute();
 
         List<String> allProjects = pagedProjectsToList(listProjectsResponse.getProjects());
 
         String nextPageToken = listProjectsResponse.getNextPageToken();
 
-        while (nextPageToken != null){
+        while (nextPageToken != null) {
 
             // submit a new request for the next page
-            listProjectsResponse = cloudResourceManager.projects()
-                    .list()
-                    .setParent("folders/" + folderId)
-                    .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
-                    .setPageToken(nextPageToken)
-                    .execute();
+            listProjectsResponse =
+                    cloudResourceManager
+                            .projects()
+                            .list()
+                            .setParent("folders/" + folderId)
+                            .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
+                            .setPageToken(nextPageToken)
+                            .execute();
 
             // add all entries listed in that page
             allProjects.addAll(pagedProjectsToList(listProjectsResponse.getProjects()));
@@ -122,37 +134,37 @@ public class ResourceScannerImpl implements ResourceScanner {
         return allProjects.stream().distinct().toList();
     }
 
-    public List<String> pagedProjectsToList(List<Project> pagedProjects){
+    public List<String> pagedProjectsToList(List<Project> pagedProjects) {
         return pagedProjects.stream()
                 .map(Project::getProjectId)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-
-
     /**
-     * Returns the folder id of the direct parent of a project.
-     * If the project doesn't have a folder, it returns null.
-     * If the project doesn't exist it will throw an exception
+     * Returns the folder id of the direct parent of a project. If the project doesn't have a
+     * folder, it returns null. If the project doesn't exist it will throw an exception
      *
-     * returns a Tuple of (folder ID, source (cache | api))
+     * <p>returns a Tuple of (folder ID, source (cache | api))
      */
 
     /**
-     * Returns the folder id of the direct parent of a project.
-     *      * If the project doesn't have a folder, it returns null.
-     *      * If the project doesn't exist it will throw an exception
+     * Returns the folder id of the direct parent of a project. * If the project doesn't have a
+     * folder, it returns null. * If the project doesn't exist it will throw an exception
+     *
      * @param projectId project id to lookup it's folder id
      * @param runId unique identifier of the run that is used to create keys for the cache
-     * @return Tuple of Tuple<String, String> where x = folder id and y = source of the lookup operation (api | cache)
+     * @return Tuple of Tuple<String, String> where x = folder id and y = source of the lookup
+     *     operation (api | cache)
      */
     @Override
-    public Tuple<String, String> getParentFolderId(String projectId, String runId) throws IOException {
+    public Tuple<String, String> getParentFolderId(String projectId, String runId)
+            throws IOException {
 
         /**
          * Resource Manager API has a rate limit of 10 GET operations per second. This means that
-         * looking up the folder for each table (for thousands of tables) is not scalable.
-         * For that we use a cache layer to store the project-folder pairs in the scope of each run (to address cache invalidation)
+         * looking up the folder for each table (for thousands of tables) is not scalable. For that
+         * we use a cache layer to store the project-folder pairs in the scope of each run (to
+         * address cache invalidation)
          */
 
         // 1. Lookup the project in the cache
@@ -163,41 +175,44 @@ public class ResourceScannerImpl implements ResourceScanner {
         Key projectFolderKey = datastore.newKeyFactory().setKind(DATASTORE_KIND).newKey(keyStr);
         Entity projectFolderEntity = datastore.get(projectFolderKey);
 
-        if(projectFolderEntity == null){
+        if (projectFolderEntity == null) {
             // 2.a project-folder entity doesn't exist in the cache
 
             // 2.a.1. Query the Resource Manager API
-            String parentFolderFromApi = cloudResourceManager
-                    .projects()
-                    .get(String.format("projects/%s", projectId))
-                    .execute()
-                    .getParent();
+            String parentFolderFromApi =
+                    cloudResourceManager
+                            .projects()
+                            .get(String.format("projects/%s", projectId))
+                            .execute()
+                            .getParent();
 
             // API returns "folders/folder_name" and we just return folder_name
-            String parentFolderFinal = parentFolderFromApi.startsWith("folders/")?
-                    parentFolderFromApi.substring(8):
-                    null;
+            String parentFolderFinal =
+                    parentFolderFromApi.startsWith("folders/")
+                            ? parentFolderFromApi.substring(8)
+                            : null;
 
             Timestamp now = Timestamp.now();
             // 2.a.2. Add it to the cache
-            projectFolderEntity = Entity.newBuilder(projectFolderKey)
-                    .set("project", projectId)
-                    .set("parent_folder", parentFolderFinal)
-                    .set("run_id", runId)
-                    .set("updated_at", now)
-                    .set("expires_at", Utils.addSeconds(now, Utils.SECONDS_IN_DAY)) // TTL 1 day
-                    .build();
+            projectFolderEntity =
+                    Entity.newBuilder(projectFolderKey)
+                            .set("project", projectId)
+                            .set("parent_folder", parentFolderFinal)
+                            .set("run_id", runId)
+                            .set("updated_at", now)
+                            .set(
+                                    "expires_at",
+                                    Utils.addSeconds(now, Utils.SECONDS_IN_DAY)) // TTL 1 day
+                            .build();
 
             datastore.put(projectFolderEntity);
 
             // 2.a.3 return it to the caller
             return Tuple.of(parentFolderFinal, PROJECT_FOLDER_LKP_SRC_API);
-        }else{
+        } else {
 
-            String projectFolderFromCache = projectFolderEntity
-                    .getValue("parent_folder")
-                    .get()
-                    .toString();
+            String projectFolderFromCache =
+                    projectFolderEntity.getValue("parent_folder").get().toString();
 
             // project-folder entity exist in the cache
             // 2.b.1 Return from cache
@@ -205,7 +220,7 @@ public class ResourceScannerImpl implements ResourceScanner {
         }
     }
 
-    public static String generateProjectFolderCacheKey(String project, String runId){
+    public static String generateProjectFolderCacheKey(String project, String runId) {
         return String.format("%s_%s", project, runId);
     }
 
@@ -219,9 +234,9 @@ public class ResourceScannerImpl implements ResourceScanner {
 
         CloudResourceManager service =
                 new CloudResourceManager.Builder(
-                        GoogleNetHttpTransport.newTrustedTransport(),
-                        JacksonFactory.getDefaultInstance(),
-                        new HttpCredentialsAdapter(credential))
+                                GoogleNetHttpTransport.newTrustedTransport(),
+                                JacksonFactory.getDefaultInstance(),
+                                new HttpCredentialsAdapter(credential))
                         .setApplicationName("service-accounts")
                         .build();
         return service;

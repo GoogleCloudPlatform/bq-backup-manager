@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy;
 
+
 import java.util.Arrays;
 
 public enum TimeTravelOffsetDays {
@@ -47,10 +48,8 @@ public enum TimeTravelOffsetDays {
             }
         }
         throw new IllegalArgumentException(
-                String.format("Invalid enum text '%s'. Available values are '%s'",
-                        text,
-                        Arrays.asList(TimeTravelOffsetDays.values())
-                )
-        );
+                String.format(
+                        "Invalid enum text '%s'. Available values are '%s'",
+                        text, Arrays.asList(TimeTravelOffsetDays.values())));
     }
 }

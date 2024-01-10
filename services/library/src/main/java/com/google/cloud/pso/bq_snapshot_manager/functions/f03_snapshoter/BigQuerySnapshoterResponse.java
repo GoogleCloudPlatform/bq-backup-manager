@@ -18,6 +18,7 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestResponse;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
@@ -32,7 +33,16 @@ public class BigQuerySnapshoterResponse extends TableOperationRequestResponse {
     private final TaggerRequest outputTaggerRequest;
     private final PubSubPublishResults pubSubPublishResults;
 
-    public BigQuerySnapshoterResponse(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, Timestamp operationTs, TableSpec computedSourceTable, TableSpec computedSnapshotTable, TaggerRequest outputTaggerRequest, PubSubPublishResults pubSubPublishResults) {
+    public BigQuerySnapshoterResponse(
+            TableSpec targetTable,
+            String runId,
+            String trackingId,
+            boolean isDryRun,
+            Timestamp operationTs,
+            TableSpec computedSourceTable,
+            TableSpec computedSnapshotTable,
+            TaggerRequest outputTaggerRequest,
+            PubSubPublishResults pubSubPublishResults) {
         super(targetTable, runId, trackingId, isDryRun);
         this.operationTs = operationTs;
         this.computedSourceTable = computedSourceTable;

@@ -18,22 +18,14 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.bq;
 
-import com.google.api.services.bigquery.model.TableFieldSchema;
+
 import com.google.cloud.Timestamp;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.TableId;
-import com.google.cloud.bigquery.TableResult;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.RetryableApplicationException;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.GCSSnapshotFormat;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.TimeTravelOffsetDays;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public interface BigQueryService {
     void createSnapshot(
@@ -41,7 +33,9 @@ public interface BigQueryService {
             TableSpec sourceTable,
             TableSpec destinationId,
             Timestamp snapshotExpirationTs,
-            String trackingId) throws InterruptedException, RetryableApplicationException, NonRetryableApplicationException;
+            String trackingId)
+            throws InterruptedException, RetryableApplicationException,
+                    NonRetryableApplicationException;
 
     void exportToGCS(
             String jobId,
@@ -52,8 +46,8 @@ public interface BigQueryService {
             @Nullable Boolean csvPrintHeader,
             @Nullable Boolean useAvroLogicalTypes,
             String trackingId,
-            Map<String, String> jobLabels
-    ) throws InterruptedException;
+            Map<String, String> jobLabels)
+            throws InterruptedException;
 
     Long getTableCreationTime(TableSpec table) throws NonRetryableApplicationException;
 }

@@ -18,17 +18,17 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.helpers;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.cloud.Timestamp;
-import org.junit.Test;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class TrackingHelperTest {
 
     @Test
-    public void parseAsTimestamp(){
+    public void parseAsTimestamp() {
         LocalDateTime now = LocalDateTime.ofEpochSecond(1641034800, 0, ZoneOffset.UTC);
         Timestamp fromRunId = TrackingHelper.parseRunIdAsTimestamp("1641034800000-H");
 
@@ -36,18 +36,17 @@ public class TrackingHelperTest {
     }
 
     @Test
-    public void parseTrackingIdFromJobId(){
+    public void parseTrackingIdFromJobId() {
         String trackingId = TrackingHelper.generateTrackingId(TrackingHelper.MIN_RUN_ID);
-        String parsedTrackingId = TrackingHelper.parseTrackingIdFromBQExportJobId(
-                TrackingHelper.generateBQExportJobId(trackingId, "bq_backup_manager")
-        );
+        String parsedTrackingId =
+                TrackingHelper.parseTrackingIdFromBQExportJobId(
+                        TrackingHelper.generateBQExportJobId(trackingId, "bq_backup_manager"));
 
         assertEquals(trackingId, parsedTrackingId);
-
     }
 
     @Test
-    public void generateUUID(){
+    public void generateUUID() {
         assertEquals(-1, TrackingHelper.generateUUIDWithUnderscores().indexOf("-"));
     }
 }

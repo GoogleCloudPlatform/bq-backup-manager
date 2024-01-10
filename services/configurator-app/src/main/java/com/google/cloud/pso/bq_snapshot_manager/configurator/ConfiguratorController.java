@@ -17,6 +17,7 @@
  */
 package com.google.cloud.pso.bq_snapshot_manager.configurator;
 
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
@@ -28,9 +29,9 @@ import com.google.cloud.pso.bq_snapshot_manager.functions.f02_configurator.Confi
 import com.google.cloud.pso.bq_snapshot_manager.helpers.ControllerExceptionHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.LoggingHelper;
 import com.google.cloud.pso.bq_snapshot_manager.helpers.TrackingHelper;
+import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
 import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyServiceGCSImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.bq.BigQueryServiceImpl;
-import com.google.cloud.pso.bq_snapshot_manager.services.backup_policy.BackupPolicyService;
 import com.google.cloud.pso.bq_snapshot_manager.services.pubsub.PubSubServiceImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.scan.ResourceScannerImpl;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.GCSPersistentSetImpl;
@@ -61,34 +62,25 @@ public class ConfiguratorController {
 
         gson = new Gson();
         environment = new Environment();
-        logger = new LoggingHelper(
-                ConfiguratorController.class.getSimpleName(),
-                functionNumber,
-                environment.getProjectId(),
-                environment.getApplicationName()
-        );
+        logger =
+                new LoggingHelper(
+                        ConfiguratorController.class.getSimpleName(),
+                        functionNumber,
+                        environment.getProjectId(),
+                        environment.getApplicationName());
 
-        logger.logInfoWithTracker(
-                trackingId,
-                null,
-                "Will try to parse fallback backup policy.."
-        );
+        logger.logInfoWithTracker(trackingId, null, "Will try to parse fallback backup policy..");
 
         // initializing in the constructor to fail the Cloud Run deployment
         // if the parsing failed. This is to avoid running the
         // solution silently with invalid cofiguration
         fallbackBackupPolicy = FallbackBackupPolicy.fromJson(environment.getBackupPolicyJson());
 
-        logger.logInfoWithTracker(
-                trackingId,
-                null,
-                "Successfully parsed fallback backup policy"
-        );
+        logger.logInfoWithTracker(trackingId, null, "Successfully parsed fallback backup policy");
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public ResponseEntity receiveMessage(@RequestBody PubSubEvent requestBody) {
-
 
         BackupPolicyService backupPolicyService = null;
 
@@ -98,13 +90,13 @@ public class ConfiguratorController {
         ConfiguratorResponse configuratorResponse = null;
         boolean isSuccess;
         Exception error = null;
-        boolean isRetryableError= false;
+        boolean isRetryableError = false;
 
         try {
 
             if (requestBody == null || requestBody.getMessage() == null) {
                 String msg = "Bad Request: invalid message format";
-                logger.logSevereWithTracker(trackingId,null, msg);
+                logger.logSevereWithTracker(trackingId, null, msg);
                 throw new NonRetryableApplicationException("Request body or message is Null.");
             }
 
@@ -113,41 +105,52 @@ public class ConfiguratorController {
             // remove any escape characters (e.g. from Terraform
             requestJsonString = requestJsonString.replace("\\", "");
 
-            logger.logInfoWithTracker(trackingId, null, String.format("Received payload: %s", requestJsonString));
+            logger.logInfoWithTracker(
+                    trackingId, null, String.format("Received payload: %s", requestJsonString));
 
             configuratorRequest = gson.fromJson(requestJsonString, ConfiguratorRequest.class);
 
             trackingId = configuratorRequest.getTrackingId();
 
-            logger.logInfoWithTracker(configuratorRequest.isDryRun(), trackingId, configuratorRequest.getTargetTable(), String.format("Parsed Request: %s", configuratorRequest.toString()));
+            logger.logInfoWithTracker(
+                    configuratorRequest.isDryRun(),
+                    trackingId,
+                    configuratorRequest.getTargetTable(),
+                    String.format("Parsed Request: %s", configuratorRequest.toString()));
 
-            backupPolicyService = new BackupPolicyServiceGCSImpl(environment.getGcsBackupPoliciesBucket());
+            backupPolicyService =
+                    new BackupPolicyServiceGCSImpl(environment.getGcsBackupPoliciesBucket());
 
-            Configurator configurator = new Configurator(
-                    environment.toConfig(),
-                    new BigQueryServiceImpl(configuratorRequest.getTargetTable().getProject()),
-                    backupPolicyService,
-                    new PubSubServiceImpl(),
-                    new ResourceScannerImpl(),
-                    new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
-                    fallbackBackupPolicy,
-                    "configurator-flags",
-                    functionNumber
-            );
+            Configurator configurator =
+                    new Configurator(
+                            environment.toConfig(),
+                            new BigQueryServiceImpl(
+                                    configuratorRequest.getTargetTable().getProject()),
+                            backupPolicyService,
+                            new PubSubServiceImpl(),
+                            new ResourceScannerImpl(),
+                            new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
+                            fallbackBackupPolicy,
+                            "configurator-flags",
+                            functionNumber);
 
-            configuratorResponse = configurator.execute(configuratorRequest, requestBody.getMessage().getMessageId());
+            configuratorResponse =
+                    configurator.execute(
+                            configuratorRequest, requestBody.getMessage().getMessageId());
 
             responseEntity = new ResponseEntity("Process completed successfully.", HttpStatus.OK);
             isSuccess = true;
 
         } catch (Exception e) {
 
-            Tuple<ResponseEntity, Boolean> handlingResults  = ControllerExceptionHelper.handleException(
-                    e,
-                    logger,
-                    trackingId,
-                    configuratorRequest == null? null : configuratorRequest.getTargetTable()
-                    );
+            Tuple<ResponseEntity, Boolean> handlingResults =
+                    ControllerExceptionHelper.handleException(
+                            e,
+                            logger,
+                            trackingId,
+                            configuratorRequest == null
+                                    ? null
+                                    : configuratorRequest.getTargetTable());
             isSuccess = false;
             responseEntity = handlingResults.x();
             isRetryableError = handlingResults.y();
@@ -161,17 +164,16 @@ public class ConfiguratorController {
         }
 
         logger.logUnified(
-                configuratorRequest == null? null: configuratorRequest.isDryRun(),
+                configuratorRequest == null ? null : configuratorRequest.isDryRun(),
                 functionNumber.toString(),
-                configuratorRequest == null? null: configuratorRequest.getRunId(),
-                configuratorRequest == null? null: configuratorRequest.getTrackingId(),
-                configuratorRequest == null? null : configuratorRequest.getTargetTable(),
+                configuratorRequest == null ? null : configuratorRequest.getRunId(),
+                configuratorRequest == null ? null : configuratorRequest.getTrackingId(),
+                configuratorRequest == null ? null : configuratorRequest.getTargetTable(),
                 configuratorRequest,
                 configuratorResponse,
                 isSuccess,
                 error,
-                isRetryableError
-        );
+                isRetryableError);
 
         return responseEntity;
     }

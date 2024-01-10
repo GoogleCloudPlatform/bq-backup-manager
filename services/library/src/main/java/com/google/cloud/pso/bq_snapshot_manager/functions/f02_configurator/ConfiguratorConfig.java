@@ -27,12 +27,12 @@ public class ConfiguratorConfig {
 
     private final String applicationName;
 
-    public ConfiguratorConfig(String projectId,
-                              String bigQuerySnapshoterTopic,
-                              String gcsSnapshoterTopic,
-                              String backupTagTemplateId,
-                              String applicationName
-                              ) {
+    public ConfiguratorConfig(
+            String projectId,
+            String bigQuerySnapshoterTopic,
+            String gcsSnapshoterTopic,
+            String backupTagTemplateId,
+            String applicationName) {
         this.projectId = projectId;
         this.bigQuerySnapshoterTopic = bigQuerySnapshoterTopic;
         this.gcsSnapshoterTopic = gcsSnapshoterTopic;
@@ -62,12 +62,22 @@ public class ConfiguratorConfig {
 
     @Override
     public String toString() {
-        return "ConfiguratorConfig{" +
-                "projectId='" + projectId + '\'' +
-                ", bigQuerySnapshoterTopic='" + bigQuerySnapshoterTopic + '\'' +
-                ", gcsSnapshoterTopic='" + gcsSnapshoterTopic + '\'' +
-                ", backupTagTemplateId='" + backupTagTemplateId + '\'' +
-                ", applicationName='" + applicationName + '\'' +
-                '}';
+        return "ConfiguratorConfig{"
+                + "projectId='"
+                + projectId
+                + '\''
+                + ", bigQuerySnapshoterTopic='"
+                + bigQuerySnapshoterTopic
+                + '\''
+                + ", gcsSnapshoterTopic='"
+                + gcsSnapshoterTopic
+                + '\''
+                + ", backupTagTemplateId='"
+                + backupTagTemplateId
+                + '\''
+                + ", applicationName='"
+                + applicationName
+                + '\''
+                + '}';
     }
 }
