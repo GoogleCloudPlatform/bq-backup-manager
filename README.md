@@ -82,11 +82,18 @@ There are two ways to define backup policies for tables, and they can be used to
 #### Scheduler
 A cloud scheduler is used to send a BigQuery “Scan Scope” to the dispatcher service every x hours. Note that at each run all tables in scope will be checked if they should be backed up or not at this point based on their backup policy's CRON configuration
 
-#### Dispatcher
+#### Datasets Dispatcher
 * Generates a unique run-id for this run including a timestamp
+* Uses the BigQuery API to list down all datasets in-scope based on the inclusion and exclusion lists passed to it
+* Creates and publishes one request per dataset to the next service via PubSub.
+
+#### Tables Dispatcher
 * Uses the BigQuery API to list down all table in-scope based on the inclusion and exclusion lists passed to it
 * Creates a unique tracking_id per table in the form of run_id + “_” + UUID
 * Creates and publishes one request per table to the next service via PubSub.
+* PS: Listing the tables in scope is split into two steps (dataset dispatcher and tables dispatcher) for 
+  scalability reasons to list 100s of thousands of tables across projects without hitting the 60 minutes time out limit
+  of a single Cloud Run request.
 
 #### Configurator
 * Fetch configuration
