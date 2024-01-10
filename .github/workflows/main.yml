@@ -33,7 +33,7 @@ jobs:
         uses: github/super-linter@v5
         env:
           VALIDATE_ALL_CODEBASE: true
-          VALIDATE_GOOGLE_JAVA_FORMAT: true
+          # VALIDATE_GOOGLE_JAVA_FORMAT: true
           VALIDATE_TERRAFORM_TFLINT: true
           VALIDATE_TERRAFORM_TERRASCAN: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

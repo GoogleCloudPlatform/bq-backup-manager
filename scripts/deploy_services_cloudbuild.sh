@@ -26,6 +26,9 @@ cd "$(dirname "$0")"
 
 cd ../services
 
+# make sure that the project is valid before submitting a build job
+mvn install
+
 gcloud builds submit \
 --project $PROJECT_ID \
 --region $COMPUTE_REGION \
