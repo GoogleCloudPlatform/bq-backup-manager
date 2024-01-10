@@ -25,19 +25,19 @@ import java.util.Map;
 
 public class PersistentMapTestImpl implements PersistentMap {
 
-    private Map<String, String> map;
+  private Map<String, String> map;
 
-    public PersistentMapTestImpl(){
-        map = new HashMap<>();
-    }
+  public PersistentMapTestImpl() {
+    map = new HashMap<>();
+  }
 
-    @Override
-    public void put(String key, String value) {
-        map.put(key, value);
-    }
+  @Override
+  public void put(String key, String value) {
+    map.put(key, value);
+  }
 
-    @Override
-    public String get(String key) {
-        return map.get(key);
-    }
+  @Override
+  public String get(String key) {
+    return map.get(key);
+  }
 }

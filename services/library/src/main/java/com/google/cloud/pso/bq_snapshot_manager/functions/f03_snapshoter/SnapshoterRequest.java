@@ -25,43 +25,46 @@ import com.google.common.base.Objects;
 
 public class SnapshoterRequest extends TableOperationRequestResponse {
 
-    private final BackupPolicyAndState backupPolicyAndState;
+  private final BackupPolicyAndState backupPolicyAndState;
 
-    public SnapshoterRequest(TableSpec targetTable, String runId, String trackingId, boolean isDryRun, BackupPolicyAndState backupPolicyAndState) {
-        super(targetTable, runId, trackingId, isDryRun);
-        this.backupPolicyAndState = backupPolicyAndState;
-    }
+  public SnapshoterRequest(
+      TableSpec targetTable,
+      String runId,
+      String trackingId,
+      boolean isDryRun,
+      BackupPolicyAndState backupPolicyAndState) {
+    super(targetTable, runId, trackingId, isDryRun);
+    this.backupPolicyAndState = backupPolicyAndState;
+  }
 
-    public BackupPolicyAndState getBackupPolicyAndState() {
-        return backupPolicyAndState;
-    }
+  public BackupPolicyAndState getBackupPolicyAndState() {
+    return backupPolicyAndState;
+  }
 
-    @Override
-    public String toString() {
-        return "SnapshoterRequest{" +
-                "backupPolicy=" + backupPolicyAndState +
-                "} " + super.toString();
-    }
+  @Override
+  public String toString() {
+    return "SnapshoterRequest{" + "backupPolicy=" + backupPolicyAndState + "} " + super.toString();
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        SnapshoterRequest that = (SnapshoterRequest) o;
-        return Objects.equal(backupPolicyAndState, that.backupPolicyAndState);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    SnapshoterRequest that = (SnapshoterRequest) o;
+    return Objects.equal(backupPolicyAndState, that.backupPolicyAndState);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(super.hashCode(), backupPolicyAndState);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(super.hashCode(), backupPolicyAndState);
+  }
 
-    public String computeBackupOperationProject(){
-        // if the backup policy specifies a project to run the backup operations on, use it. Otherwise,
-        // use the source table project
-        return this.backupPolicyAndState.getBackupOperationProject() != null?
-                this.backupPolicyAndState.getBackupOperationProject():
-                this.getTargetTable().getProject();
-    }
+  public String computeBackupOperationProject() {
+    // if the backup policy specifies a project to run the backup operations on, use it. Otherwise,
+    // use the source table project
+    return this.backupPolicyAndState.getBackupOperationProject() != null
+        ? this.backupPolicyAndState.getBackupOperationProject()
+        : this.getTargetTable().getProject();
+  }
 }

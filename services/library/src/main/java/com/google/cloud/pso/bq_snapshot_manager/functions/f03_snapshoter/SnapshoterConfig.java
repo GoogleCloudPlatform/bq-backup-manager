@@ -20,35 +20,41 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f03_snapshoter;
 
 public class SnapshoterConfig {
 
-    private String projectId;
-    private String outputTopic;
+  private String projectId;
+  private String outputTopic;
 
-    private String applicationName;
+  private String applicationName;
 
-    public SnapshoterConfig(String projectId, String outputTopic, String applicationName) {
-        this.projectId = projectId;
-        this.outputTopic = outputTopic;
-        this.applicationName = applicationName;
-    }
+  public SnapshoterConfig(String projectId, String outputTopic, String applicationName) {
+    this.projectId = projectId;
+    this.outputTopic = outputTopic;
+    this.applicationName = applicationName;
+  }
 
-    public String getProjectId() {
-        return projectId;
-    }
+  public String getProjectId() {
+    return projectId;
+  }
 
-    public String getOutputTopic() {
-        return outputTopic;
-    }
+  public String getOutputTopic() {
+    return outputTopic;
+  }
 
-    public String getApplicationName() {
-        return applicationName;
-    }
+  public String getApplicationName() {
+    return applicationName;
+  }
 
-    @Override
-    public String toString() {
-        return "SnapshoterConfig{" +
-                "projectId='" + projectId + '\'' +
-                ", outputTopic='" + outputTopic + '\'' +
-                ", applicationName='" + applicationName + '\'' +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "SnapshoterConfig{"
+        + "projectId='"
+        + projectId
+        + '\''
+        + ", outputTopic='"
+        + outputTopic
+        + '\''
+        + ", applicationName='"
+        + applicationName
+        + '\''
+        + '}';
+  }
 }

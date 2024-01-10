@@ -18,14 +18,12 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.pubsub;
 
-
 import com.google.api.core.ApiFuture;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,42 +31,42 @@ import java.util.concurrent.TimeUnit;
 
 public class PubSubServiceImpl implements PubSubService {
 
+  @Override
+  public PubSubPublishResults publishTableOperationRequests(
+      String projectId, String topicId, List<JsonMessage> messages)
+      throws IOException, InterruptedException {
 
-    @Override
-    public PubSubPublishResults publishTableOperationRequests(String projectId, String topicId, List<JsonMessage> messages)
-            throws IOException, InterruptedException {
+    List<SuccessPubSubMessage> successMessages = new ArrayList<>();
+    List<FailedPubSubMessage> failedMessages = new ArrayList<>();
 
-        List<SuccessPubSubMessage> successMessages = new ArrayList<>();
-        List<FailedPubSubMessage> failedMessages = new ArrayList<>();
+    Publisher publisher = null;
+    try {
+      TopicName topicName = TopicName.of(projectId, topicId);
+      // Create a publisher instance with default settings bound to the topic
+      publisher = Publisher.newBuilder(topicName).build();
+      for (final JsonMessage msg : messages) {
+        ByteString data = ByteString.copyFromUtf8(msg.toJsonString());
+        PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
 
-        Publisher publisher = null;
+        // Once published, returns a server-assigned message id (unique within the topic)
+        ApiFuture<String> future = publisher.publish(pubsubMessage);
         try {
-            TopicName topicName = TopicName.of(projectId, topicId);
-            // Create a publisher instance with default settings bound to the topic
-            publisher = Publisher.newBuilder(topicName).build();
-            for (final JsonMessage msg : messages) {
-                ByteString data = ByteString.copyFromUtf8(msg.toJsonString());
-                PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
-
-                // Once published, returns a server-assigned message id (unique within the topic)
-                ApiFuture<String> future = publisher.publish(pubsubMessage);
-                try{
-                    // wait and retrieves results
-                    String messageId = future.get();
-                    successMessages.add(new SuccessPubSubMessage(msg, messageId));
-                }catch (Exception ex){
-                    failedMessages.add(new FailedPubSubMessage(msg, ex));
-                }
-            }
-
-            return new PubSubPublishResults(successMessages, failedMessages);
-
-        } finally {
-            if (publisher != null) {
-                // When finished with the publisher, shutdown to free up resources.
-                publisher.shutdown();
-                publisher.awaitTermination(1, TimeUnit.MINUTES);
-            }
+          // wait and retrieves results
+          String messageId = future.get();
+          successMessages.add(new SuccessPubSubMessage(msg, messageId));
+        } catch (Exception ex) {
+          failedMessages.add(new FailedPubSubMessage(msg, ex));
         }
+      }
+
+      return new PubSubPublishResults(successMessages, failedMessages);
+
+    } finally {
+      if (publisher != null) {
+        // When finished with the publisher, shutdown to free up resources.
+        publisher.shutdown();
+        publisher.awaitTermination(1, TimeUnit.MINUTES);
+      }
     }
+  }
 }

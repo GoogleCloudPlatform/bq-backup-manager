@@ -19,7 +19,7 @@
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
 public class NonRetryableApplicationException extends Exception {
-    public NonRetryableApplicationException(String msg){
-        super(msg);
-    }
+  public NonRetryableApplicationException(String msg) {
+    super(msg);
+  }
 }
