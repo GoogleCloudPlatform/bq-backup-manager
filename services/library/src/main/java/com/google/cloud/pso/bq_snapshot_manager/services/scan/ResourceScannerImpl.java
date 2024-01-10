@@ -48,189 +48,197 @@ import java.util.stream.StreamSupport;
 
 public class ResourceScannerImpl implements ResourceScanner {
 
-  public static final String DATASTORE_KIND = "project_folder_cache";
+    public static final String DATASTORE_KIND = "project_folder_cache";
 
-  public static final String PROJECT_FOLDER_LKP_SRC_API = "api";
+    public static final String PROJECT_FOLDER_LKP_SRC_API = "api";
 
-  public static final String PROJECT_FOLDER_LKP_SRC_CACHE = "cache";
+    public static final String PROJECT_FOLDER_LKP_SRC_CACHE = "cache";
 
-  private final BigQuery bqService;
-  private final CloudResourceManager cloudResourceManager;
+    private final BigQuery bqService;
+    private final CloudResourceManager cloudResourceManager;
 
-  private Datastore datastore;
+    private Datastore datastore;
 
-  public final Integer RESOURCE_MANAGER_PAGE_SIZE = 300;
+    public final Integer RESOURCE_MANAGER_PAGE_SIZE = 300;
 
-  public ResourceScannerImpl() throws IOException, GeneralSecurityException {
+    public ResourceScannerImpl() throws IOException, GeneralSecurityException {
 
-    bqService = BigQueryOptions.getDefaultInstance().getService();
-    cloudResourceManager = createCloudResourceManagerService();
-    datastore = DatastoreOptions.getDefaultInstance().getService();
-  }
-
-  @Override
-  public List<String> listTables(String projectId, String datasetId) {
-    return StreamSupport.stream(
-            bqService
-                .listTables(DatasetId.of(projectId, datasetId))
-                .iterateAll() // lazy fetching of pages
-                .spliterator(),
-            false)
-        .filter(t -> t.getDefinition().getType().equals(TableDefinition.Type.TABLE))
-        .map(t -> String.format("%s.%s.%s", projectId, datasetId, t.getTableId().getTable()))
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
-
-  @Override
-  public List<String> listDatasets(String projectId) {
-    return StreamSupport.stream(
-            bqService
-                .listDatasets(projectId)
-                .iterateAll() // lazy fetching of pages
-                .spliterator(),
-            false)
-        .map(d -> String.format("%s.%s", projectId, d.getDatasetId().getDataset()))
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
-
-  @Override
-  public List<String> listProjects(Long folderId) throws IOException {
-
-    ListProjectsResponse listProjectsResponse =
-        cloudResourceManager
-            .projects()
-            .list()
-            .setParent("folders/" + folderId)
-            .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
-            .execute();
-
-    List<String> allProjects = pagedProjectsToList(listProjectsResponse.getProjects());
-
-    String nextPageToken = listProjectsResponse.getNextPageToken();
-
-    while (nextPageToken != null) {
-
-      // submit a new request for the next page
-      listProjectsResponse =
-          cloudResourceManager
-              .projects()
-              .list()
-              .setParent("folders/" + folderId)
-              .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
-              .setPageToken(nextPageToken)
-              .execute();
-
-      // add all entries listed in that page
-      allProjects.addAll(pagedProjectsToList(listProjectsResponse.getProjects()));
-
-      // set the next page
-      nextPageToken = listProjectsResponse.getNextPageToken();
+        bqService = BigQueryOptions.getDefaultInstance().getService();
+        cloudResourceManager = createCloudResourceManagerService();
+        datastore = DatastoreOptions.getDefaultInstance().getService();
     }
 
-    return allProjects.stream().distinct().toList();
-  }
+    @Override
+    public List<String> listTables(String projectId, String datasetId) {
+        return StreamSupport.stream(
+                        bqService
+                                .listTables(DatasetId.of(projectId, datasetId))
+                                .iterateAll() // lazy fetching of pages
+                                .spliterator(),
+                        false)
+                .filter(t -> t.getDefinition().getType().equals(TableDefinition.Type.TABLE))
+                .map(
+                        t ->
+                                String.format(
+                                        "%s.%s.%s",
+                                        projectId, datasetId, t.getTableId().getTable()))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
 
-  public List<String> pagedProjectsToList(List<Project> pagedProjects) {
-    return pagedProjects.stream()
-        .map(Project::getProjectId)
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
+    @Override
+    public List<String> listDatasets(String projectId) {
+        return StreamSupport.stream(
+                        bqService
+                                .listDatasets(projectId)
+                                .iterateAll() // lazy fetching of pages
+                                .spliterator(),
+                        false)
+                .map(d -> String.format("%s.%s", projectId, d.getDatasetId().getDataset()))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
 
-  /**
-   * Returns the folder id of the direct parent of a project. If the project doesn't have a folder,
-   * it returns null. If the project doesn't exist it will throw an exception
-   *
-   * <p>returns a Tuple of (folder ID, source (cache | api))
-   */
+    @Override
+    public List<String> listProjects(Long folderId) throws IOException {
 
-  /**
-   * Returns the folder id of the direct parent of a project. * If the project doesn't have a
-   * folder, it returns null. * If the project doesn't exist it will throw an exception
-   *
-   * @param projectId project id to lookup it's folder id
-   * @param runId unique identifier of the run that is used to create keys for the cache
-   * @return Tuple of Tuple<String, String> where x = folder id and y = source of the lookup
-   *     operation (api | cache)
-   */
-  @Override
-  public Tuple<String, String> getParentFolderId(String projectId, String runId)
-      throws IOException {
+        ListProjectsResponse listProjectsResponse =
+                cloudResourceManager
+                        .projects()
+                        .list()
+                        .setParent("folders/" + folderId)
+                        .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
+                        .execute();
+
+        List<String> allProjects = pagedProjectsToList(listProjectsResponse.getProjects());
+
+        String nextPageToken = listProjectsResponse.getNextPageToken();
+
+        while (nextPageToken != null) {
+
+            // submit a new request for the next page
+            listProjectsResponse =
+                    cloudResourceManager
+                            .projects()
+                            .list()
+                            .setParent("folders/" + folderId)
+                            .setPageSize(RESOURCE_MANAGER_PAGE_SIZE)
+                            .setPageToken(nextPageToken)
+                            .execute();
+
+            // add all entries listed in that page
+            allProjects.addAll(pagedProjectsToList(listProjectsResponse.getProjects()));
+
+            // set the next page
+            nextPageToken = listProjectsResponse.getNextPageToken();
+        }
+
+        return allProjects.stream().distinct().toList();
+    }
+
+    public List<String> pagedProjectsToList(List<Project> pagedProjects) {
+        return pagedProjects.stream()
+                .map(Project::getProjectId)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
 
     /**
-     * Resource Manager API has a rate limit of 10 GET operations per second. This means that
-     * looking up the folder for each table (for thousands of tables) is not scalable. For that we
-     * use a cache layer to store the project-folder pairs in the scope of each run (to address
-     * cache invalidation)
+     * Returns the folder id of the direct parent of a project. If the project doesn't have a
+     * folder, it returns null. If the project doesn't exist it will throw an exception
+     *
+     * <p>returns a Tuple of (folder ID, source (cache | api))
      */
 
-    // 1. Lookup the project in the cache
+    /**
+     * Returns the folder id of the direct parent of a project. * If the project doesn't have a
+     * folder, it returns null. * If the project doesn't exist it will throw an exception
+     *
+     * @param projectId project id to lookup it's folder id
+     * @param runId unique identifier of the run that is used to create keys for the cache
+     * @return Tuple of Tuple<String, String> where x = folder id and y = source of the lookup
+     *     operation (api | cache)
+     */
+    @Override
+    public Tuple<String, String> getParentFolderId(String projectId, String runId)
+            throws IOException {
 
-    // construct a key including the pro
-    String keyStr = generateProjectFolderCacheKey(projectId, runId);
+        /**
+         * Resource Manager API has a rate limit of 10 GET operations per second. This means that
+         * looking up the folder for each table (for thousands of tables) is not scalable. For that
+         * we use a cache layer to store the project-folder pairs in the scope of each run (to
+         * address cache invalidation)
+         */
 
-    Key projectFolderKey = datastore.newKeyFactory().setKind(DATASTORE_KIND).newKey(keyStr);
-    Entity projectFolderEntity = datastore.get(projectFolderKey);
+        // 1. Lookup the project in the cache
 
-    if (projectFolderEntity == null) {
-      // 2.a project-folder entity doesn't exist in the cache
+        // construct a key including the pro
+        String keyStr = generateProjectFolderCacheKey(projectId, runId);
 
-      // 2.a.1. Query the Resource Manager API
-      String parentFolderFromApi =
-          cloudResourceManager
-              .projects()
-              .get(String.format("projects/%s", projectId))
-              .execute()
-              .getParent();
+        Key projectFolderKey = datastore.newKeyFactory().setKind(DATASTORE_KIND).newKey(keyStr);
+        Entity projectFolderEntity = datastore.get(projectFolderKey);
 
-      // API returns "folders/folder_name" and we just return folder_name
-      String parentFolderFinal =
-          parentFolderFromApi.startsWith("folders/") ? parentFolderFromApi.substring(8) : null;
+        if (projectFolderEntity == null) {
+            // 2.a project-folder entity doesn't exist in the cache
 
-      Timestamp now = Timestamp.now();
-      // 2.a.2. Add it to the cache
-      projectFolderEntity =
-          Entity.newBuilder(projectFolderKey)
-              .set("project", projectId)
-              .set("parent_folder", parentFolderFinal)
-              .set("run_id", runId)
-              .set("updated_at", now)
-              .set("expires_at", Utils.addSeconds(now, Utils.SECONDS_IN_DAY)) // TTL 1 day
-              .build();
+            // 2.a.1. Query the Resource Manager API
+            String parentFolderFromApi =
+                    cloudResourceManager
+                            .projects()
+                            .get(String.format("projects/%s", projectId))
+                            .execute()
+                            .getParent();
 
-      datastore.put(projectFolderEntity);
+            // API returns "folders/folder_name" and we just return folder_name
+            String parentFolderFinal =
+                    parentFolderFromApi.startsWith("folders/")
+                            ? parentFolderFromApi.substring(8)
+                            : null;
 
-      // 2.a.3 return it to the caller
-      return Tuple.of(parentFolderFinal, PROJECT_FOLDER_LKP_SRC_API);
-    } else {
+            Timestamp now = Timestamp.now();
+            // 2.a.2. Add it to the cache
+            projectFolderEntity =
+                    Entity.newBuilder(projectFolderKey)
+                            .set("project", projectId)
+                            .set("parent_folder", parentFolderFinal)
+                            .set("run_id", runId)
+                            .set("updated_at", now)
+                            .set(
+                                    "expires_at",
+                                    Utils.addSeconds(now, Utils.SECONDS_IN_DAY)) // TTL 1 day
+                            .build();
 
-      String projectFolderFromCache =
-          projectFolderEntity.getValue("parent_folder").get().toString();
+            datastore.put(projectFolderEntity);
 
-      // project-folder entity exist in the cache
-      // 2.b.1 Return from cache
-      return Tuple.of(projectFolderFromCache, PROJECT_FOLDER_LKP_SRC_CACHE);
+            // 2.a.3 return it to the caller
+            return Tuple.of(parentFolderFinal, PROJECT_FOLDER_LKP_SRC_API);
+        } else {
+
+            String projectFolderFromCache =
+                    projectFolderEntity.getValue("parent_folder").get().toString();
+
+            // project-folder entity exist in the cache
+            // 2.b.1 Return from cache
+            return Tuple.of(projectFolderFromCache, PROJECT_FOLDER_LKP_SRC_CACHE);
+        }
     }
-  }
 
-  public static String generateProjectFolderCacheKey(String project, String runId) {
-    return String.format("%s_%s", project, runId);
-  }
+    public static String generateProjectFolderCacheKey(String project, String runId) {
+        return String.format("%s_%s", project, runId);
+    }
 
-  public static CloudResourceManager createCloudResourceManagerService()
-      throws IOException, GeneralSecurityException {
-    // Use the Application Default Credentials strategy for authentication. For more info, see:
-    // https://cloud.google.com/docs/authentication/production#finding_credentials_automatically
-    GoogleCredentials credential =
-        GoogleCredentials.getApplicationDefault()
-            .createScoped(Collections.singleton(IamScopes.CLOUD_PLATFORM));
+    public static CloudResourceManager createCloudResourceManagerService()
+            throws IOException, GeneralSecurityException {
+        // Use the Application Default Credentials strategy for authentication. For more info, see:
+        // https://cloud.google.com/docs/authentication/production#finding_credentials_automatically
+        GoogleCredentials credential =
+                GoogleCredentials.getApplicationDefault()
+                        .createScoped(Collections.singleton(IamScopes.CLOUD_PLATFORM));
 
-    CloudResourceManager service =
-        new CloudResourceManager.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                JacksonFactory.getDefaultInstance(),
-                new HttpCredentialsAdapter(credential))
-            .setApplicationName("service-accounts")
-            .build();
-    return service;
-  }
+        CloudResourceManager service =
+                new CloudResourceManager.Builder(
+                                GoogleNetHttpTransport.newTrustedTransport(),
+                                JacksonFactory.getDefaultInstance(),
+                                new HttpCredentialsAdapter(credential))
+                        .setApplicationName("service-accounts")
+                        .build();
+        return service;
+    }
 }

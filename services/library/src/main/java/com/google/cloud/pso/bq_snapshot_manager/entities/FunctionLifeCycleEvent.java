@@ -19,6 +19,6 @@
 package com.google.cloud.pso.bq_snapshot_manager.entities;
 
 public enum FunctionLifeCycleEvent {
-  START,
-  END
+    START,
+    END
 }

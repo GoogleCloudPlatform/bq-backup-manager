@@ -36,91 +36,91 @@ import org.junit.Test;
 
 public class GCSSnapshoterTest {
 
-  @Test
-  public void testPrepareGcsUriForMultiFileExport() {
+    @Test
+    public void testPrepareGcsUriForMultiFileExport() {
 
-    assertEquals(
-        "gs://backups/a/b/c/*",
-        GCSSnapshoter.prepareGcsUriForMultiFileExport("gs://backups/", "a/b/c"));
+        assertEquals(
+                "gs://backups/a/b/c/*",
+                GCSSnapshoter.prepareGcsUriForMultiFileExport("gs://backups/", "a/b/c"));
 
-    assertEquals(
-        "gs://backups/a/b/c/*",
-        GCSSnapshoter.prepareGcsUriForMultiFileExport("gs://backups", "/a/b/c/"));
-  }
+        assertEquals(
+                "gs://backups/a/b/c/*",
+                GCSSnapshoter.prepareGcsUriForMultiFileExport("gs://backups", "/a/b/c/"));
+    }
 
-  @Test
-  public void testExecute()
-      throws NonRetryableApplicationException, IOException, InterruptedException {
+    @Test
+    public void testExecute()
+            throws NonRetryableApplicationException, IOException, InterruptedException {
 
-    GCSSnapshoter gcsSnapshoter =
-        new GCSSnapshoter(
-            new SnapshoterConfig("host-project", "data-region", "bq_backup_manager"),
-            new BigQueryService() {
-              @Override
-              public void createSnapshot(
-                  String jobId,
-                  TableSpec sourceTable,
-                  TableSpec destinationId,
-                  Timestamp snapshotExpirationTs,
-                  String trackingId)
-                  throws InterruptedException {}
+        GCSSnapshoter gcsSnapshoter =
+                new GCSSnapshoter(
+                        new SnapshoterConfig("host-project", "data-region", "bq_backup_manager"),
+                        new BigQueryService() {
+                            @Override
+                            public void createSnapshot(
+                                    String jobId,
+                                    TableSpec sourceTable,
+                                    TableSpec destinationId,
+                                    Timestamp snapshotExpirationTs,
+                                    String trackingId)
+                                    throws InterruptedException {}
 
-              @Override
-              public void exportToGCS(
-                  String jobId,
-                  TableSpec sourceTable,
-                  String gcsDestinationUri,
-                  GCSSnapshotFormat exportFormat,
-                  @Nullable String csvFieldDelimiter,
-                  @Nullable Boolean csvPrintHeader,
-                  @Nullable Boolean useAvroLogicalTypes,
-                  String trackingId,
-                  Map<String, String> jobLabels)
-                  throws InterruptedException {}
+                            @Override
+                            public void exportToGCS(
+                                    String jobId,
+                                    TableSpec sourceTable,
+                                    String gcsDestinationUri,
+                                    GCSSnapshotFormat exportFormat,
+                                    @Nullable String csvFieldDelimiter,
+                                    @Nullable Boolean csvPrintHeader,
+                                    @Nullable Boolean useAvroLogicalTypes,
+                                    String trackingId,
+                                    Map<String, String> jobLabels)
+                                    throws InterruptedException {}
 
-              @Override
-              public Long getTableCreationTime(TableSpec table) {
-                return null;
-              }
-            },
-            new PubSubServiceTestImpl(),
-            new PersistentSetTestImpl(),
-            "test-set-prefix",
-            new PersistentMapTestImpl(),
-            "test-map-prefix",
-            -3);
+                            @Override
+                            public Long getTableCreationTime(TableSpec table) {
+                                return null;
+                            }
+                        },
+                        new PubSubServiceTestImpl(),
+                        new PersistentSetTestImpl(),
+                        "test-set-prefix",
+                        new PersistentMapTestImpl(),
+                        "test-map-prefix",
+                        -3);
 
-    BackupPolicy backupPolicy =
-        new BackupPolicy.BackupPolicyBuilder(
-                "test-cron",
-                BackupMethod.GCS_SNAPSHOT,
-                TimeTravelOffsetDays.DAYS_3,
-                BackupConfigSource.SYSTEM,
-                "project")
-            .setBackupOperationProject("project")
-            .setGcsSnapshotStorageLocation("gs://backups")
-            .setGcsExportFormat(GCSSnapshotFormat.AVRO_SNAPPY)
-            .setGcsUseAvroLogicalTypes(true)
-            .build();
+        BackupPolicy backupPolicy =
+                new BackupPolicy.BackupPolicyBuilder(
+                                "test-cron",
+                                BackupMethod.GCS_SNAPSHOT,
+                                TimeTravelOffsetDays.DAYS_3,
+                                BackupConfigSource.SYSTEM,
+                                "project")
+                        .setBackupOperationProject("project")
+                        .setGcsSnapshotStorageLocation("gs://backups")
+                        .setGcsExportFormat(GCSSnapshotFormat.AVRO_SNAPPY)
+                        .setGcsUseAvroLogicalTypes(true)
+                        .build();
 
-    TableSpec sourceTable = TableSpec.fromSqlString("project.dataset.table");
-    Timestamp operationTime = Timestamp.ofTimeSecondsAndNanos(1667478075L, 0);
-    Long timeTravelMilis = (Utils.timestampToUnixTimeMillis(operationTime) - (3 * 86400000));
-    TableSpec expectedSourceTable =
-        TableSpec.fromSqlString("project.dataset.table@" + timeTravelMilis);
+        TableSpec sourceTable = TableSpec.fromSqlString("project.dataset.table");
+        Timestamp operationTime = Timestamp.ofTimeSecondsAndNanos(1667478075L, 0);
+        Long timeTravelMilis = (Utils.timestampToUnixTimeMillis(operationTime) - (3 * 86400000));
+        TableSpec expectedSourceTable =
+                TableSpec.fromSqlString("project.dataset.table@" + timeTravelMilis);
 
-    GCSSnapshoterResponse actualResponse =
-        gcsSnapshoter.execute(
-            new SnapshoterRequest(
-                sourceTable,
-                "runId",
-                "trackingId",
-                false,
-                new BackupPolicyAndState(backupPolicy, null)),
-            operationTime,
-            "pubsub-message-id");
+        GCSSnapshoterResponse actualResponse =
+                gcsSnapshoter.execute(
+                        new SnapshoterRequest(
+                                sourceTable,
+                                "runId",
+                                "trackingId",
+                                false,
+                                new BackupPolicyAndState(backupPolicy, null)),
+                        operationTime,
+                        "pubsub-message-id");
 
-    assertEquals(expectedSourceTable, actualResponse.getComputedSourceTable());
-    assertEquals(operationTime, actualResponse.getOperationTs());
-  }
+        assertEquals(expectedSourceTable, actualResponse.getComputedSourceTable());
+        assertEquals(operationTime, actualResponse.getOperationTs());
+    }
 }

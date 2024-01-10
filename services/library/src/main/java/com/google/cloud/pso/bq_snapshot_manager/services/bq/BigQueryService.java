@@ -28,25 +28,26 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public interface BigQueryService {
-  void createSnapshot(
-      String jobId,
-      TableSpec sourceTable,
-      TableSpec destinationId,
-      Timestamp snapshotExpirationTs,
-      String trackingId)
-      throws InterruptedException, RetryableApplicationException, NonRetryableApplicationException;
+    void createSnapshot(
+            String jobId,
+            TableSpec sourceTable,
+            TableSpec destinationId,
+            Timestamp snapshotExpirationTs,
+            String trackingId)
+            throws InterruptedException, RetryableApplicationException,
+                    NonRetryableApplicationException;
 
-  void exportToGCS(
-      String jobId,
-      TableSpec sourceTable,
-      String gcsDestinationUri,
-      GCSSnapshotFormat exportFormat,
-      @Nullable String csvFieldDelimiter,
-      @Nullable Boolean csvPrintHeader,
-      @Nullable Boolean useAvroLogicalTypes,
-      String trackingId,
-      Map<String, String> jobLabels)
-      throws InterruptedException;
+    void exportToGCS(
+            String jobId,
+            TableSpec sourceTable,
+            String gcsDestinationUri,
+            GCSSnapshotFormat exportFormat,
+            @Nullable String csvFieldDelimiter,
+            @Nullable Boolean csvPrintHeader,
+            @Nullable Boolean useAvroLogicalTypes,
+            String trackingId,
+            Map<String, String> jobLabels)
+            throws InterruptedException;
 
-  Long getTableCreationTime(TableSpec table) throws NonRetryableApplicationException;
+    Long getTableCreationTime(TableSpec table) throws NonRetryableApplicationException;
 }

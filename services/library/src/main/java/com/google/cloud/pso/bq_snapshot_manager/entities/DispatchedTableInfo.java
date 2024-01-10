@@ -20,19 +20,19 @@ package com.google.cloud.pso.bq_snapshot_manager.entities;
 
 public class DispatchedTableInfo {
 
-  private TableSpec targetTable;
-  private String trackingId;
+    private TableSpec targetTable;
+    private String trackingId;
 
-  public DispatchedTableInfo(TableSpec targetTable, String trackingId) {
-    this.targetTable = targetTable;
-    this.trackingId = trackingId;
-  }
+    public DispatchedTableInfo(TableSpec targetTable, String trackingId) {
+        this.targetTable = targetTable;
+        this.trackingId = trackingId;
+    }
 
-  public TableSpec getTargetTable() {
-    return targetTable;
-  }
+    public TableSpec getTargetTable() {
+        return targetTable;
+    }
 
-  public String getTrackingId() {
-    return trackingId;
-  }
+    public String getTrackingId() {
+        return trackingId;
+    }
 }

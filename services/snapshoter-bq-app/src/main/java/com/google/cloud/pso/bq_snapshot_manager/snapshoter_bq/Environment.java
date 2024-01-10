@@ -23,24 +23,24 @@ import com.google.cloud.pso.bq_snapshot_manager.helpers.Utils;
 
 public class Environment {
 
-  public SnapshoterConfig toConfig() {
+    public SnapshoterConfig toConfig() {
 
-    return new SnapshoterConfig(getProjectId(), getOutputTopic(), getApplicationName());
-  }
+        return new SnapshoterConfig(getProjectId(), getOutputTopic(), getApplicationName());
+    }
 
-  public String getProjectId() {
-    return Utils.getConfigFromEnv("PROJECT_ID", true);
-  }
+    public String getProjectId() {
+        return Utils.getConfigFromEnv("PROJECT_ID", true);
+    }
 
-  public String getOutputTopic() {
-    return Utils.getConfigFromEnv("OUTPUT_TOPIC", true);
-  }
+    public String getOutputTopic() {
+        return Utils.getConfigFromEnv("OUTPUT_TOPIC", true);
+    }
 
-  public String getGcsFlagsBucket() {
-    return Utils.getConfigFromEnv("GCS_FLAGS_BUCKET", true);
-  }
+    public String getGcsFlagsBucket() {
+        return Utils.getConfigFromEnv("GCS_FLAGS_BUCKET", true);
+    }
 
-  public String getApplicationName() {
-    return Utils.getConfigFromEnv("APPLICATION_NAME", true);
-  }
+    public String getApplicationName() {
+        return Utils.getConfigFromEnv("APPLICATION_NAME", true);
+    }
 }

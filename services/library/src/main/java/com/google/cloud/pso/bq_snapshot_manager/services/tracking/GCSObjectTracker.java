@@ -33,45 +33,47 @@ import java.util.List;
 
 public class GCSObjectTracker implements ObjectTracker {
 
-  private String bucketName;
+    private String bucketName;
 
-  public GCSObjectTracker(String bucketName) {
-    this.bucketName = bucketName;
-  }
-
-  @Override
-  public void trackObjects(List<Object> objects, String objectPrefix) throws IOException {
-
-    // Initialize GSON
-    Gson gson = new Gson();
-
-    // Initialize Google Cloud Storage client
-    Storage storage = StorageOptions.getDefaultInstance().getService();
-
-    // Create a byte array output stream to write JSON data
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-    // Create a buffered writer for writing newline-delimited JSON
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(baos));
-
-    // Convert each object to JSON and write it to the writer with a newline
-    for (Object object : objects) {
-      String json = gson.toJson(object);
-      writer.write(json);
-      writer.newLine();
+    public GCSObjectTracker(String bucketName) {
+        this.bucketName = bucketName;
     }
 
-    // Close the writer and output stream
-    writer.close();
-    baos.close();
+    @Override
+    public void trackObjects(List<Object> objects, String objectPrefix) throws IOException {
 
-    String objectName = String.format("%s/data.json", objectPrefix);
+        // Initialize GSON
+        Gson gson = new Gson();
 
-    // Create the blob information
-    BlobInfo blobInfo =
-        BlobInfo.newBuilder(bucketName, objectName).setContentType("application/json").build();
+        // Initialize Google Cloud Storage client
+        Storage storage = StorageOptions.getDefaultInstance().getService();
 
-    // Create the blob
-    storage.create(blobInfo, baos.toByteArray());
-  }
+        // Create a byte array output stream to write JSON data
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        // Create a buffered writer for writing newline-delimited JSON
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(baos));
+
+        // Convert each object to JSON and write it to the writer with a newline
+        for (Object object : objects) {
+            String json = gson.toJson(object);
+            writer.write(json);
+            writer.newLine();
+        }
+
+        // Close the writer and output stream
+        writer.close();
+        baos.close();
+
+        String objectName = String.format("%s/data.json", objectPrefix);
+
+        // Create the blob information
+        BlobInfo blobInfo =
+                BlobInfo.newBuilder(bucketName, objectName)
+                        .setContentType("application/json")
+                        .build();
+
+        // Create the blob
+        storage.create(blobInfo, baos.toByteArray());
+    }
 }

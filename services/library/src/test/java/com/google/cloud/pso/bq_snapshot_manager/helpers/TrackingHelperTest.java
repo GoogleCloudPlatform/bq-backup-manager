@@ -27,26 +27,26 @@ import org.junit.Test;
 
 public class TrackingHelperTest {
 
-  @Test
-  public void parseAsTimestamp() {
-    LocalDateTime now = LocalDateTime.ofEpochSecond(1641034800, 0, ZoneOffset.UTC);
-    Timestamp fromRunId = TrackingHelper.parseRunIdAsTimestamp("1641034800000-H");
+    @Test
+    public void parseAsTimestamp() {
+        LocalDateTime now = LocalDateTime.ofEpochSecond(1641034800, 0, ZoneOffset.UTC);
+        Timestamp fromRunId = TrackingHelper.parseRunIdAsTimestamp("1641034800000-H");
 
-    assertEquals(1641034800, fromRunId.getSeconds());
-  }
+        assertEquals(1641034800, fromRunId.getSeconds());
+    }
 
-  @Test
-  public void parseTrackingIdFromJobId() {
-    String trackingId = TrackingHelper.generateTrackingId(TrackingHelper.MIN_RUN_ID);
-    String parsedTrackingId =
-        TrackingHelper.parseTrackingIdFromBQExportJobId(
-            TrackingHelper.generateBQExportJobId(trackingId, "bq_backup_manager"));
+    @Test
+    public void parseTrackingIdFromJobId() {
+        String trackingId = TrackingHelper.generateTrackingId(TrackingHelper.MIN_RUN_ID);
+        String parsedTrackingId =
+                TrackingHelper.parseTrackingIdFromBQExportJobId(
+                        TrackingHelper.generateBQExportJobId(trackingId, "bq_backup_manager"));
 
-    assertEquals(trackingId, parsedTrackingId);
-  }
+        assertEquals(trackingId, parsedTrackingId);
+    }
 
-  @Test
-  public void generateUUID() {
-    assertEquals(-1, TrackingHelper.generateUUIDWithUnderscores().indexOf("-"));
-  }
+    @Test
+    public void generateUUID() {
+        assertEquals(-1, TrackingHelper.generateUUIDWithUnderscores().indexOf("-"));
+    }
 }

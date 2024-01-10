@@ -27,17 +27,17 @@ import java.util.List;
 
 public interface ResourceScanner {
 
-  // list projects under a folder in the format "project"
-  List<String> listProjects(Long folderId)
-      throws NonRetryableApplicationException, GeneralSecurityException, IOException;
+    // list projects under a folder in the format "project"
+    List<String> listProjects(Long folderId)
+            throws NonRetryableApplicationException, GeneralSecurityException, IOException;
 
-  // list datasets under a project in the format "project.dataset"
-  List<String> listDatasets(String project)
-      throws NonRetryableApplicationException, InterruptedException;
+    // list datasets under a project in the format "project.dataset"
+    List<String> listDatasets(String project)
+            throws NonRetryableApplicationException, InterruptedException;
 
-  // list tables under a project/dataset in the format "project.dataset.table"
-  List<String> listTables(String project, String dataset)
-      throws InterruptedException, NonRetryableApplicationException;
+    // list tables under a project/dataset in the format "project.dataset.table"
+    List<String> listTables(String project, String dataset)
+            throws InterruptedException, NonRetryableApplicationException;
 
-  Tuple<String, String> getParentFolderId(String project, String runId) throws IOException;
+    Tuple<String, String> getParentFolderId(String project, String runId) throws IOException;
 }

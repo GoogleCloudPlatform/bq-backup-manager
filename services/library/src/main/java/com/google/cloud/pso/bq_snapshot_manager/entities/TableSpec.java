@@ -26,92 +26,93 @@ import java.util.Objects;
 
 public class TableSpec {
 
-  private final String project;
-  private final String dataset;
-  private final String table;
+    private final String project;
+    private final String dataset;
+    private final String table;
 
-  public TableSpec(String project, String dataset, String table) {
-    this.project = project;
-    this.dataset = dataset;
-    this.table = table;
-  }
+    public TableSpec(String project, String dataset, String table) {
+        this.project = project;
+        this.dataset = dataset;
+        this.table = table;
+    }
 
-  public String getProject() {
-    return project;
-  }
+    public String getProject() {
+        return project;
+    }
 
-  public String getDataset() {
-    return dataset;
-  }
+    public String getDataset() {
+        return dataset;
+    }
 
-  public String getTable() {
-    return table;
-  }
+    public String getTable() {
+        return table;
+    }
 
-  public String toSqlString() {
-    return String.format("%s.%s.%s", project, dataset, table);
-  }
+    public String toSqlString() {
+        return String.format("%s.%s.%s", project, dataset, table);
+    }
 
-  public TableId toTableId() {
-    return TableId.of(project, dataset, table);
-  }
+    public TableId toTableId() {
+        return TableId.of(project, dataset, table);
+    }
 
-  // parse from "project.dataset.table" format
-  public static TableSpec fromSqlString(String sqlTableId) {
-    List<String> targetTableSpecs = Utils.tokenize(sqlTableId, ".", true);
-    return new TableSpec(targetTableSpecs.get(0), targetTableSpecs.get(1), targetTableSpecs.get(2));
-  }
+    // parse from "project.dataset.table" format
+    public static TableSpec fromSqlString(String sqlTableId) {
+        List<String> targetTableSpecs = Utils.tokenize(sqlTableId, ".", true);
+        return new TableSpec(
+                targetTableSpecs.get(0), targetTableSpecs.get(1), targetTableSpecs.get(2));
+    }
 
-  // parse from
-  // "//bigquery.googleapis.com/projects/#project_name/datasets/#dataset_name/tables/#table_name>"
-  public static TableSpec fromFullResource(String fullResource) {
-    List<String> tokens = Utils.tokenize(fullResource, "/", true);
-    return new TableSpec(tokens.get(2), tokens.get(4), tokens.get(6));
-  }
+    // parse from
+    // "//bigquery.googleapis.com/projects/#project_name/datasets/#dataset_name/tables/#table_name>"
+    public static TableSpec fromFullResource(String fullResource) {
+        List<String> tokens = Utils.tokenize(fullResource, "/", true);
+        return new TableSpec(tokens.get(2), tokens.get(4), tokens.get(6));
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    TableSpec tableSpec = (TableSpec) o;
-    return Objects.equals(project, tableSpec.project)
-        && Objects.equals(dataset, tableSpec.dataset)
-        && Objects.equals(table, tableSpec.table);
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TableSpec tableSpec = (TableSpec) o;
+        return Objects.equals(project, tableSpec.project)
+                && Objects.equals(dataset, tableSpec.dataset)
+                && Objects.equals(table, tableSpec.table);
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(project, dataset, table);
-  }
+    @Override
+    public int hashCode() {
+        return Objects.hash(project, dataset, table);
+    }
 
-  public String toDataCatalogLinkedResource() {
-    return String.format(
-        "//bigquery.googleapis.com/projects/%s/datasets/%s/tables/%s",
-        getProject(), getDataset(), getTable());
-  }
+    public String toDataCatalogLinkedResource() {
+        return String.format(
+                "//bigquery.googleapis.com/projects/%s/datasets/%s/tables/%s",
+                getProject(), getDataset(), getTable());
+    }
 
-  @Override
-  public String toString() {
-    return "TableSpec{"
-        + "project='"
-        + project
-        + '\''
-        + ", dataset='"
-        + dataset
-        + '\''
-        + ", table='"
-        + table
-        + '\''
-        + '}';
-  }
+    @Override
+    public String toString() {
+        return "TableSpec{"
+                + "project='"
+                + project
+                + '\''
+                + ", dataset='"
+                + dataset
+                + '\''
+                + ", table='"
+                + table
+                + '\''
+                + '}';
+    }
 
-  public String toResourceUrl() {
-    return String.format(
-        "https://console.cloud.google.com/bigquery?d=%s&p=%s&page=table&t=%s",
-        getDataset(), getProject(), getTable());
-  }
+    public String toResourceUrl() {
+        return String.format(
+                "https://console.cloud.google.com/bigquery?d=%s&p=%s&page=table&t=%s",
+                getDataset(), getProject(), getTable());
+    }
 
-  public String toHivePartitionPostfix() {
-    return String.format("project=%s/dataset=%s/table=%s", project, dataset, table);
-  }
+    public String toHivePartitionPostfix() {
+        return String.format("project=%s/dataset=%s/table=%s", project, dataset, table);
+    }
 }

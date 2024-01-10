@@ -25,73 +25,73 @@ import java.util.List;
 
 public class DispatcherTableRequest extends JsonMessage {
 
-  private String runId;
+    private String runId;
 
-  private DatasetSpec datasetSpec;
+    private DatasetSpec datasetSpec;
 
-  private List<String> tablesInclusionList;
-  private List<String> tablesExclusionList;
+    private List<String> tablesInclusionList;
+    private List<String> tablesExclusionList;
 
-  private boolean isDryRun;
+    private boolean isDryRun;
 
-  private boolean isForceRun;
+    private boolean isForceRun;
 
-  public DispatcherTableRequest(
-      String runId,
-      boolean isDryRun,
-      boolean isForceRun,
-      DatasetSpec datasetSpec,
-      List<String> tablesInclusionList,
-      List<String> tablesExclusionList) {
-    this.runId = runId;
-    this.isDryRun = isDryRun;
-    this.isForceRun = isForceRun;
-    this.datasetSpec = datasetSpec;
-    this.tablesInclusionList = tablesInclusionList;
-    this.tablesExclusionList = tablesExclusionList;
-  }
+    public DispatcherTableRequest(
+            String runId,
+            boolean isDryRun,
+            boolean isForceRun,
+            DatasetSpec datasetSpec,
+            List<String> tablesInclusionList,
+            List<String> tablesExclusionList) {
+        this.runId = runId;
+        this.isDryRun = isDryRun;
+        this.isForceRun = isForceRun;
+        this.datasetSpec = datasetSpec;
+        this.tablesInclusionList = tablesInclusionList;
+        this.tablesExclusionList = tablesExclusionList;
+    }
 
-  public String getRunId() {
-    return runId;
-  }
+    public String getRunId() {
+        return runId;
+    }
 
-  public boolean isDryRun() {
-    return isDryRun;
-  }
+    public boolean isDryRun() {
+        return isDryRun;
+    }
 
-  public boolean isForceRun() {
-    return isForceRun;
-  }
+    public boolean isForceRun() {
+        return isForceRun;
+    }
 
-  public List<String> getTablesInclusionList() {
-    return tablesInclusionList;
-  }
+    public List<String> getTablesInclusionList() {
+        return tablesInclusionList;
+    }
 
-  public List<String> getTablesExclusionList() {
-    return tablesExclusionList;
-  }
+    public List<String> getTablesExclusionList() {
+        return tablesExclusionList;
+    }
 
-  public DatasetSpec getDatasetSpec() {
-    return datasetSpec;
-  }
+    public DatasetSpec getDatasetSpec() {
+        return datasetSpec;
+    }
 
-  @Override
-  public String toString() {
-    return "DispatcherTableRequest{"
-        + "runId='"
-        + runId
-        + '\''
-        + ", datasetSpec="
-        + datasetSpec
-        + ", tablesInclusionList="
-        + tablesInclusionList
-        + ", tablesExclusionList="
-        + tablesExclusionList
-        + ", isDryRun="
-        + isDryRun
-        + ", isForceRun="
-        + isForceRun
-        + "} "
-        + super.toString();
-  }
+    @Override
+    public String toString() {
+        return "DispatcherTableRequest{"
+                + "runId='"
+                + runId
+                + '\''
+                + ", datasetSpec="
+                + datasetSpec
+                + ", tablesInclusionList="
+                + tablesInclusionList
+                + ", tablesExclusionList="
+                + tablesExclusionList
+                + ", isDryRun="
+                + isDryRun
+                + ", isForceRun="
+                + isForceRun
+                + "} "
+                + super.toString();
+    }
 }

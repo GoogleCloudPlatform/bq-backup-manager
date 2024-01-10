@@ -46,111 +46,114 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class GCSSnapshoterController {
 
-  private final LoggingHelper logger;
+    private final LoggingHelper logger;
 
-  private static final Integer functionNumber = -3;
+    private static final Integer functionNumber = -3;
 
-  private Gson gson;
-  Environment environment;
+    private Gson gson;
+    Environment environment;
 
-  public GCSSnapshoterController() {
+    public GCSSnapshoterController() {
 
-    gson = new Gson();
-    environment = new Environment();
-    logger =
-        new LoggingHelper(
-            GCSSnapshoterController.class.getSimpleName(),
-            functionNumber,
-            environment.getProjectId(),
-            environment.getApplicationName());
-  }
-
-  @RequestMapping(value = "/", method = RequestMethod.POST)
-  public ResponseEntity receiveMessage(@RequestBody PubSubEvent requestBody) {
-
-    String trackingId = TrackingHelper.MIN_RUN_ID;
-
-    // These values will be updated based on the execution flow and logged at the end
-    ResponseEntity responseEntity;
-    SnapshoterRequest snapshoterRequest = null;
-    GCSSnapshoterResponse snapshoterResponse = null;
-    boolean isSuccess;
-    Exception error = null;
-    boolean isRetryableError = false;
-
-    try {
-
-      if (requestBody == null || requestBody.getMessage() == null) {
-        String msg = "Bad Request: invalid message format";
-        logger.logSevereWithTracker(trackingId, null, msg);
-        throw new NonRetryableApplicationException("Request body or message is Null.");
-      }
-
-      String requestJsonString = requestBody.getMessage().dataToUtf8String();
-
-      // remove any escape characters (e.g. from Terraform
-      requestJsonString = requestJsonString.replace("\\", "");
-
-      logger.logInfoWithTracker(
-          trackingId, null, String.format("Received payload: %s", requestJsonString));
-
-      snapshoterRequest = gson.fromJson(requestJsonString, SnapshoterRequest.class);
-
-      trackingId = snapshoterRequest.getTrackingId();
-
-      logger.logInfoWithTracker(
-          snapshoterRequest.isDryRun(),
-          trackingId,
-          snapshoterRequest.getTargetTable(),
-          String.format("Parsed Request: %s", snapshoterRequest.toString()));
-
-      GCSSnapshoter snapshoter =
-          new GCSSnapshoter(
-              environment.toConfig(),
-              new BigQueryServiceImpl(snapshoterRequest.computeBackupOperationProject()),
-              new PubSubServiceImpl(),
-              new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
-              "snapshoter-gcs-flags",
-              new GcsPersistentMapImpl(environment.getGcsFlagsBucket()),
-              "snapshoter-gcs-tagger-requests",
-              functionNumber);
-
-      snapshoterResponse =
-          snapshoter.execute(
-              snapshoterRequest, Timestamp.now(), requestBody.getMessage().getMessageId());
-
-      responseEntity = new ResponseEntity("Process completed successfully.", HttpStatus.OK);
-      isSuccess = true;
-
-    } catch (Exception e) {
-      Tuple<ResponseEntity, Boolean> handlingResults =
-          ControllerExceptionHelper.handleException(
-              e,
-              logger,
-              trackingId,
-              snapshoterRequest == null ? null : snapshoterRequest.getTargetTable());
-      isSuccess = false;
-      responseEntity = handlingResults.x();
-      isRetryableError = handlingResults.y();
-      error = e;
+        gson = new Gson();
+        environment = new Environment();
+        logger =
+                new LoggingHelper(
+                        GCSSnapshoterController.class.getSimpleName(),
+                        functionNumber,
+                        environment.getProjectId(),
+                        environment.getApplicationName());
     }
 
-    logger.logUnified(
-        snapshoterRequest == null ? null : snapshoterRequest.isDryRun(),
-        functionNumber.toString(),
-        snapshoterRequest == null ? null : snapshoterRequest.getRunId(),
-        snapshoterRequest == null ? null : snapshoterRequest.getTrackingId(),
-        snapshoterRequest == null ? null : snapshoterRequest.getTargetTable(),
-        snapshoterRequest,
-        snapshoterResponse,
-        isSuccess,
-        error,
-        isRetryableError);
+    @RequestMapping(value = "/", method = RequestMethod.POST)
+    public ResponseEntity receiveMessage(@RequestBody PubSubEvent requestBody) {
 
-    return responseEntity;
-  }
+        String trackingId = TrackingHelper.MIN_RUN_ID;
 
-  public static void main(String[] args) {
-    SpringApplication.run(GCSSnapshoterController.class, args);
-  }
+        // These values will be updated based on the execution flow and logged at the end
+        ResponseEntity responseEntity;
+        SnapshoterRequest snapshoterRequest = null;
+        GCSSnapshoterResponse snapshoterResponse = null;
+        boolean isSuccess;
+        Exception error = null;
+        boolean isRetryableError = false;
+
+        try {
+
+            if (requestBody == null || requestBody.getMessage() == null) {
+                String msg = "Bad Request: invalid message format";
+                logger.logSevereWithTracker(trackingId, null, msg);
+                throw new NonRetryableApplicationException("Request body or message is Null.");
+            }
+
+            String requestJsonString = requestBody.getMessage().dataToUtf8String();
+
+            // remove any escape characters (e.g. from Terraform
+            requestJsonString = requestJsonString.replace("\\", "");
+
+            logger.logInfoWithTracker(
+                    trackingId, null, String.format("Received payload: %s", requestJsonString));
+
+            snapshoterRequest = gson.fromJson(requestJsonString, SnapshoterRequest.class);
+
+            trackingId = snapshoterRequest.getTrackingId();
+
+            logger.logInfoWithTracker(
+                    snapshoterRequest.isDryRun(),
+                    trackingId,
+                    snapshoterRequest.getTargetTable(),
+                    String.format("Parsed Request: %s", snapshoterRequest.toString()));
+
+            GCSSnapshoter snapshoter =
+                    new GCSSnapshoter(
+                            environment.toConfig(),
+                            new BigQueryServiceImpl(
+                                    snapshoterRequest.computeBackupOperationProject()),
+                            new PubSubServiceImpl(),
+                            new GCSPersistentSetImpl(environment.getGcsFlagsBucket()),
+                            "snapshoter-gcs-flags",
+                            new GcsPersistentMapImpl(environment.getGcsFlagsBucket()),
+                            "snapshoter-gcs-tagger-requests",
+                            functionNumber);
+
+            snapshoterResponse =
+                    snapshoter.execute(
+                            snapshoterRequest,
+                            Timestamp.now(),
+                            requestBody.getMessage().getMessageId());
+
+            responseEntity = new ResponseEntity("Process completed successfully.", HttpStatus.OK);
+            isSuccess = true;
+
+        } catch (Exception e) {
+            Tuple<ResponseEntity, Boolean> handlingResults =
+                    ControllerExceptionHelper.handleException(
+                            e,
+                            logger,
+                            trackingId,
+                            snapshoterRequest == null ? null : snapshoterRequest.getTargetTable());
+            isSuccess = false;
+            responseEntity = handlingResults.x();
+            isRetryableError = handlingResults.y();
+            error = e;
+        }
+
+        logger.logUnified(
+                snapshoterRequest == null ? null : snapshoterRequest.isDryRun(),
+                functionNumber.toString(),
+                snapshoterRequest == null ? null : snapshoterRequest.getRunId(),
+                snapshoterRequest == null ? null : snapshoterRequest.getTrackingId(),
+                snapshoterRequest == null ? null : snapshoterRequest.getTargetTable(),
+                snapshoterRequest,
+                snapshoterResponse,
+                isSuccess,
+                error,
+                isRetryableError);
+
+        return responseEntity;
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(GCSSnapshoterController.class, args);
+    }
 }

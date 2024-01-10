@@ -37,106 +37,107 @@ import org.junit.Test;
 
 public class BigQuerySnapshoterTest {
 
-  @Test
-  public void testGetSnapshotTableSpec() {
+    @Test
+    public void testGetSnapshotTableSpec() {
 
-    TableSpec actual =
-        BigQuerySnapshoter.getSnapshotTableSpec(
-            TableSpec.fromSqlString("p.d.t"), "sProject", "sDataset", "123", 100L);
+        TableSpec actual =
+                BigQuerySnapshoter.getSnapshotTableSpec(
+                        TableSpec.fromSqlString("p.d.t"), "sProject", "sDataset", "123", 100L);
 
-    TableSpec expected = new TableSpec("sProject", "sDataset", "p_d_t_123_100");
+        TableSpec expected = new TableSpec("sProject", "sDataset", "p_d_t_123_100");
 
-    assertEquals(expected, actual);
-  }
+        assertEquals(expected, actual);
+    }
 
-  @Test
-  public void testExecute()
-      throws NonRetryableApplicationException, IOException, InterruptedException,
-          RetryableApplicationException {
+    @Test
+    public void testExecute()
+            throws NonRetryableApplicationException, IOException, InterruptedException,
+                    RetryableApplicationException {
 
-    BigQuerySnapshoter snapshoter =
-        new BigQuerySnapshoter(
-            new SnapshoterConfig("host-project", "data-region", "bq_backup_manager"),
-            new BigQueryService() {
-              @Override
-              public void createSnapshot(
-                  String jobId,
-                  TableSpec sourceTable,
-                  TableSpec destinationId,
-                  Timestamp snapshotExpirationTs,
-                  String trackingId)
-                  throws InterruptedException {}
+        BigQuerySnapshoter snapshoter =
+                new BigQuerySnapshoter(
+                        new SnapshoterConfig("host-project", "data-region", "bq_backup_manager"),
+                        new BigQueryService() {
+                            @Override
+                            public void createSnapshot(
+                                    String jobId,
+                                    TableSpec sourceTable,
+                                    TableSpec destinationId,
+                                    Timestamp snapshotExpirationTs,
+                                    String trackingId)
+                                    throws InterruptedException {}
 
-              @Override
-              public void exportToGCS(
-                  String jobId,
-                  TableSpec sourceTable,
-                  String gcsDestinationUri,
-                  GCSSnapshotFormat exportFormat,
-                  @Nullable String csvFieldDelimiter,
-                  @Nullable Boolean csvPrintHeader,
-                  @Nullable Boolean useAvroLogicalTypes,
-                  String trackingId,
-                  Map<String, String> jobLabels)
-                  throws InterruptedException {}
+                            @Override
+                            public void exportToGCS(
+                                    String jobId,
+                                    TableSpec sourceTable,
+                                    String gcsDestinationUri,
+                                    GCSSnapshotFormat exportFormat,
+                                    @Nullable String csvFieldDelimiter,
+                                    @Nullable Boolean csvPrintHeader,
+                                    @Nullable Boolean useAvroLogicalTypes,
+                                    String trackingId,
+                                    Map<String, String> jobLabels)
+                                    throws InterruptedException {}
 
-              @Override
-              public Long getTableCreationTime(TableSpec table) {
-                return 0L;
-              }
-            },
-            new PubSubServiceTestImpl(),
-            new PersistentSetTestImpl(),
-            "test-prefix",
-            3);
+                            @Override
+                            public Long getTableCreationTime(TableSpec table) {
+                                return 0L;
+                            }
+                        },
+                        new PubSubServiceTestImpl(),
+                        new PersistentSetTestImpl(),
+                        "test-prefix",
+                        3);
 
-    BackupPolicy backupPolicy =
-        new BackupPolicy.BackupPolicyBuilder(
-                "test-cron",
-                BackupMethod.BIGQUERY_SNAPSHOT,
-                TimeTravelOffsetDays.DAYS_3,
-                BackupConfigSource.SYSTEM,
-                "backup-p")
-            .setBackupOperationProject("backup-p")
-            .setBigQuerySnapshotExpirationDays(15.0)
-            .setBigQuerySnapshotStorageDataset("backup-d")
-            .setGcsSnapshotStorageLocation("gs://bucket/folder")
-            .build();
+        BackupPolicy backupPolicy =
+                new BackupPolicy.BackupPolicyBuilder(
+                                "test-cron",
+                                BackupMethod.BIGQUERY_SNAPSHOT,
+                                TimeTravelOffsetDays.DAYS_3,
+                                BackupConfigSource.SYSTEM,
+                                "backup-p")
+                        .setBackupOperationProject("backup-p")
+                        .setBigQuerySnapshotExpirationDays(15.0)
+                        .setBigQuerySnapshotStorageDataset("backup-d")
+                        .setGcsSnapshotStorageLocation("gs://bucket/folder")
+                        .build();
 
-    TableSpec sourceTable = TableSpec.fromSqlString("project.dataset.table");
-    Timestamp operationTime = Timestamp.ofTimeSecondsAndNanos(1667478075L, 0);
-    Long timeTravelMilis = (Utils.timestampToUnixTimeMillis(operationTime) - (3 * 86400000));
-    TableSpec expectedSourceTable =
-        TableSpec.fromSqlString("project.dataset.table@" + timeTravelMilis);
-    TableSpec expectedSnapshotTable =
-        TableSpec.fromSqlString("backup-p.backup-d.project_dataset_table_runId_" + timeTravelMilis);
+        TableSpec sourceTable = TableSpec.fromSqlString("project.dataset.table");
+        Timestamp operationTime = Timestamp.ofTimeSecondsAndNanos(1667478075L, 0);
+        Long timeTravelMilis = (Utils.timestampToUnixTimeMillis(operationTime) - (3 * 86400000));
+        TableSpec expectedSourceTable =
+                TableSpec.fromSqlString("project.dataset.table@" + timeTravelMilis);
+        TableSpec expectedSnapshotTable =
+                TableSpec.fromSqlString(
+                        "backup-p.backup-d.project_dataset_table_runId_" + timeTravelMilis);
 
-    BigQuerySnapshoterResponse actualResponse =
-        snapshoter.execute(
-            new SnapshoterRequest(
-                sourceTable,
-                "runId",
-                "trackingId",
-                false,
-                new BackupPolicyAndState(backupPolicy, null)),
-            operationTime,
-            "pubsub-message-id");
+        BigQuerySnapshoterResponse actualResponse =
+                snapshoter.execute(
+                        new SnapshoterRequest(
+                                sourceTable,
+                                "runId",
+                                "trackingId",
+                                false,
+                                new BackupPolicyAndState(backupPolicy, null)),
+                        operationTime,
+                        "pubsub-message-id");
 
-    TaggerRequest expectedTaggerRequest =
-        new TaggerRequest(
-            sourceTable,
-            "runId",
-            "trackingId",
-            false,
-            new BackupPolicyAndState(backupPolicy, null),
-            BackupMethod.BIGQUERY_SNAPSHOT,
-            expectedSnapshotTable,
-            null,
-            operationTime);
+        TaggerRequest expectedTaggerRequest =
+                new TaggerRequest(
+                        sourceTable,
+                        "runId",
+                        "trackingId",
+                        false,
+                        new BackupPolicyAndState(backupPolicy, null),
+                        BackupMethod.BIGQUERY_SNAPSHOT,
+                        expectedSnapshotTable,
+                        null,
+                        operationTime);
 
-    assertEquals(expectedTaggerRequest, actualResponse.getOutputTaggerRequest());
-    assertEquals(expectedSourceTable, actualResponse.getComputedSourceTable());
-    assertEquals(expectedSnapshotTable, actualResponse.getComputedSnapshotTable());
-    assertEquals(operationTime, actualResponse.getOperationTs());
-  }
+        assertEquals(expectedTaggerRequest, actualResponse.getOutputTaggerRequest());
+        assertEquals(expectedSourceTable, actualResponse.getComputedSourceTable());
+        assertEquals(expectedSnapshotTable, actualResponse.getComputedSnapshotTable());
+        assertEquals(operationTime, actualResponse.getOperationTs());
+    }
 }

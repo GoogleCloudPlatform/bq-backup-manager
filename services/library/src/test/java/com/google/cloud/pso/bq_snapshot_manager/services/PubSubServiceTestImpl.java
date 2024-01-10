@@ -30,14 +30,15 @@ import java.util.List;
 
 public class PubSubServiceTestImpl implements PubSubService {
 
-  @Override
-  public PubSubPublishResults publishTableOperationRequests(
-      String projectId, String topicId, List<JsonMessage> messages)
-      throws IOException, InterruptedException {
-    List<SuccessPubSubMessage> successPubSubMessages = new ArrayList<>(messages.size());
-    for (JsonMessage msg : messages) {
-      successPubSubMessages.add(new SuccessPubSubMessage(msg, "message-id"));
+    @Override
+    public PubSubPublishResults publishTableOperationRequests(
+            String projectId, String topicId, List<JsonMessage> messages)
+            throws IOException, InterruptedException {
+        List<SuccessPubSubMessage> successPubSubMessages = new ArrayList<>(messages.size());
+        for (JsonMessage msg : messages) {
+            successPubSubMessages.add(new SuccessPubSubMessage(msg, "message-id"));
+        }
+        return new PubSubPublishResults(
+                successPubSubMessages, new ArrayList<FailedPubSubMessage>());
     }
-    return new PubSubPublishResults(successPubSubMessages, new ArrayList<FailedPubSubMessage>());
-  }
 }

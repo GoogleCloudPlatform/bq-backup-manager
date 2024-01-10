@@ -109,7 +109,7 @@
                         </includes>
                         <googleJavaFormat>
                             <version>1.7</version>
-                            <style>GOOGLE</style>
+                            <style>AOSP</style>
                         </googleJavaFormat>
                         <importOrder /> <!-- standard import order -->
                     </java>
