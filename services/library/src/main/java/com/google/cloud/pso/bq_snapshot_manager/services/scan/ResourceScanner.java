@@ -20,8 +20,6 @@ package com.google.cloud.pso.bq_snapshot_manager.services.scan;
 
 import com.google.cloud.Tuple;
 import com.google.cloud.pso.bq_snapshot_manager.entities.NonRetryableApplicationException;
-import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;

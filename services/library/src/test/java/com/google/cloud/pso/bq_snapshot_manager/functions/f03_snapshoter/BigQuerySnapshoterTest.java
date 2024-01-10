@@ -51,9 +51,7 @@ public class BigQuerySnapshoterTest {
 
   @Test
   public void testExecute()
-      throws NonRetryableApplicationException,
-          IOException,
-          InterruptedException,
+      throws NonRetryableApplicationException, IOException, InterruptedException,
           RetryableApplicationException {
 
     BigQuerySnapshoter snapshoter =

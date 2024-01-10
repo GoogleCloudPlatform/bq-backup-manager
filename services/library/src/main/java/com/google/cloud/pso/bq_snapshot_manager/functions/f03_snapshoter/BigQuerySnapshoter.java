@@ -98,9 +98,7 @@ public class BigQuerySnapshoter {
 
   public BigQuerySnapshoterResponse execute(
       SnapshoterRequest request, Timestamp operationTs, String pubSubMessageId)
-      throws IOException,
-          NonRetryableApplicationException,
-          InterruptedException,
+      throws IOException, NonRetryableApplicationException, InterruptedException,
           RetryableApplicationException {
 
     // run common service start logging and checks

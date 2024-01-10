@@ -18,12 +18,10 @@
 
 package com.google.cloud.pso.bq_snapshot_manager.services.backup_policy;
 
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
-import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupState;
-
-import javax.annotation.Nullable;
+import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.BackupPolicyAndState;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 public interface BackupPolicyService {
 

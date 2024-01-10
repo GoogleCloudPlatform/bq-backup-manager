@@ -97,7 +97,8 @@ public class BigQueryScopeLister {
                   datasetExcludeListPatterns);
         } else {
           throw new NonRetryableApplicationException(
-              "At least one of of the following params must be not empty [tableIncludeList, datasetIncludeList, projectIncludeList, folderIncludeList]");
+              "At least one of of the following params must be not empty [tableIncludeList,"
+                  + " datasetIncludeList, projectIncludeList, folderIncludeList]");
         }
       }
     }
@@ -173,7 +174,8 @@ public class BigQueryScopeLister {
           if (projectDatasets.isEmpty()) {
             String msg =
                 String.format(
-                    "No datasets found under project '%s' or no enough permissions to list BigQuery resources.",
+                    "No datasets found under project '%s' or no enough permissions to list BigQuery"
+                        + " resources.",
                     project);
 
             logger.logWarnWithTracker(runId, null, msg);

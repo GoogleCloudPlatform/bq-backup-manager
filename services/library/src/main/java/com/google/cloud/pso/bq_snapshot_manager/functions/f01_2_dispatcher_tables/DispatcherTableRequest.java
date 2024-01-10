@@ -20,8 +20,6 @@ package com.google.cloud.pso.bq_snapshot_manager.functions.f01_2_dispatcher_tabl
 
 import com.google.cloud.pso.bq_snapshot_manager.entities.DatasetSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.JsonMessage;
-import com.google.cloud.pso.bq_snapshot_manager.entities.PubSubEvent;
-
 import java.util.List;
 
 public class DispatcherTableRequest extends JsonMessage {

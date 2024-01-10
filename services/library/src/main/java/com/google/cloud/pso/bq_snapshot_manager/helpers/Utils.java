@@ -25,14 +25,13 @@ import com.google.cloud.pso.bq_snapshot_manager.entities.TableOperationRequestRe
 import com.google.cloud.pso.bq_snapshot_manager.entities.TableSpec;
 import com.google.cloud.pso.bq_snapshot_manager.entities.backup_policy.TimeTravelOffsetDays;
 import com.google.cloud.pso.bq_snapshot_manager.services.set.PersistentSet;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 
 public class Utils {
 
