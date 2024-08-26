@@ -206,7 +206,7 @@ gsutil mb -p $PROJECT_ID -l $COMPUTE_REGION -b on $BUCKET
 
 #### Prepare Terraform Service Account
 
-Terraform needs to run with a service account to deploy DLP resources. User accounts are not enough.
+Create a service account with required permissions to be used by Terraform
 
 ```shell
 ./scripts/prepare_terraform_service_account.sh
@@ -275,14 +275,9 @@ compute_region = "<GCP region to deploy compute resources e.g. cloud run, iam, e
 data_region = "<GCP region to deploy data resources (buckets, datasets, etc> (equals to $DATA_REGION)"
 ```
 
-##### Configure Cloud Scheduler Service Account
-
-Terraform will need to grant the Cloud Scheduler account permissions to use parts of the solution. If this host project
-never used Cloud Scheduler before, create and run a sample job to force GCP to create the service account.
-
 ##### Configure Terraform Service Account
 
-Terraform needs to run with a service account to deploy DLP resources. User accounts are not enough.
+Terraform will use a service account to deploy resources.
 
 This service account name is defined in the "Setup Environment Variables" step and created
 in the "Prepare Terraform Service Account" step.
@@ -544,7 +539,7 @@ PS:
 * For backup operation projects, use the same projects listed in:
   * All the `backup_operation_project` fields in the Terraform variable `fallback_policy`
   * Source tables projects in all inclusion lists in the BigQuery Scan scope (if you're not explicitly setting the `backup_operation_project` field)
-  * The manually attached backup tag-templates
+  * The manually attached table-level backup policies
 * If a project is used both as the source and destination, include the project in all scripts
 * If a project is used both as the `backup_storage_project` and `backup_operation_project`, include the project in both respective scripts
 
