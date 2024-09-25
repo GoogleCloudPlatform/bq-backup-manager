@@ -417,11 +417,13 @@ One must set the below fields when choosing the `BigQuery Snapshot` or `Both` ba
 One must set the below fields when choosing the `GCS Snapshot` or `Both` backup method:
 
 
-| Field                   | Description                                                                                  |
-|-------------------------|----------------------------------------------------------------------------------------------|
-| `gcs_snapshot_storage_location` | A GCS bucket in the format `gs://bucket/path/` to store snapshots to.                        |
-| `gcs_snapshot_format`           | The file format and compression used to export a BigQuery table to GCS. Avaiable values are `CSV`, `CSV_GZIP`, `JSON`, `JSON_GZIP`, `AVRO`, `AVRO_DEFLATE`, `AVRO_SNAPPY`, `PARQUET`, `PARQUET_SNAPPY`, `PARQUET_GZIP` |
-| `gcs_avro_use_logical_types`    | When set to `FALSE` the below BigQuery types are exported as strings, otherwise as their corresponding [Avro logical type](https://avro.apache.org/docs/1.10.2/spec.html#Logical+Types).    | 
+| Field                           | Description                                                                                                                                                                                                                                          |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `gcs_snapshot_storage_location` | A GCS bucket in the format `gs://bucket/path/` to store snapshots to.                                                                                                                                                                                |
+| `gcs_snapshot_format`           | The file format and compression used to export a BigQuery table to GCS. Avaiable values are `CSV`, `CSV_GZIP`, `JSON`, `JSON_GZIP`, `AVRO`, `AVRO_DEFLATE`, `AVRO_SNAPPY`, `PARQUET`, `PARQUET_SNAPPY`, `PARQUET_GZIP`                               |
+| `gcs_avro_use_logical_types`    | Required when the `gcs_snapshot_format` is any Avro-format. When set to `FALSE` the below BigQuery types are exported as strings, otherwise as their corresponding [Avro logical type](https://avro.apache.org/docs/1.10.2/spec.html#Logical+Types). |
+| `gcs_csv_delimiter`             | Required when the `gcs_snapshot_format` is any CSV-format. Set the delimiter used for the exported CSV file(s). For example `;` or `,`                                                                                                               |`.                                                                                                                                                |`                                                                                                                                                |
+| `gcs_csv_export_header`         | Required when the `gcs_snapshot_format` is any CSV-format. Set to `TRUE` to include column headers in the exported CSV file(s). Otherwise set it to `FALSE`                                                                                          |
 
 BigQuery Types to Avro Logical Types mapping:
 
