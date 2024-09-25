@@ -90,9 +90,3 @@ variable "role" {
   description = "The role of subnetwork. Currently, this field is only used when purpose = INTERNAL_HTTPS_LOAD_BALANCER. The value can be set to ACTIVE or BACKUP."
   default     = null
 }
-
-variable "secondary_ranges" {
-  type        = list(object({ range_name = string, ip_cidr_range = string }))
-  description = "Secondary ranges that will be used in some of the subnets"
-  default     = []
-}
