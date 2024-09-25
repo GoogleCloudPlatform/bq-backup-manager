@@ -32,10 +32,6 @@ resource "google_compute_subnetwork" "subnetwork" {
     filter_expr          = try(var.subnet_flow_logs_filter_expr, "true")
   }
 
-  secondary_ip_range = [
-  for i in range(length(var.secondary_ranges)) : var.secondary_ranges[i]
-  ]
-
   purpose = var.purpose
   role    = var.role
 }
