@@ -14,7 +14,7 @@
       * [BigQuery Snapshoter](#bigquery-snapshoter)
       * [GCS Snapshoter](#gcs-snapshoter)
       * [Tagger](#tagger)
-      * [Design Notes](#design-notes)
+    * [Design Notes](#design-notes)
     * [Assumptions](#assumptions)
   * [Deployment](#deployment)
     * [Install Maven](#install-maven)
@@ -30,26 +30,31 @@
       * [Terraform Variables Configuration](#terraform-variables-configuration)
         * [Create a Terraform .tfvars file](#create-a-terraform-tfvars-file)
         * [Configure Project Variables](#configure-project-variables)
-        * [Configure Cloud Scheduler Service Account](#configure-cloud-scheduler-service-account)
         * [Configure Terraform Service Account](#configure-terraform-service-account)
         * [Configure Cloud Run Service Images](#configure-cloud-run-service-images)
-        * [Configure Scheduler(s)](#configure-scheduler--s-)
+        * [Configure Scheduler(s)](#configure-schedulers)
+          * [Payload Fields:](#payload-fields)
+          * [Using regular expressions in exclusion lists:](#using-regular-expressions-in-exclusion-lists)
         * [Fallback Policies](#fallback-policies)
         * [Fallback Policy Structure](#fallback-policy-structure)
-        * [Required Policy Fields](#required-policy-fields)
+        * [Common Policy Fields](#common-policy-fields)
         * [BigQuery Snapshot Policy Fields](#bigquery-snapshot-policy-fields)
         * [GCS Snapshot Policy Fields](#gcs-snapshot-policy-fields)
+        * [Configure Backup Projects](#configure-backup-projects)
+          * [Additional Backup Operation Projects](#additional-backup-operation-projects)
+          * [Configure Terraform SA permissions on Backup Projects](#configure-terraform-sa-permissions-on-backup-projects)
       * [Terraform Deployment](#terraform-deployment)
       * [Manual Deployment](#manual-deployment)
       * [Setup Access to Sources and Destinations](#setup-access-to-sources-and-destinations)
         * [Set Environment Variables](#set-environment-variables)
         * [Prepare Source Folders](#prepare-source-folders)
         * [Prepare Source and Destination Projects](#prepare-source-and-destination-projects)
-        * [Target tables with policy tags](#target-tables-with-policy-tags)
+        * [Target tables with policy tags (optional)](#target-tables-with-policy-tags-optional)
+        * [Target tables with row-level access policies (optional)](#target-tables-with-row-level-access-policies-optional)
+        * [Grant BigQuery Admin to Snapshot Services](#grant-bigquery-admin-to-snapshot-services)
+* [exact required permission is bigquery.rowAccessPolicies.overrideTimeTravelRestrictions (could create a custom role)](#exact-required-permission-is-bigqueryrowaccesspoliciesoverridetimetravelrestrictions-could-create-a-custom-role)
   * [Running the Solution](#running-the-solution)
     * [Setting table-level backup policies](#setting-table-level-backup-policies)
-      * [From Terminal](#from-terminal)
-      * [From UI](#from-ui)
     * [Triggering backup operations](#triggering-backup-operations)
     * [Monitoring and Reporting](#monitoring-and-reporting)
   * [Limits](#limits)
@@ -545,7 +550,7 @@ PS:
 * If a project is used both as the source and destination, include the project in all scripts
 * If a project is used both as the `backup_storage_project` and `backup_operation_project`, include the project in both respective scripts
 
-##### Target tables with policy tags
+##### Target tables with policy tags (optional)
 
 For tables that use column-level access control, one must grant access to the solution's service accounts
 to be able to read the table data in order to create a backup.
@@ -563,6 +568,61 @@ gcloud data-catalog taxonomies add-iam-policy-binding \
 $TAXONOMY \
 --member="serviceAccount:${SA_SNAPSHOTER_GCS_EMAIL}" \
 --role='roles/datacatalog.categoryFineGrainedReader'
+```
+
+##### Target tables with row-level access policies (optional)
+
+Follow these steps to run the solution on tables that have row-level access policies set:
+
+###### Grant BigQuery Admin to Snapshot Services
+
+BigQuery admin role is required on tables with row-level access policy to be able to use time travel and take snapshots [(reference)](https://cloud.google.com/bigquery/docs/time-travel#time_travel_and_row-level_access). 
+The exact required permission is `bigquery.rowAccessPolicies.overrideTimeTravelRestrictions` which could be used in a
+custom role to reduce the rights granted to the snapshot services accounts.
+
+Grant admin rights to the BigQuery and GCS Snapshot service accounts on project-level:
+```shell
+
+TARGET_PROJECT_ID = "<project hosting the target table(s)>"
+
+gcloud projects add-iam-policy-binding "${TARGET_PROJECT_ID}" \
+    --member="serviceAccount:${SA_SNAPSHOTER_BQ_EMAIL}" \
+    --role="roles/bigquery.admin"
+
+gcloud projects add-iam-policy-binding "${TARGET_PROJECT_ID}" \
+    --member="serviceAccount:${SA_SNAPSHOTER_GCS_EMAIL}" \
+     --role="roles/bigquery.admin"
+```
+
+Alternatively, you can grant the admin role on table-level instead of project-level:
+```shell
+
+bq add-iam-policy-binding \
+  --member="serviceAccount:${SA_SNAPSHOTER_BQ_EMAIL}" \
+  --role="roles/bigquery.admin" \
+  YOUR_PROJECT_ID:YOUR_DATASET_ID.YOUR_TABLE_ID
+  
+bq add-iam-policy-binding \
+  --member="serviceAccount:${SA_SNAPSHOTER_GCS_EMAIL}" \
+  --role="roles/bigquery.admin" \
+  YOUR_PROJECT_ID:YOUR_DATASET_ID.YOUR_TABLE_ID
+```
+###### Add Snapshot Service Accounts to Row-Level Policies
+
+The Snapshot service accounts must be added to the target table row-level access policies with a `True` filter to read 
+and copy all data [(reference)](https://cloud.google.com/bigquery/docs/using-row-level-security-with-features#table-snapshots):
+
+```shell
+
+export TARGET_TABLE="PROJECT.DATASET.TABLE"
+
+bq query --use_legacy_sql=false --nouse_legacy_sql \
+"CREATE ROW ACCESS POLICY bq_backup_manager_bq_snapshoter_all_access ON \`${TARGET_TABLE}\` \
+GRANT TO (\"serviceAccount:${SA_SNAPSHOTER_BQ_EMAIL}\") \
+FILTER USING (TRUE); \
+CREATE ROW ACCESS POLICY bq_backup_manager_gcs_snapshoter_all_access ON \`${TARGET_TABLE}\` \
+GRANT TO (\"serviceAccount:${SA_SNAPSHOTER_GCS_EMAIL}\") \
+FILTER USING (TRUE);"
 ```
 
 ## Running the Solution
