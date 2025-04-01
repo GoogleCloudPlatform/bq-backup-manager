@@ -303,7 +303,7 @@ is already done in a previous step)
 ```yaml
 dispatcher_service_image     = "< value of env variable DISPATCHER_IMAGE >"
 configurator_service_image   = "< value of env variable CONFIGURATOR_IMAGE >"
-snapshoter_bq_service_image  = "< value of env variable DISPATCHER_IMAGE >"
+snapshoter_bq_service_image  = "< value of env variable SNAPSHOTER_BQ_IMAGEE >"
 snapshoter_gcs_service_image = "< value of env variable SNAPSHOTER_GCS_IMAGE>"
 tagger_service_image         = "< value of env variable TAGGER_IMAGE>"
 ``` 
