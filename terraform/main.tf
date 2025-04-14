@@ -185,7 +185,6 @@ module "cloud-run-dispatcher" {
   ]
   )
   common_labels = local.common_labels
-  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-configurator" {
@@ -221,7 +220,6 @@ module "cloud-run-configurator" {
   )
 
   common_labels = local.common_labels
-  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-snapshoter-bq" {
@@ -245,7 +243,6 @@ module "cloud-run-snapshoter-bq" {
   )
 
   common_labels = local.common_labels
-  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-snapshoter-gcs" {
@@ -269,7 +266,6 @@ module "cloud-run-snapshoter-gcs" {
   )
 
   common_labels = local.common_labels
-  vpc_access_connector = module.vpc_connector.id
 }
 
 module "cloud-run-tagger" {
@@ -292,7 +288,6 @@ module "cloud-run-tagger" {
   )
 
   common_labels = local.common_labels
-  vpc_access_connector = module.vpc_connector.id
 }
 
 
