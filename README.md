@@ -206,7 +206,7 @@ One can skip this section when re-deploying the solution (e.g. after new commits
 #### Prepare Terraform State Bucket
 
 ```shell
-gsutil mb -p $PROJECT_ID -l $COMPUTE_REGION -b on $BUCKET
+gcloud storage buckets create $BUCKET --project=$PROJECT_ID --location=$COMPUTE_REGION --uniform-bucket-level-access
 ```
 
 #### Prepare Terraform Service Account
@@ -657,7 +657,7 @@ export BACKUP_POLICY="{
 # File name MUST BE backup_policy.json
 echo $BACKUP_POLICY >> backup_policy.json
 
-gsutil cp backup_policy.json gs://${POLICIES_BUCKET}/policy/project=${TABLE_PROJECT}/dataset=${TABLE_DATASET}/table=${TABLE}/backup_policy.json
+gcloud storage cp backup_policy.json gs://${POLICIES_BUCKET}/policy/project=${TABLE_PROJECT}/dataset=${TABLE_DATASET}/table=${TABLE}/backup_policy.json
 ```
 
 ### Triggering backup operations
